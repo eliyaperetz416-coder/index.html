@@ -2,7 +2,7 @@
   "name": "Paper Portfolio",
   "short_name": "Paper Portfolio",
   "description": "A virtual investing simulator for learning and gameplay.",
-  "start_url": "./paper_portfolio.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#09101d",
   "theme_color": "#09101d",
