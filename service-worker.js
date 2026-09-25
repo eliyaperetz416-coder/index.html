@@ -1,7 +1,7 @@
-const CACHE_NAME = 'paper-portfolio-v1';
+const CACHE_NAME = 'paper-portfolio-v2';
 const APP_FILES = [
   './',
-  './paper_portfolio.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
