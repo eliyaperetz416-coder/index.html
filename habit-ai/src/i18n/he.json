@@ -86,5 +86,10 @@
 "ai.left": "נשארו {n} מתוך {max} בקשות AI להיום",
 "ai.err.limit": "הגעת למגבלה היומית. נתראה מחר.",
 "ai.err.network": "אין חיבור ל-AI כרגע.",
-"ai.err.provider": "הייתה תקלה ב-AI. נסה שוב."
+"ai.err.provider": "הייתה תקלה ב-AI. נסה שוב.",
+"coach.clear": "נקה",
+"coach.plan": "תוכנית שבועית",
+"coach.plan.make": "צור תוכנית לשבוע",
+"coach.plan.redo": "צור מחדש",
+"coach.ph": "דבר עם המאמן…"
 }

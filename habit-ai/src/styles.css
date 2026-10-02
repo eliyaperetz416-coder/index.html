@@ -42,3 +42,8 @@ input:focus{border-color:var(--acc)}
 .opt.sel{border-color:var(--acc);background:#1c2142}
 label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}.form label:first-child{margin-top:0}
 .hint{font-size:13px;color:var(--mut);margin:6px 0 10px}.block{display:block;margin-top:12px}a.btn{text-decoration:none;color:var(--txt)}
+.coach{display:flex;flex-direction:column;min-height:100dvh}.msgs{flex:1;display:flex;flex-direction:column;gap:8px;padding-bottom:70px}
+.msg{max-width:85%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;background:var(--card);border:1px solid var(--line)}
+.msg.user{align-self:flex-end;background:#232a55;border-color:#2f3870}.pre{white-space:pre-wrap;margin:10px 0}
+.chatbar{position:fixed;inset:auto 0 calc(62px + env(safe-area-inset-bottom)) 0;max-width:520px;margin:0 auto;display:flex;gap:8px;padding:8px 16px;background:var(--bg)}
+.chatbar .btn{flex:none;padding:10px 14px}.btn.on,.rec{border-color:var(--acc2)}.rec{background:#3a1b25}

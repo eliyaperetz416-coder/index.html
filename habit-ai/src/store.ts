@@ -13,9 +13,11 @@ export type State = {
   habits: Habit[]
   logs: Record<string, string[]> // dateKey -> done habit ids
   reviews: Record<string, Review> // Monday dateKey -> weekly self-monitoring
+  chat: { role: 'user' | 'assistant'; content: string }[]
+  plans: Record<string, string> // Monday dateKey -> cached AI weekly plan
 }
 const KEY = 'habitai:v1'
-const init: State = { lang: 'en', onboarded: false, goals: [], wake: '07:00', mainHabit: '', habits: [], logs: {}, reviews: {} }
+const init: State = { lang: 'en', onboarded: false, goals: [], wake: '07:00', mainHabit: '', habits: [], logs: {}, reviews: {}, chat: [], plans: {} }
 
 function load(): State {
   try { return { ...init, ...JSON.parse(localStorage.getItem(KEY) || '{}') } } catch { return init }
@@ -41,6 +43,9 @@ export const addHabit = (h: Omit<Habit, 'id' | 'created'>) =>
 export const editHabit = (id: string, h: Omit<Habit, 'id' | 'created'>) =>
   update(s => ({ ...s, habits: s.habits.map(x => (x.id === id ? { ...x, ...h } : x)) }))
 export const mondayKey = (d = new Date()) => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return dateKey(x) }
+export const pushChat = (m: State['chat'][number]) => update(s => ({ ...s, chat: [...s.chat, m].slice(-60) }))
+export const clearChat = () => update(s => ({ ...s, chat: [] }))
+export const savePlan = (text: string) => update(s => ({ ...s, plans: { ...s.plans, [mondayKey()]: text } }))
 export const saveReview = (r: Review) => update(s => ({ ...s, reviews: { ...s.reviews, [mondayKey()]: r } }))
 export const deleteHabit = (id: string) =>
   update(s => ({ ...s, habits: s.habits.filter(h => h.id !== id) }))

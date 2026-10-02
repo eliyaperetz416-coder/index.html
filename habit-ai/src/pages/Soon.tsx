@@ -1,7 +1,7 @@
 import { useT, setLang } from '../i18n'
 import AiNotice from '../AiNotice'
 
-export default function Soon({ k }: { k: 'coach' | 'scan' }) {
+export default function Soon({ k }: { k: 'scan' }) {
   const { t, lang } = useT()
   return (
     <div className="screen">

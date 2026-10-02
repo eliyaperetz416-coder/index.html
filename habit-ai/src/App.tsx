@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Habits from './pages/Habits'
 import Progress from './pages/Progress'
 import Review from './pages/Review'
+import Coach from './pages/Coach'
 import Soon from './pages/Soon'
 
 const TABS = [['/', 'home', '🏠'], ['/habits', 'habits', '✅'], ['/coach', 'coach', '💬'], ['/scan', 'scan', '📷'], ['/progress', 'progress', '📈']]
@@ -19,7 +20,7 @@ function Shell() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/habits" element={<Habits />} />
-        <Route path="/coach" element={<Soon k="coach" />} />
+        <Route path="/coach" element={<Coach />} />
         <Route path="/scan" element={<Soon k="scan" />} />
         <Route path="/review" element={<Review />} />
         <Route path="/progress" element={<Progress />} />

@@ -86,5 +86,10 @@
 "ai.left": "{n} of {max} AI requests left today",
 "ai.err.limit": "Daily AI limit reached. Back tomorrow.",
 "ai.err.network": "Can't reach the AI right now.",
-"ai.err.provider": "The AI had a problem. Try again."
+"ai.err.provider": "The AI had a problem. Try again.",
+"coach.clear": "Clear",
+"coach.plan": "Weekly plan",
+"coach.plan.make": "Generate this week's plan",
+"coach.plan.redo": "Regenerate",
+"coach.ph": "Talk to your coach…"
 }
