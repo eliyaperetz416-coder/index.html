@@ -134,5 +134,17 @@
 "gal.empty": "No photos yet. Save one from Physique.",
 "gal.compare": "First vs latest",
 "gal.deleteall": "Delete all photos",
-"gal.confirm": "Delete all gallery photos?"
+"gal.confirm": "Delete all gallery photos?",
+"set.title": "Settings",
+"set.limit": "Daily AI requests (this device)",
+"set.remind": "Daily reminder",
+"set.on": "On",
+"set.off": "Off",
+"set.denied": "Notifications are blocked. Enable them in iOS Settings for this app.",
+"set.remind.note": "Fires when the app is opened after this time and nothing is checked yet. Installed app, iOS 16.4+.",
+"set.nonotif": "Notifications aren't available here. On iPhone, add the app to the Home Screen first.",
+"set.wipe": "Delete all data",
+"set.confirm": "Delete ALL data (habits, chat, photos, settings)? This can't be undone.",
+"remind.title": "Time for your tiny habit",
+"remind.body": "One small step today keeps the momentum."
 }

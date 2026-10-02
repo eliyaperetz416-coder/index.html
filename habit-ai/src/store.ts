@@ -14,11 +14,12 @@ export type State = {
   logs: Record<string, string[]> // dateKey -> done habit ids
   reviews: Record<string, Review> // Monday dateKey -> weekly self-monitoring
   scanConsent: boolean
+  remind: { on: boolean; time: string }
   chat: { role: 'user' | 'assistant'; content: string }[]
   plans: Record<string, string> // Monday dateKey -> cached AI weekly plan
 }
 const KEY = 'habitai:v1'
-const init: State = { lang: 'en', onboarded: false, goals: [], wake: '07:00', mainHabit: '', habits: [], logs: {}, reviews: {}, chat: [], plans: {}, scanConsent: false }
+const init: State = { lang: 'en', onboarded: false, goals: [], wake: '07:00', mainHabit: '', habits: [], logs: {}, reviews: {}, chat: [], plans: {}, scanConsent: false, remind: { on: false, time: '20:00' } }
 
 function load(): State {
   try { return { ...init, ...JSON.parse(localStorage.getItem(KEY) || '{}') } } catch { return init }

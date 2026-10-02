@@ -14,6 +14,7 @@ export default function Home() {
     <div className="screen">
       <header className="top">
         <div><div className="muted">{date}</div><h1>{t('home.today')}</h1></div>
+        <Link className="gear" to="/settings" aria-label={t('set.title')}>⚙️</Link>
         <div className="streak"><b>{cur}</b><span>🔥 {t('home.streak')} · {completion(s, 30)}%</span></div>
       </header>
       <section className="card">
