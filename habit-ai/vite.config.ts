@@ -7,6 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globIgnores: ['mediapipe/**'], // big on-device model/wasm: cached on first posture scan instead
+        runtimeCaching: [{ urlPattern: /\/mediapipe\//, handler: 'CacheFirst', options: { cacheName: 'mediapipe' } }],
+      },
       manifest: {
         name: 'Habit AI', short_name: 'Habit AI', display: 'standalone',
         background_color: '#0b0d12', theme_color: '#0b0d12', start_url: '/',
