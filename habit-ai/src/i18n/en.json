@@ -80,5 +80,11 @@
 "review.saved": "Saved ✓",
 "review.back": "Back",
 "streak.rule": "One missed day is fine. Never miss twice.",
-"prog.rate7": "Completion (7d)"
+"prog.rate7": "Completion (7d)",
+"ai.off": "AI not configured",
+"ai.off.sub": "Everything else works without it. Add an API key on the server to turn on the coach and scans.",
+"ai.left": "{n} of {max} AI requests left today",
+"ai.err.limit": "Daily AI limit reached. Back tomorrow.",
+"ai.err.network": "Can't reach the AI right now.",
+"ai.err.provider": "The AI had a problem. Try again."
 }
