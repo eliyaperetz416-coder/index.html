@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">הרשימה שלי</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="הרשימה שלי">
+<style>
+  :root {
+    --coral: #ff6b6b;
+    --teal: #4ecdc4;
+    --yellow: #ffd166;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --radius: 14px;
+  }
+
+  /* Dark theme (default) */
+  html[data-theme="dark"] {
+    --bg: #1a1a2e;
+    --surface: #26264a;
+    --surface-dim: #20203a;
+    --text: #ffffff;
+    --text-dim: #8b8ba7;
+  }
+
+  /* Light theme */
+  html[data-theme="light"] {
+    --bg: #f4f4fb;
+    --surface: #ffffff;
+    --surface-dim: #e9e9f5;
+    --text: #1a1a2e;
+    --text-dim: #6b6b8a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  header p {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: none;
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+
+  .icon-btn:active { transform: scale(0.94); }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .add-row input {
+    flex: 1;
+    height: 50px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    padding: 0 16px;
+    font-size: 15px;
+    outline: none;
+  }
+
+  .add-row input::placeholder { color: var(--text-dim); }
+  .add-row input:focus { box-shadow: 0 0 0 2px var(--teal); }
+
+  .add-row button {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--coral);
+    color: #1a1a2e;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .add-row button:active { transform: scale(0.92); }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border-inline-start: 3px solid var(--cat-color, var(--purple));
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .item.bought {
+    background: var(--surface-dim);
+    opacity: 0.6;
+    border-inline-start-color: transparent;
+  }
+
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    border: 2px solid var(--cat-color, var(--purple));
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .item.bought .checkbox {
+    background: var(--coral);
+    border-color: var(--coral);
+  }
+
+  .checkbox svg { display: none; width: 12px; height: 12px; }
+  .item.bought .checkbox svg { display: block; }
+
+  .item-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .item.bought .item-name {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .item-cat {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1a1a2e;
+    background: var(--cat-color, var(--purple));
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .item.bought .item-cat { display: none; }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .delete-btn:hover { color: var(--coral); }
+
+  /* Urgency indicator (small colored square) and its picker menu */
+  .urgency-square {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    background: var(--urgency-color, transparent);
+  }
+
+  .urgency-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .urgency-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .urgency-btn:hover { color: var(--text); }
+
+  .urgency-menu {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    margin-top: 4px;
+    background: var(--surface-dim);
+    border-radius: 12px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 5;
+    min-width: 140px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+
+  .urgency-menu.show { display: flex; }
+
+  .urgency-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: start;
+  }
+
+  .urgency-option:hover { background: var(--surface); }
+
+  .urgency-option .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .category-group-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin: 16px 0 8px;
+    padding: 0 2px;
+  }
+
+  .category-group-title:first-child { margin-top: 0; }
+
+  .bought-group-title {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--surface-dim);
+    opacity: 0.7;
+  }
+
+  /* Settings panel */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .settings-overlay.show { display: flex; }
+
+  .settings-panel {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    animation: slideUp 0.2s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .settings-panel h2 {
+    font-size: 17px;
+    margin-bottom: 16px;
+  }
+
+  .setting-group {
+    margin-bottom: 20px;
+  }
+
+  .setting-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .setting-group select {
+    width: 100%;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: var(--surface-dim);
+    color: var(--text);
+    padding: 0 14px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .theme-toggle {
+    display: flex;
+    gap: 8px;
+  }
+
+  .theme-option {
+    flex: 1;
+    height: 46px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: var(--surface-dim);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .theme-option.active {
+    border-color: var(--teal);
+  }
+
+  .soon-box {
+    background: var(--surface-dim);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  .settings-panel .close-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: var(--surface-dim);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  /* Screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Bottom nav (List / Stats tabs) */
+  .bottom-nav {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 6px;
+    position: sticky;
+    bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+
+  .nav-tab {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .nav-tab.active {
+    background: linear-gradient(135deg, var(--coral), var(--yellow));
+    color: #1a1a2e;
+  }
+
+  /* Stats screen */
+  .stats-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .stats-summary-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .stats-summary-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .stats-summary-value {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .stats-compare-box {
+    background: var(--bg-accent-muted, var(--surface));
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stats-chart-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stats-chart-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .stats-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .stats-bar-row:last-child { margin-bottom: 0; }
+
+  .stats-bar-label {
+    font-size: 12px;
+    width: 84px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stats-bar-track {
+    flex: 1;
+    height: 14px;
+    background: var(--surface-dim);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .stats-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.3s ease;
+  }
+
+  .stats-bar-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    width: 20px;
+    text-align: end;
+    flex-shrink: 0;
+  }
+
+  .stats-empty {
+    text-align: center;
+    padding: 30px 16px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .suggestions-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+
+  .suggestions-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: none;
+    background: var(--surface-dim);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+
+  .suggestion-chip:active { transform: scale(0.95); }
+  .suggestion-chip.added { opacity: 0.4; pointer-events: none; }
+
+  .suggestion-chip .plus { color: var(--teal); font-weight: 700; }
+
+  /* Login screen */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+  }
+
+  .login-emoji { font-size: 48px; margin-bottom: 12px; }
+
+  .login-box h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+
+  .login-box p#loginSubtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+
+  .google-btn {
+    width: 100%;
+    height: 50px;
+    border-radius: 14px;
+    border: none;
+    background: #fff;
+    color: #1a1a2e;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Header actions (list picker + settings) */
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* List picker */
+  .list-picker-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .list-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface-dim);
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  .list-picker-item.active { border-color: var(--teal); }
+
+  .list-picker-item .list-name { font-size: 14px; font-weight: 600; }
+  .list-picker-item .list-code { font-size: 11px; color: var(--text-dim); }
+
+  .inline-form-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .inline-form-row input {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: var(--surface-dim);
+    color: var(--text);
+    padding: 0 14px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .inline-form-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: var(--teal);
+    color: #1a1a2e;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .form-error {
+    font-size: 12px;
+    color: var(--coral);
+    margin-top: 6px;
+    min-height: 14px;
+  }
+
+  .signed-in-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .text-link-btn {
+    background: none;
+    border: none;
+    color: var(--coral);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+
+</style>
+</head>
+<body>
+
+<script>
+  // TEMP DEBUG: catch any JS error anywhere on the page and show it on screen,
+  // since there's no devtools access on a phone. Remove once things work.
+  window.addEventListener('error', function (e) {
+    var box = document.getElementById('debugErrorBox');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'debugErrorBox';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff3333;color:#fff;font-size:12px;padding:10px;z-index:99999;direction:ltr;text-align:left;word-break:break-word;';
+      document.body.appendChild(box);
+    }
+    box.textContent = 'JS ERROR: ' + e.message + ' (line ' + e.lineno + ')';
+  });
+</script>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <p class="login-emoji">🛒</p>
+    <h1 id="loginTitle">הרשימה שלי</h1>
+    <p id="loginSubtitle">התחבר כדי לראות ולשתף רשימות קניות</p>
+    <button class="google-btn" id="googleSignInBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.8 2.73v2.27h2.92c1.71-1.57 2.68-3.88 2.68-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.27c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.34C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.97 10.7c-.18-.54-.28-1.11-.28-1.7s.1-1.16.28-1.7V4.96H.96C.35 6.17 0 7.55 0 9s.35 2.83.96 4.04l3.01-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3.01 2.34C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+      <span id="googleSignInLabel">התחבר עם Google</span>
+    </button>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+  <header>
+    <div>
+      <h1 id="headerTitle">הרשימה שלי 🛒</h1>
+      <p id="stats">0 פריטים</p>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="listPickerBtn" aria-label="רשימות">📋</button>
+      <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">⚙️</button>
+    </div>
+  </header>
+
+  <div class="screen active" id="listScreen">
+    <div class="add-row">
+      <input type="text" id="itemInput" />
+      <button id="addBtn" aria-label="הוסף">+</button>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
+
+  <div class="screen" id="statsScreen">
+    <div class="suggestions-card" id="suggestionsCard" style="display:none;">
+      <p class="suggestions-title" id="suggestionsTitle">מוסיפים מהיר?</p>
+      <div class="suggestions-list" id="suggestionsList"></div>
+    </div>
+
+    <div class="stats-summary-grid">
+      <div class="stats-summary-card">
+        <p class="stats-summary-label" id="statsWeekTotalLabel">פריטים השבוע</p>
+        <p class="stats-summary-value" id="statsWeekTotalValue">0</p>
+      </div>
+      <div class="stats-summary-card">
+        <p class="stats-summary-label" id="statsTopCategoryLabel">קטגוריה מובילה</p>
+        <p class="stats-summary-value" id="statsTopCategoryValue">–</p>
+      </div>
+    </div>
+
+    <div class="stats-compare-box" id="statsCompareBox"></div>
+
+    <div class="stats-chart-card">
+      <p class="stats-chart-title" id="statsChartTitle">לפי קטגוריה השבוע</p>
+      <div id="statsChart"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab active" id="navListBtn">📝 <span id="navListLabel">רשימה</span></button>
+    <button class="nav-tab" id="navStatsBtn">📊 <span id="navStatsLabel">סטטיסטיקה</span></button>
+  </div>
+</div>
+
+<div class="settings-overlay" id="listPickerOverlay">
+  <div class="settings-panel">
+    <h2 id="listPickerTitle">הרשימות שלי</h2>
+
+    <div class="list-picker-items" id="listPickerItems"></div>
+
+    <div class="setting-group">
+      <label id="createListLabel">רשימה חדשה</label>
+      <div class="inline-form-row">
+        <input type="text" id="newListNameInput" />
+        <button class="inline-form-btn" id="createListBtn">+</button>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label id="joinListLabel">הצטרף עם קוד</label>
+      <div class="inline-form-row">
+        <input type="text" id="joinCodeInput" />
+        <button class="inline-form-btn" id="joinListBtn">↵</button>
+      </div>
+      <p class="form-error" id="joinListError"></p>
+    </div>
+
+    <div class="setting-group" id="signedInAsGroup">
+      <label id="signedInAsLabel">מחובר כ</label>
+      <div class="signed-in-row">
+        <span id="signedInEmail"></span>
+        <button class="text-link-btn" id="signOutBtn">התנתק</button>
+      </div>
+    </div>
+
+    <button class="close-btn" id="closeListPickerBtn">סגור</button>
+  </div>
+</div>
+
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <h2 id="settingsTitle">הגדרות</h2>
+
+    <div class="setting-group">
+      <label id="langLabel">שפה</label>
+      <select id="langSelect">
+        <option value="he">עברית</option>
+        <option value="en">English</option>
+        <option value="ar">العربية</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="ru">Русский</option>
+        <option value="pt">Português</option>
+        <option value="zh">中文</option>
+        <option value="hi">हिन्दी</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label id="themeLabel">ערכת נושא</label>
+      <div class="theme-toggle">
+        <button class="theme-option" id="darkOption">🌙 <span id="darkLabel">כהה</span></button>
+        <button class="theme-option" id="lightOption">☀️ <span id="lightLabel">בהיר</span></button>
+      </div>
+    </div>
+
+    <button class="close-btn" id="closeSettingsBtn">סגור</button>
+  </div>
+</div>
+
+<script type="module">
+  // ============================================================
+  // FIREBASE SETUP — shared lists (auth + realtime sync)
+  // ============================================================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+    getRedirectResult, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot,
+    collection, query, where, arrayUnion, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBL3DPWGO3PIdbGxH8QlvFzx6tGaC2Z3Bk",
+    authDomain: "shopping-list-app-2fa25.firebaseapp.com",
+    projectId: "shopping-list-app-2fa25",
+    storageBucket: "shopping-list-app-2fa25.firebasestorage.app",
+    messagingSenderId: "307109384624",
+    appId: "1:307109384624:web:d00f77a99b119e581cc675",
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const auth = getAuth(fbApp);
+  const db = getFirestore(fbApp);
+  const googleProvider = new GoogleAuthProvider();
+
+  // NOTE: we tried redirect-based sign-in for mobile, but iOS Safari's
+  // privacy protections (ITP) block the cross-domain storage needed for
+  // signInWithRedirect to complete (authDomain is firebaseapp.com, the site
+  // is on web.app) — getRedirectResult always came back null. Popup avoids
+  // that entirely since it stays in the same browsing context.
+  function signInWithGoogle() {
+    return signInWithPopup(auth, googleProvider);
+  }
+
+  // No longer using signInWithRedirect (see note above), but keep this as a
+  // silent safety net in case a stale redirect is somehow still pending.
+  getRedirectResult(auth).catch(err => {
+    console.error('Redirect sign-in failed:', err);
+  });
+
+  // Expose what the rest of the (non-module) app script needs, via a small bridge object.
+  window.FB = {
+    auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot,
+    collection, query, where, arrayUnion, serverTimestamp,
+    signInWithGoogle,
+    signOutUser: () => signOut(auth),
+    onAuthChange: (cb) => onAuthStateChanged(auth, cb),
+  };
+
+  // Let the main script know Firebase is ready to use
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<script>
+  // ============================================================
+  // TRANSLATIONS
+  // ============================================================
+  const TRANSLATIONS = {
+    he: {
+      dir: 'rtl',
+      pageTitle: 'הרשימה שלי',
+      headerTitle: 'הרשימה שלי 🛒',
+      statsFn: (total, bought) => `${total} פריטים · ${bought} נקנו`,
+      itemPlaceholder: 'מה חסר?',
+      emptyState: 'הרשימה ריקה. הוסיפו פריט ראשון 👆',
+      boughtSectionTitle: 'נקנה ✓',
+      findStoreBtn: '📍 מצא לי סופר קרוב',
+      findingLocation: '📍 מאתר מיקום...',
+      searchingStores: '📍 מחפש סופרים...',
+      noGeoSupport: 'הדפדפן שלך לא תומך במיקום 😕',
+      noLocationPermission: 'לא הצלחנו לקבל את המיקום שלך. ודא/י שנתת הרשאת מיקום 📍',
+      noStoresFound: 'לא נמצאו סופרים בקרבת מקום 🤷',
+      searchError: 'משהו השתבש בחיפוש. נסה/י שוב בעוד רגע 🙏',
+      metersAway: (m) => `כ-${m} מטר ממך`,
+      navigate: 'ניווט ↗',
+      unnamedStore: 'סופרמרקט',
+      approxLocation: 'מיקום משוער',
+      settingsTitle: 'הגדרות',
+      langLabel: 'שפה',
+      themeLabel: 'ערכת נושא',
+      dark: 'כהה',
+      light: 'בהיר',
+      sharedListSoon: '👥 רשימות משותפות — בקרוב',
+      navList: 'רשימה',
+      navMap: 'מפה',
+      mapRefresh: '🔄 חפש סופרים באזור',
+      mapSearching: '🔄 מחפש...',
+      mapResolvingCities: '🏙️ מזהה ערים...',
+      mapNoSearchResults: 'לא נמצאו תוצאות לחיפוש הזה 🔍',
+      mapSearchPlaceholder: '🔍 חפש לפי שם סופר או עיר...',
+      unknownCity: 'אזור לא מזוהה',
+      mapNoStores: 'לא נמצאו סופרים באזור 🤷',
+      mapSelectPrompt: 'בחר סופר מהרשימה או מהמפה',
+      close: 'סגור',
+      categories: {
+        dairy: 'חלבי 🧀', bakery: 'מאפים 🍞', veg: 'ירקות 🥬',
+        fruit: 'פירות 🍎', meat: 'בשר 🍗', clean: 'ניקיון 🧼',
+        frozen: 'קפוא ❄️', snacks: 'חטיפים 🍫', drinks: 'משקאות 🥤', baking: 'אפייה 🧂',
+        other: 'שונות 🛍️',
+      },
+      urgencyLabels: { high: 'חייב', medium: 'כמעט נגמר', low: 'צריך' },
+      navList: 'רשימה',
+      navStats: 'סטטיסטיקה',
+      statsWeekTotal: 'פריטים השבוע',
+      statsTopCategory: 'קטגוריה מובילה',
+      statsChartTitle: 'לפי קטגוריה השבוע',
+      statsNoDataYet: 'עדיין אין מספיק נתונים. תתחיל לסמן פריטים כנקנים!',
+      statsFirstWeek: 'זה השבוע הראשון שלך - נשווה משבוע הבא',
+      statsMoreThanLastWeek: (n) => `${n} יותר מהשבוע שעבר`,
+      statsLessThanLastWeek: (n) => `${n} פחות מהשבוע שעבר`,
+      statsSameAsLastWeek: 'אותה כמות כמו שבוע שעבר',
+      statsEmptyChart: 'עדיין אין רכישות השבוע',
+      suggestionsTitle: 'מוסיפים מהיר?',
+      loginTitle: 'הרשימה שלי',
+      loginSubtitle: 'התחבר כדי לראות ולשתף רשימות קניות',
+      googleSignInLabel: 'התחבר עם Google',
+      listPickerTitle: 'הרשימות שלי',
+      createListLabel: 'רשימה חדשה',
+      joinListLabel: 'הצטרף עם קוד',
+      joinCodeLabel: 'קוד',
+      joinCodeNotFound: 'לא נמצאה רשימה עם הקוד הזה',
+      noListsYet: 'עדיין אין לך רשימות. צור אחת או הצטרף עם קוד',
+      signedInAsLabel: 'מחובר כ',
+      signOutLabel: 'התנתק',
+    },
+    en: {
+      dir: 'ltr',
+      pageTitle: 'My List',
+      headerTitle: 'My List 🛒',
+      statsFn: (total, bought) => `${total} items · ${bought} bought`,
+      itemPlaceholder: "What's missing?",
+      emptyState: 'Your list is empty. Add your first item 👆',
+      boughtSectionTitle: 'Bought ✓',
+      findStoreBtn: '📍 Find nearby store',
+      findingLocation: '📍 Finding location...',
+      searchingStores: '📍 Searching stores...',
+      noGeoSupport: "Your browser doesn't support location 😕",
+      noLocationPermission: "Couldn't get your location. Please allow location access 📍",
+      noStoresFound: 'No stores found nearby 🤷',
+      searchError: 'Something went wrong. Please try again 🙏',
+      metersAway: (m) => `~${m}m away`,
+      navigate: 'Navigate ↗',
+      unnamedStore: 'Supermarket',
+      approxLocation: 'Approximate location',
+      settingsTitle: 'Settings',
+      langLabel: 'Language',
+      themeLabel: 'Theme',
+      dark: 'Dark',
+      light: 'Light',
+      sharedListSoon: '👥 Shared lists — coming soon',
+      navList: 'List',
+      navMap: 'Map',
+      mapRefresh: '🔄 Search stores nearby',
+      mapSearching: '🔄 Searching...',
+      mapResolvingCities: '🏙️ Identifying cities...',
+      mapNoSearchResults: 'No results for this search 🔍',
+      mapSearchPlaceholder: '🔍 Search by store or city...',
+      unknownCity: 'Unknown area',
+      mapNoStores: 'No stores found in the area 🤷',
+      mapSelectPrompt: 'Select a store from the list or the map',
+      close: 'Close',
+      categories: {
+        dairy: 'Dairy 🧀', bakery: 'Bakery 🍞', veg: 'Vegetables 🥬',
+        fruit: 'Fruit 🍎', meat: 'Meat 🍗', clean: 'Cleaning 🧼',
+        frozen: 'Frozen ❄️', snacks: 'Snacks 🍫', drinks: 'Drinks 🥤', baking: 'Baking 🧂',
+        other: 'Other 🛍️',
+      },
+      urgencyLabels: { high: 'Must have', medium: 'Almost out', low: 'Need' },
+      navList: 'List',
+      navStats: 'Stats',
+      statsWeekTotal: 'Items this week',
+      statsTopCategory: 'Top category',
+      statsChartTitle: 'By category this week',
+      statsNoDataYet: "Not enough data yet. Start checking off items!",
+      statsFirstWeek: "This is your first week — we'll compare next week",
+      statsMoreThanLastWeek: (n) => `${n} more than last week`,
+      statsLessThanLastWeek: (n) => `${n} less than last week`,
+      statsSameAsLastWeek: 'Same as last week',
+      statsEmptyChart: 'No purchases yet this week',
+      suggestionsTitle: 'Quick add?',
+      loginTitle: 'My List',
+      loginSubtitle: 'Sign in to view and share shopping lists',
+      googleSignInLabel: 'Sign in with Google',
+      listPickerTitle: 'My Lists',
+      createListLabel: 'New list',
+      joinListLabel: 'Join with code',
+      joinCodeLabel: 'Code',
+      joinCodeNotFound: 'No list found with that code',
+      noListsYet: "You don't have any lists yet. Create one or join with a code",
+      signedInAsLabel: 'Signed in as',
+      signOutLabel: 'Sign out',
+    },
+    ar: {
+      dir: 'rtl',
+      pageTitle: 'قائمتي',
+      headerTitle: 'قائمتي 🛒',
+      statsFn: (total, bought) => `${total} عناصر · ${bought} تم شراؤها`,
+      itemPlaceholder: 'ما الذي ينقص؟',
+      emptyState: 'قائمتك فارغة. أضف أول عنصر 👆',
+      boughtSectionTitle: 'تم الشراء ✓',
+      findStoreBtn: '📍 ابحث عن متجر قريب',
+      findingLocation: '📍 تحديد الموقع...',
+      searchingStores: '📍 البحث عن متاجر...',
+      noGeoSupport: 'متصفحك لا يدعم تحديد الموقع 😕',
+      noLocationPermission: 'تعذر الحصول على موقعك. يرجى السماح بالوصول للموقع 📍',
+      noStoresFound: 'لم يتم العثور على متاجر قريبة 🤷',
+      searchError: 'حدث خطأ ما. حاول مرة أخرى 🙏',
+      metersAway: (m) => `حوالي ${m} متر منك`,
+      navigate: 'الملاحة ↗',
+      unnamedStore: 'سوبر ماركت',
+      approxLocation: 'موقع تقريبي',
+      settingsTitle: 'الإعدادات',
+      langLabel: 'اللغة',
+      themeLabel: 'المظهر',
+      dark: 'داكن',
+      light: 'فاتح',
+      sharedListSoon: '👥 القوائم المشتركة — قريباً',
+      navList: 'القائمة',
+      navMap: 'الخريطة',
+      mapRefresh: '🔄 البحث عن متاجر قريبة',
+      mapSearching: '🔄 جارٍ البحث...',
+      mapResolvingCities: '🏙️ تحديد المدن...',
+      mapNoSearchResults: 'لا توجد نتائج لهذا البحث 🔍',
+      mapSearchPlaceholder: '🔍 ابحث بالاسم أو المدينة...',
+      unknownCity: 'منطقة غير معروفة',
+      mapNoStores: 'لم يتم العثور على متاجر في المنطقة 🤷',
+      mapSelectPrompt: 'اختر متجراً من القائمة أو الخريطة',
+      close: 'إغلاق',
+      categories: {
+        dairy: 'ألبان 🧀', bakery: 'مخبوزات 🍞', veg: 'خضروات 🥬',
+        fruit: 'فواكه 🍎', meat: 'لحوم 🍗', clean: 'تنظيف 🧼',
+        frozen: 'مجمدات ❄️', snacks: 'وجبات خفيفة 🍫', drinks: 'مشروبات 🥤', baking: 'خبز وطهي 🧂',
+        other: 'أخرى 🛍️',
+      },
+      urgencyLabels: { high: 'ضروري', medium: 'أوشك على النفاد', low: 'مطلوب' },
+      navList: 'القائمة',
+      navStats: 'الإحصائيات',
+      statsWeekTotal: 'عناصر هذا الأسبوع',
+      statsTopCategory: 'الفئة الأكثر',
+      statsChartTitle: 'حسب الفئة هذا الأسبوع',
+      statsNoDataYet: 'لا توجد بيانات كافية بعد. ابدأ بتحديد العناصر كمشتراة!',
+      statsFirstWeek: 'هذا أسبوعك الأول - سنقارن الأسبوع القادم',
+      statsMoreThanLastWeek: (n) => `${n} أكثر من الأسبوع الماضي`,
+      statsLessThanLastWeek: (n) => `${n} أقل من الأسبوع الماضي`,
+      statsSameAsLastWeek: 'نفس كمية الأسبوع الماضي',
+      statsEmptyChart: 'لا توجد مشتريات هذا الأسبوع بعد',
+      suggestionsTitle: 'إضافة سريعة؟',
+      loginTitle: 'قائمتي',
+      loginSubtitle: 'سجّل الدخول لعرض ومشاركة قوائم التسوق',
+      googleSignInLabel: 'تسجيل الدخول بواسطة Google',
+      listPickerTitle: 'قوائمي',
+      createListLabel: 'قائمة جديدة',
+      joinListLabel: 'انضم برمز',
+      joinCodeLabel: 'الرمز',
+      joinCodeNotFound: 'لم يتم العثور على قائمة بهذا الرمز',
+      noListsYet: 'ليس لديك أي قوائم بعد. أنشئ واحدة أو انضم برمز',
+      signedInAsLabel: 'مسجل الدخول كـ',
+      signOutLabel: 'تسجيل الخروج',
+    },
+    es: {
+      dir: 'ltr',
+      pageTitle: 'Mi Lista',
+      headerTitle: 'Mi Lista 🛒',
+      statsFn: (total, bought) => `${total} artículos · ${bought} comprados`,
+      itemPlaceholder: '¿Qué falta?',
+      emptyState: 'Tu lista está vacía. Añade el primer artículo 👆',
+      boughtSectionTitle: 'Comprado ✓',
+      findStoreBtn: '📍 Buscar tienda cercana',
+      findingLocation: '📍 Buscando ubicación...',
+      searchingStores: '📍 Buscando tiendas...',
+      noGeoSupport: 'Tu navegador no soporta ubicación 😕',
+      noLocationPermission: 'No se pudo obtener tu ubicación. Permite el acceso 📍',
+      noStoresFound: 'No se encontraron tiendas cercanas 🤷',
+      searchError: 'Algo salió mal. Inténtalo de nuevo 🙏',
+      metersAway: (m) => `a ${m}m de ti`,
+      navigate: 'Navegar ↗',
+      unnamedStore: 'Supermercado',
+      approxLocation: 'Ubicación aproximada',
+      langLabel: 'Idioma',
+      themeLabel: 'Tema',
+      dark: 'Oscuro',
+      light: 'Claro',
+      sharedListSoon: '👥 Listas compartidas — próximamente',
+      navList: 'Lista',
+      navMap: 'Mapa',
+      mapRefresh: '🔄 Buscar tiendas cercanas',
+      mapSearching: '🔄 Buscando...',
+      mapResolvingCities: '🏙️ Identificando ciudades...',
+      mapNoSearchResults: 'No hay resultados para esta búsqueda 🔍',
+      mapSearchPlaceholder: '🔍 Buscar por tienda o ciudad...',
+      unknownCity: 'Zona desconocida',
+      mapNoStores: 'No se encontraron tiendas en la zona 🤷',
+      mapSelectPrompt: 'Selecciona una tienda de la lista o el mapa',
+      close: 'Cerrar',
+      categories: {
+        dairy: 'Lácteos 🧀', bakery: 'Panadería 🍞', veg: 'Verduras 🥬',
+        fruit: 'Fruta 🍎', meat: 'Carne 🍗', clean: 'Limpieza 🧼',
+        frozen: 'Congelados ❄️', snacks: 'Snacks 🍫', drinks: 'Bebidas 🥤', baking: 'Repostería 🧂',
+        other: 'Otros 🛍️',
+      },
+      urgencyLabels: { high: 'Imprescindible', medium: 'Casi agotado', low: 'Necesario' },
+      navList: 'Lista',
+      navStats: 'Estadísticas',
+      statsWeekTotal: 'Artículos esta semana',
+      statsTopCategory: 'Categoría principal',
+      statsChartTitle: 'Por categoría esta semana',
+      statsNoDataYet: '¡Aún no hay suficientes datos. Empieza a marcar artículos comprados!',
+      statsFirstWeek: 'Esta es tu primera semana — compararemos la próxima',
+      statsMoreThanLastWeek: (n) => `${n} más que la semana pasada`,
+      statsLessThanLastWeek: (n) => `${n} menos que la semana pasada`,
+      statsSameAsLastWeek: 'Igual que la semana pasada',
+      statsEmptyChart: 'Aún no hay compras esta semana',
+      suggestionsTitle: '¿Añadir rápido?',
+      loginTitle: 'Mi Lista',
+      loginSubtitle: 'Inicia sesión para ver y compartir listas de compras',
+      googleSignInLabel: 'Iniciar sesión con Google',
+      listPickerTitle: 'Mis Listas',
+      createListLabel: 'Nueva lista',
+      joinListLabel: 'Unirse con código',
+      joinCodeLabel: 'Código',
+      joinCodeNotFound: 'No se encontró ninguna lista con ese código',
+      noListsYet: 'Aún no tienes listas. Crea una o únete con un código',
+      signedInAsLabel: 'Conectado como',
+      signOutLabel: 'Cerrar sesión',
+    },
+    fr: {
+      dir: 'ltr',
+      pageTitle: 'Ma Liste',
+      headerTitle: 'Ma Liste 🛒',
+      statsFn: (total, bought) => `${total} articles · ${bought} achetés`,
+      itemPlaceholder: 'Que manque-t-il ?',
+      emptyState: 'Votre liste est vide. Ajoutez un article 👆',
+      boughtSectionTitle: 'Acheté ✓',
+      findStoreBtn: '📍 Trouver un magasin proche',
+      findingLocation: '📍 Localisation...',
+      searchingStores: '📍 Recherche de magasins...',
+      noGeoSupport: "Votre navigateur ne supporte pas la localisation 😕",
+      noLocationPermission: "Impossible d'obtenir votre position. Autorisez l'accès 📍",
+      noStoresFound: 'Aucun magasin trouvé à proximité 🤷',
+      searchError: "Une erreur s'est produite. Réessayez 🙏",
+      metersAway: (m) => `à ${m}m de vous`,
+      navigate: 'Itinéraire ↗',
+      unnamedStore: 'Supermarché',
+      approxLocation: 'Emplacement approximatif',
+      settingsTitle: 'Paramètres',
+      langLabel: 'Langue',
+      themeLabel: 'Thème',
+      dark: 'Sombre',
+      light: 'Clair',
+      sharedListSoon: '👥 Listes partagées — bientôt',
+      navList: 'Liste',
+      navMap: 'Carte',
+      mapRefresh: '🔄 Rechercher des magasins proches',
+      mapSearching: '🔄 Recherche...',
+      mapResolvingCities: '🏙️ Identification des villes...',
+      mapNoSearchResults: 'Aucun résultat pour cette recherche 🔍',
+      mapSearchPlaceholder: '🔍 Rechercher par magasin ou ville...',
+      unknownCity: 'Zone inconnue',
+      mapNoStores: 'Aucun magasin trouvé dans la zone 🤷',
+      mapSelectPrompt: 'Sélectionnez un magasin dans la liste ou la carte',
+      close: 'Fermer',
+      categories: {
+        dairy: 'Laitier 🧀', bakery: 'Boulangerie 🍞', veg: 'Légumes 🥬',
+        fruit: 'Fruits 🍎', meat: 'Viande 🍗', clean: 'Nettoyage 🧼',
+        frozen: 'Surgelés ❄️', snacks: 'Snacks 🍫', drinks: 'Boissons 🥤', baking: 'Pâtisserie 🧂',
+        other: 'Autre 🛍️',
+      },
+      urgencyLabels: { high: 'Indispensable', medium: 'Presque épuisé', low: 'Nécessaire' },
+      navList: 'Liste',
+      navStats: 'Statistiques',
+      statsWeekTotal: 'Articles cette semaine',
+      statsTopCategory: 'Catégorie principale',
+      statsChartTitle: 'Par catégorie cette semaine',
+      statsNoDataYet: "Pas encore assez de données. Commencez à cocher des articles !",
+      statsFirstWeek: 'C\'est votre première semaine — on comparera la semaine prochaine',
+      statsMoreThanLastWeek: (n) => `${n} de plus que la semaine dernière`,
+      statsLessThanLastWeek: (n) => `${n} de moins que la semaine dernière`,
+      statsSameAsLastWeek: 'Comme la semaine dernière',
+      statsEmptyChart: 'Aucun achat cette semaine',
+      suggestionsTitle: 'Ajout rapide ?',
+      loginTitle: 'Ma Liste',
+      loginSubtitle: 'Connectez-vous pour voir et partager des listes de courses',
+      googleSignInLabel: 'Se connecter avec Google',
+      listPickerTitle: 'Mes Listes',
+      createListLabel: 'Nouvelle liste',
+      joinListLabel: 'Rejoindre avec un code',
+      joinCodeLabel: 'Code',
+      joinCodeNotFound: 'Aucune liste trouvée avec ce code',
+      noListsYet: "Vous n'avez pas encore de liste. Créez-en une ou rejoignez avec un code",
+      signedInAsLabel: 'Connecté en tant que',
+      signOutLabel: 'Se déconnecter',
+    },
+    de: {
+      dir: 'ltr',
+      pageTitle: 'Meine Liste',
+      headerTitle: 'Meine Liste 🛒',
+      statsFn: (total, bought) => `${total} Artikel · ${bought} gekauft`,
+      itemPlaceholder: 'Was fehlt?',
+      emptyState: 'Deine Liste ist leer. Füge ein Element hinzu 👆',
+      boughtSectionTitle: 'Gekauft ✓',
+      findStoreBtn: '📍 Geschäft in der Nähe finden',
+      findingLocation: '📍 Standort wird ermittelt...',
+      searchingStores: '📍 Suche Geschäfte...',
+      noGeoSupport: 'Dein Browser unterstützt keine Standortdienste 😕',
+      noLocationPermission: 'Standort konnte nicht ermittelt werden. Bitte erlauben 📍',
+      noStoresFound: 'Keine Geschäfte in der Nähe gefunden 🤷',
+      searchError: 'Etwas ist schiefgelaufen. Versuche es erneut 🙏',
+      metersAway: (m) => `ca. ${m}m entfernt`,
+      navigate: 'Navigation ↗',
+      unnamedStore: 'Supermarkt',
+      approxLocation: 'Ungefährer Standort',
+      settingsTitle: 'Einstellungen',
+      langLabel: 'Sprache',
+      themeLabel: 'Design',
+      dark: 'Dunkel',
+      light: 'Hell',
+      sharedListSoon: '👥 Geteilte Listen — bald verfügbar',
+      navList: 'Liste',
+      navMap: 'Karte',
+      mapRefresh: '🔄 Geschäfte in der Nähe suchen',
+      mapSearching: '🔄 Suche...',
+      mapResolvingCities: '🏙️ Städte werden ermittelt...',
+      mapNoSearchResults: 'Keine Ergebnisse für diese Suche 🔍',
+      mapSearchPlaceholder: '🔍 Nach Geschäft oder Stadt suchen...',
+      unknownCity: 'Unbekanntes Gebiet',
+      mapNoStores: 'Keine Geschäfte in der Umgebung gefunden 🤷',
+      mapSelectPrompt: 'Wähle ein Geschäft aus der Liste oder Karte',
+      close: 'Schließen',
+      categories: {
+        dairy: 'Milchprodukte 🧀', bakery: 'Bäckerei 🍞', veg: 'Gemüse 🥬',
+        fruit: 'Obst 🍎', meat: 'Fleisch 🍗', clean: 'Reinigung 🧼',
+        frozen: 'Tiefkühl ❄️', snacks: 'Snacks 🍫', drinks: 'Getränke 🥤', baking: 'Backen 🧂',
+        other: 'Sonstiges 🛍️',
+      },
+      urgencyLabels: { high: 'Unverzichtbar', medium: 'Fast leer', low: 'Benötigt' },
+      navList: 'Liste',
+      navStats: 'Statistik',
+      statsWeekTotal: 'Artikel diese Woche',
+      statsTopCategory: 'Top-Kategorie',
+      statsChartTitle: 'Nach Kategorie diese Woche',
+      statsNoDataYet: 'Noch nicht genug Daten. Fang an, Artikel abzuhaken!',
+      statsFirstWeek: 'Dies ist deine erste Woche — wir vergleichen nächste Woche',
+      statsMoreThanLastWeek: (n) => `${n} mehr als letzte Woche`,
+      statsLessThanLastWeek: (n) => `${n} weniger als letzte Woche`,
+      statsSameAsLastWeek: 'Gleich wie letzte Woche',
+      statsEmptyChart: 'Noch keine Einkäufe diese Woche',
+      suggestionsTitle: 'Schnell hinzufügen?',
+      loginTitle: 'Meine Liste',
+      loginSubtitle: 'Melde dich an, um Einkaufslisten anzuzeigen und zu teilen',
+      googleSignInLabel: 'Mit Google anmelden',
+      listPickerTitle: 'Meine Listen',
+      createListLabel: 'Neue Liste',
+      joinListLabel: 'Mit Code beitreten',
+      joinCodeLabel: 'Code',
+      joinCodeNotFound: 'Keine Liste mit diesem Code gefunden',
+      noListsYet: 'Du hast noch keine Listen. Erstelle eine oder tritt mit einem Code bei',
+      signedInAsLabel: 'Angemeldet als',
+      signOutLabel: 'Abmelden',
+    },
+    ru: {
+      dir: 'ltr',
+      pageTitle: 'Мой список',
+      headerTitle: 'Мой список 🛒',
+      statsFn: (total, bought) => `${total} товаров · ${bought} куплено`,
+      itemPlaceholder: 'Что нужно купить?',
+      emptyState: 'Список пуст. Добавьте первый товар 👆',
+      boughtSectionTitle: 'Куплено ✓',
+      findStoreBtn: '📍 Найти ближайший магазин',
+      findingLocation: '📍 Определение местоположения...',
+      searchingStores: '📍 Поиск магазинов...',
+      noGeoSupport: 'Ваш браузер не поддерживает геолокацию 😕',
+      noLocationPermission: 'Не удалось определить местоположение. Разрешите доступ 📍',
+      noStoresFound: 'Магазины поблизости не найдены 🤷',
+      searchError: 'Что-то пошло не так. Попробуйте снова 🙏',
+      metersAway: (m) => `~${m}м от вас`,
+      navigate: 'Маршрут ↗',
+      unnamedStore: 'Супермаркет',
+      approxLocation: 'Примерное местоположение',
+      settingsTitle: 'Настройки',
+      langLabel: 'Язык',
+      themeLabel: 'Тема',
+      dark: 'Тёмная',
+      light: 'Светлая',
+      sharedListSoon: '👥 Общие списки — скоро',
+      navList: 'Список',
+      navMap: 'Карта',
+      mapRefresh: '🔄 Искать магазины рядом',
+      mapSearching: '🔄 Поиск...',
+      mapResolvingCities: '🏙️ Определение городов...',
+      mapNoSearchResults: 'Нет результатов по этому запросу 🔍',
+      mapSearchPlaceholder: '🔍 Поиск по магазину или городу...',
+      unknownCity: 'Неизвестный район',
+      mapNoStores: 'Магазины в этом районе не найдены 🤷',
+      mapSelectPrompt: 'Выберите магазин из списка или карты',
+      close: 'Закрыть',
+      categories: {
+        dairy: 'Молочное 🧀', bakery: 'Выпечка 🍞', veg: 'Овощи 🥬',
+        fruit: 'Фрукты 🍎', meat: 'Мясо 🍗', clean: 'Чистящие 🧼',
+        frozen: 'Заморозка ❄️', snacks: 'Снеки 🍫', drinks: 'Напитки 🥤', baking: 'Выпечка и специи 🧂',
+        other: 'Другое 🛍️',
+      },
+      urgencyLabels: { high: 'Обязательно', medium: 'Почти закончилось', low: 'Нужно' },
+      navList: 'Список',
+      navStats: 'Статистика',
+      statsWeekTotal: 'Товаров на этой неделе',
+      statsTopCategory: 'Топ категория',
+      statsChartTitle: 'По категориям на этой неделе',
+      statsNoDataYet: 'Пока недостаточно данных. Начните отмечать купленные товары!',
+      statsFirstWeek: 'Это ваша первая неделя — сравним на следующей',
+      statsMoreThanLastWeek: (n) => `На ${n} больше, чем на прошлой неделе`,
+      statsLessThanLastWeek: (n) => `На ${n} меньше, чем на прошлой неделе`,
+      statsSameAsLastWeek: 'Так же, как на прошлой неделе',
+      statsEmptyChart: 'На этой неделе пока нет покупок',
+      suggestionsTitle: 'Быстро добавить?',
+      loginTitle: 'Мой список',
+      loginSubtitle: 'Войдите, чтобы просматривать и делиться списками покупок',
+      googleSignInLabel: 'Войти через Google',
+      listPickerTitle: 'Мои списки',
+      createListLabel: 'Новый список',
+      joinListLabel: 'Присоединиться по коду',
+      joinCodeLabel: 'Код',
+      joinCodeNotFound: 'Список с таким кодом не найден',
+      noListsYet: 'У вас пока нет списков. Создайте новый или присоединитесь по коду',
+      signedInAsLabel: 'Вы вошли как',
+      signOutLabel: 'Выйти',
+    },
+    pt: {
+      dir: 'ltr',
+      pageTitle: 'Minha Lista',
+      headerTitle: 'Minha Lista 🛒',
+      statsFn: (total, bought) => `${total} itens · ${bought} comprados`,
+      itemPlaceholder: 'O que está faltando?',
+      emptyState: 'Sua lista está vazia. Adicione um item 👆',
+      boughtSectionTitle: 'Comprado ✓',
+      findStoreBtn: '📍 Encontrar mercado próximo',
+      findingLocation: '📍 Localizando...',
+      searchingStores: '📍 Buscando mercados...',
+      noGeoSupport: 'Seu navegador não suporta localização 😕',
+      noLocationPermission: 'Não foi possível obter sua localização. Permita o acesso 📍',
+      noStoresFound: 'Nenhum mercado encontrado por perto 🤷',
+      searchError: 'Algo deu errado. Tente novamente 🙏',
+      metersAway: (m) => `a ${m}m de você`,
+      navigate: 'Navegar ↗',
+      unnamedStore: 'Supermercado',
+      approxLocation: 'Localização aproximada',
+      settingsTitle: 'Configurações',
+      langLabel: 'Idioma',
+      themeLabel: 'Tema',
+      dark: 'Escuro',
+      light: 'Claro',
+      sharedListSoon: '👥 Listas compartilhadas — em breve',
+      navList: 'Lista',
+      navMap: 'Mapa',
+      mapRefresh: '🔄 Buscar mercados próximos',
+      mapSearching: '🔄 Buscando...',
+      mapResolvingCities: '🏙️ Identificando cidades...',
+      mapNoSearchResults: 'Nenhum resultado para esta busca 🔍',
+      mapSearchPlaceholder: '🔍 Buscar por mercado ou cidade...',
+      unknownCity: 'Área desconhecida',
+      mapNoStores: 'Nenhum mercado encontrado na área 🤷',
+      mapSelectPrompt: 'Selecione um mercado da lista ou do mapa',
+      close: 'Fechar',
+      categories: {
+        dairy: 'Laticínios 🧀', bakery: 'Padaria 🍞', veg: 'Vegetais 🥬',
+        fruit: 'Frutas 🍎', meat: 'Carne 🍗', clean: 'Limpeza 🧼',
+        frozen: 'Congelados ❄️', snacks: 'Salgadinhos 🍫', drinks: 'Bebidas 🥤', baking: 'Confeitaria 🧂',
+        other: 'Outros 🛍️',
+      },
+      urgencyLabels: { high: 'Essencial', medium: 'Quase acabando', low: 'Necessário' },
+      navList: 'Lista',
+      navStats: 'Estatísticas',
+      statsWeekTotal: 'Itens esta semana',
+      statsTopCategory: 'Categoria principal',
+      statsChartTitle: 'Por categoria esta semana',
+      statsNoDataYet: 'Ainda não há dados suficientes. Comece a marcar itens comprados!',
+      statsFirstWeek: 'Esta é sua primeira semana — vamos comparar na próxima',
+      statsMoreThanLastWeek: (n) => `${n} a mais que na semana passada`,
+      statsLessThanLastWeek: (n) => `${n} a menos que na semana passada`,
+      statsSameAsLastWeek: 'Igual à semana passada',
+      statsEmptyChart: 'Ainda sem compras esta semana',
+      suggestionsTitle: 'Adicionar rápido?',
+      loginTitle: 'Minha Lista',
+      loginSubtitle: 'Entre para ver e compartilhar listas de compras',
+      googleSignInLabel: 'Entrar com o Google',
+      listPickerTitle: 'Minhas Listas',
+      createListLabel: 'Nova lista',
+      joinListLabel: 'Entrar com código',
+      joinCodeLabel: 'Código',
+      joinCodeNotFound: 'Nenhuma lista encontrada com esse código',
+      noListsYet: 'Você ainda não tem listas. Crie uma ou entre com um código',
+      signedInAsLabel: 'Conectado como',
+      signOutLabel: 'Sair',
+    },
+    zh: {
+      dir: 'ltr',
+      pageTitle: '我的清单',
+      headerTitle: '我的清单 🛒',
+      statsFn: (total, bought) => `共 ${total} 项 · 已购 ${bought} 项`,
+      itemPlaceholder: '缺什么？',
+      emptyState: '清单是空的，添加第一项吧 👆',
+      boughtSectionTitle: '已购买 ✓',
+      findStoreBtn: '📍 查找附近超市',
+      findingLocation: '📍 正在定位...',
+      searchingStores: '📍 正在搜索超市...',
+      noGeoSupport: '你的浏览器不支持定位 😕',
+      noLocationPermission: '无法获取你的位置，请允许位置权限 📍',
+      noStoresFound: '附近没有找到超市 🤷',
+      searchError: '出了点问题，请重试 🙏',
+      metersAway: (m) => `距你约 ${m} 米`,
+      navigate: '导航 ↗',
+      unnamedStore: '超市',
+      approxLocation: '大致位置',
+      settingsTitle: '设置',
+      langLabel: '语言',
+      themeLabel: '主题',
+      dark: '深色',
+      light: '浅色',
+      sharedListSoon: '👥 共享清单 — 即将推出',
+      navList: '清单',
+      navMap: '地图',
+      mapRefresh: '🔄 搜索附近超市',
+      mapSearching: '🔄 搜索中...',
+      mapResolvingCities: '🏙️ 正在识别城市...',
+      mapNoSearchResults: '未找到相关结果 🔍',
+      mapSearchPlaceholder: '🔍 按超市或城市搜索...',
+      unknownCity: '未知区域',
+      mapNoStores: '该地区未找到超市 🤷',
+      mapSelectPrompt: '从列表或地图中选择一家超市',
+      close: '关闭',
+      categories: {
+        dairy: '乳制品 🧀', bakery: '面包 🍞', veg: '蔬菜 🥬',
+        fruit: '水果 🍎', meat: '肉类 🍗', clean: '清洁用品 🧼',
+        frozen: '冷冻食品 ❄️', snacks: '零食 🍫', drinks: '饮料 🥤', baking: '烘焙 🧂',
+        other: '其他 🛍️',
+      },
+      urgencyLabels: { high: '必需', medium: '快用完了', low: '需要' },
+      navList: '清单',
+      navStats: '统计',
+      statsWeekTotal: '本周项目',
+      statsTopCategory: '主要类别',
+      statsChartTitle: '本周按类别',
+      statsNoDataYet: '数据还不够。开始勾选已购买的项目吧！',
+      statsFirstWeek: '这是你的第一周 — 我们会在下周进行比较',
+      statsMoreThanLastWeek: (n) => `比上周多 ${n} 个`,
+      statsLessThanLastWeek: (n) => `比上周少 ${n} 个`,
+      statsSameAsLastWeek: '和上周一样',
+      statsEmptyChart: '本周还没有购买记录',
+      suggestionsTitle: '快速添加？',
+      loginTitle: '我的清单',
+      loginSubtitle: '登录以查看和共享购物清单',
+      googleSignInLabel: '使用 Google 登录',
+      listPickerTitle: '我的清单',
+      createListLabel: '新建清单',
+      joinListLabel: '用代码加入',
+      joinCodeLabel: '代码',
+      joinCodeNotFound: '未找到该代码对应的清单',
+      noListsYet: '你还没有任何清单。创建一个或用代码加入',
+      signedInAsLabel: '当前登录账号',
+      signOutLabel: '退出登录',
+    },
+    hi: {
+      dir: 'ltr',
+      pageTitle: 'मेरी सूची',
+      headerTitle: 'मेरी सूची 🛒',
+      statsFn: (total, bought) => `${total} आइटम · ${bought} खरीदे गए`,
+      itemPlaceholder: 'क्या चाहिए?',
+      emptyState: 'आपकी सूची खाली है। पहला आइटम जोड़ें 👆',
+      boughtSectionTitle: 'खरीदा गया ✓',
+      findStoreBtn: '📍 नज़दीकी स्टोर खोजें',
+      findingLocation: '📍 स्थान खोजा जा रहा है...',
+      searchingStores: '📍 स्टोर खोजे जा रहे हैं...',
+      noGeoSupport: 'आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता 😕',
+      noLocationPermission: 'स्थान प्राप्त नहीं हो सका। कृपया अनुमति दें 📍',
+      noStoresFound: 'आसपास कोई स्टोर नहीं मिला 🤷',
+      searchError: 'कुछ गलत हो गया। दोबारा कोशिश करें 🙏',
+      metersAway: (m) => `आपसे लगभग ${m} मीटर दूर`,
+      navigate: 'नेविगेट करें ↗',
+      unnamedStore: 'सुपरमार्केट',
+      approxLocation: 'अनुमानित स्थान',
+      settingsTitle: 'सेटिंग्स',
+      langLabel: 'भाषा',
+      themeLabel: 'थीम',
+      dark: 'डार्क',
+      light: 'लाइट',
+      sharedListSoon: '👥 साझा सूचियाँ — जल्द आ रहा है',
+      navList: 'सूची',
+      navMap: 'नक्शा',
+      mapRefresh: '🔄 आसपास स्टोर खोजें',
+      mapSearching: '🔄 खोजा जा रहा है...',
+      mapResolvingCities: '🏙️ शहरों की पहचान हो रही है...',
+      mapNoSearchResults: 'इस खोज के लिए कोई परिणाम नहीं मिला 🔍',
+      mapSearchPlaceholder: '🔍 स्टोर या शहर से खोजें...',
+      unknownCity: 'अज्ञात क्षेत्र',
+      mapNoStores: 'इस क्षेत्र में कोई स्टोर नहीं मिला 🤷',
+      mapSelectPrompt: 'सूची या नक्शे से एक स्टोर चुनें',
+      close: 'बंद करें',
+      categories: {
+        dairy: 'डेयरी 🧀', bakery: 'बेकरी 🍞', veg: 'सब्ज़ियाँ 🥬',
+        fruit: 'फल 🍎', meat: 'मांस 🍗', clean: 'सफाई 🧼',
+        frozen: 'फ्रोज़न ❄️', snacks: 'नाश्ता 🍫', drinks: 'पेय 🥤', baking: 'बेकिंग 🧂',
+        other: 'अन्य 🛍️',
+      },
+      urgencyLabels: { high: 'ज़रूरी', medium: 'लगभग खत्म', low: 'चाहिए' },
+      navList: 'सूची',
+      navStats: 'आँकड़े',
+      statsWeekTotal: 'इस सप्ताह के आइटम',
+      statsTopCategory: 'शीर्ष श्रेणी',
+      statsChartTitle: 'इस सप्ताह श्रेणी अनुसार',
+      statsNoDataYet: 'अभी पर्याप्त डेटा नहीं है। आइटम को खरीदा हुआ चिह्नित करना शुरू करें!',
+      statsFirstWeek: 'यह आपका पहला सप्ताह है — हम अगले सप्ताह तुलना करेंगे',
+      statsMoreThanLastWeek: (n) => `पिछले सप्ताह से ${n} अधिक`,
+      statsLessThanLastWeek: (n) => `पिछले सप्ताह से ${n} कम`,
+      statsSameAsLastWeek: 'पिछले सप्ताह जितना ही',
+      statsEmptyChart: 'इस सप्ताह अभी तक कोई खरीदारी नहीं',
+      suggestionsTitle: 'तुरंत जोड़ें?',
+      loginTitle: 'मेरी सूची',
+      loginSubtitle: 'शॉपिंग सूचियाँ देखने और साझा करने के लिए साइन इन करें',
+      googleSignInLabel: 'Google से साइन इन करें',
+      listPickerTitle: 'मेरी सूचियाँ',
+      createListLabel: 'नई सूची',
+      joinListLabel: 'कोड से जुड़ें',
+      joinCodeLabel: 'कोड',
+      joinCodeNotFound: 'इस कोड से कोई सूची नहीं मिली',
+      noListsYet: 'आपके पास अभी तक कोई सूची नहीं है। एक बनाएं या कोड से जुड़ें',
+      signedInAsLabel: 'इस रूप में साइन इन किया',
+      signOutLabel: 'साइन आउट करें',
+    },
+  };
+
+  // Keyword lists per language, mapped to category keys (used to guess category from item name)
+  const CATEGORY_KEYWORDS = {
+    he: {
+      dairy: ['חלב', 'ביצים', 'גבינה', 'יוגורט', 'קוטג', 'חמאה', 'שמנת', 'לבן', 'מעדן', 'גבינת שמנת', 'קרם'],
+      bakery: ['לחם', 'פיתה', 'לחמניה', 'בגט', 'עוגה', 'עוגיות', 'חלה', 'קרואסון', 'טורטיה', 'לחמניות'],
+      veg: ['עגבניה', 'עגבניות', 'מלפפון', 'מלפפונים', 'חסה', 'גזר', 'בצל', 'פלפל', 'תפוח אדמה', 'ירק', 'שום', 'כרוב', 'קישוא', 'חציל', 'תרד', 'פטריות', 'תירס', 'סלק', 'צנונית'],
+      fruit: ['תפוח', 'בננה', 'תות', 'ענבים', 'אבטיח', 'מלון', 'פרי', 'תפוז', 'לימון', 'אבוקדו', 'קיווי', 'אפרסק', 'שזיף', 'אגס', 'מנגו', 'רימון', 'תמר'],
+      meat: ['עוף', 'בשר', 'הודו', 'נקניק', 'סטייק', 'קציצות', 'שניצל', 'כבד', 'המבורגר', 'פרגית', 'כנפיים', 'טחון'],
+      clean: ['נייר טואלט', 'סבון', 'שמפו', 'מגבון', 'אקונומיקה', 'ניקוי', 'מרכך', 'אבקת כביסה', 'ספוג', 'שקיות זבל', 'נוזל כלים', 'מטהר אוויר'],
+      frozen: ['גלידה', 'פיצה קפואה', 'ירקות קפואים', 'שניצל קפוא', 'מלאווח', 'בורקס', 'קפוא', 'ארטיק', 'שרימפס קפוא'],
+      snacks: ['חטיף', 'צ׳יפס', 'ביסלי', 'במבה', 'שוקולד', 'עוגיות', 'ממתק', 'סוכריות', 'גומי', 'פופקורן', 'קרקר', 'וופל', 'חטיפי אנרגיה'],
+      drinks: ['מים', 'קולה', 'מיץ', 'סודה', 'בירה', 'יין', 'משקה אנרגיה', 'תה', 'קפה', 'סוכר', 'שוקו', 'לימונדה', 'משקה קל'],
+      baking: ['קמח', 'סוכר', 'שמרים', 'תבלין', 'מלח', 'שמן', 'אבקת אפייה', 'וניל', 'קקאו', 'דבש', 'רסק עגבניות', 'חומץ', 'ציר'],
+    },
+    en: {
+      dairy: ['milk', 'egg', 'cheese', 'yogurt', 'yoghurt', 'butter', 'cream', 'cottage', 'sour cream', 'cream cheese'],
+      bakery: ['bread', 'pita', 'bun', 'baguette', 'cake', 'cookie', 'challah', 'croissant', 'tortilla', 'roll', 'bagel'],
+      veg: ['tomato', 'cucumber', 'lettuce', 'carrot', 'onion', 'pepper', 'potato', 'vegetable', 'garlic', 'cabbage', 'zucchini', 'eggplant', 'spinach', 'mushroom', 'corn', 'beet', 'radish', 'broccoli'],
+      fruit: ['apple', 'banana', 'strawberr', 'grape', 'watermelon', 'melon', 'fruit', 'orange', 'lemon', 'avocado', 'kiwi', 'peach', 'plum', 'pear', 'mango', 'pomegranate', 'date'],
+      meat: ['chicken', 'beef', 'turkey', 'sausage', 'steak', 'meatball', 'meat', 'schnitzel', 'liver', 'burger', 'wings', 'ground beef', 'mince'],
+      clean: ['toilet paper', 'soap', 'shampoo', 'wipes', 'bleach', 'cleaning', 'detergent', 'softener', 'sponge', 'trash bag', 'dish soap', 'air freshener'],
+      frozen: ['ice cream', 'frozen pizza', 'frozen vegetable', 'frozen schnitzel', 'burekas', 'frozen', 'popsicle', 'frozen shrimp'],
+      snacks: ['snack', 'chips', 'chocolate', 'cookie', 'candy', 'sweets', 'gummy', 'popcorn', 'cracker', 'wafer', 'energy bar'],
+      drinks: ['water', 'cola', 'juice', 'soda', 'beer', 'wine', 'energy drink', 'tea', 'coffee', 'sugar', 'chocolate milk', 'lemonade', 'soft drink'],
+      baking: ['flour', 'sugar', 'yeast', 'spice', 'salt', 'oil', 'baking powder', 'vanilla', 'cocoa', 'honey', 'tomato paste', 'vinegar', 'broth'],
+    },
+    es: {
+      dairy: ['leche', 'huevo', 'queso', 'yogur', 'mantequilla', 'crema', 'requesón', 'nata'],
+      bakery: ['pan', 'pita', 'bollo', 'baguette', 'pastel', 'galleta', 'croissant', 'tortilla', 'bagel'],
+      veg: ['tomate', 'pepino', 'lechuga', 'zanahoria', 'cebolla', 'pimiento', 'papa', 'patata', 'verdura', 'ajo', 'repollo', 'calabacín', 'berenjena', 'espinaca', 'champiñón', 'maíz', 'remolacha', 'rábano'],
+      fruit: ['manzana', 'plátano', 'banana', 'fresa', 'uva', 'sandía', 'melón', 'fruta', 'naranja', 'limón', 'aguacate', 'kiwi', 'durazno', 'ciruela', 'pera', 'mango', 'granada', 'dátil'],
+      meat: ['pollo', 'res', 'carne', 'pavo', 'salchicha', 'bistec', 'albóndiga', 'hígado', 'hamburguesa', 'alitas'],
+      clean: ['papel higiénico', 'jabón', 'champú', 'toallitas', 'lejía', 'limpieza', 'suavizante', 'esponja', 'bolsa de basura', 'lavavajillas'],
+      frozen: ['helado', 'pizza congelada', 'verdura congelada', 'congelado', 'paleta', 'camarón congelado'],
+      snacks: ['snack', 'papas fritas', 'chocolate', 'galleta', 'dulce', 'caramelo', 'palomitas', 'galletas saladas'],
+      drinks: ['agua', 'refresco', 'jugo', 'zumo', 'cerveza', 'vino', 'bebida energética', 'té', 'café', 'azúcar', 'limonada'],
+      baking: ['harina', 'azúcar', 'levadura', 'especia', 'sal', 'aceite', 'polvo de hornear', 'vainilla', 'cacao', 'miel', 'vinagre'],
+    },
+    fr: {
+      dairy: ['lait', 'œuf', 'oeuf', 'fromage', 'yaourt', 'beurre', 'crème', 'fromage blanc'],
+      bakery: ['pain', 'pita', 'petit pain', 'baguette', 'gâteau', 'biscuit', 'croissant', 'tortilla', 'bagel'],
+      veg: ['tomate', 'concombre', 'laitue', 'carotte', 'oignon', 'poivron', 'pomme de terre', 'légume', 'ail', 'chou', 'courgette', 'aubergine', 'épinard', 'champignon', 'maïs', 'betterave', 'radis'],
+      fruit: ['pomme', 'banane', 'fraise', 'raisin', 'pastèque', 'melon', 'fruit', 'orange', 'citron', 'avocat', 'kiwi', 'pêche', 'prune', 'poire', 'mangue', 'grenade', 'datte'],
+      meat: ['poulet', 'bœuf', 'boeuf', 'dinde', 'saucisse', 'steak', 'boulette', 'viande', 'foie', 'burger', 'ailes'],
+      clean: ['papier toilette', 'savon', 'shampooing', 'lingette', 'javel', 'nettoyage', 'adoucissant', 'éponge', 'sac poubelle', 'liquide vaisselle'],
+      frozen: ['glace', 'pizza surgelée', 'légume surgelé', 'surgelé', 'esquimau', 'crevette surgelée'],
+      snacks: ['snack', 'chips', 'chocolat', 'biscuit', 'bonbon', 'confiserie', 'pop-corn', 'cracker'],
+      drinks: ['eau', 'cola', 'jus', 'soda', 'bière', 'vin', 'boisson énergisante', 'thé', 'café', 'sucre', 'limonade'],
+      baking: ['farine', 'sucre', 'levure', 'épice', 'sel', 'huile', 'levure chimique', 'vanille', 'cacao', 'miel', 'vinaigre'],
+    },
+    de: {
+      dairy: ['milch', 'ei', 'käse', 'joghurt', 'butter', 'sahne', 'quark', 'schmand'],
+      bakery: ['brot', 'pita', 'brötchen', 'baguette', 'kuchen', 'keks', 'croissant', 'tortilla', 'bagel'],
+      veg: ['tomate', 'gurke', 'salat', 'karotte', 'zwiebel', 'paprika', 'kartoffel', 'gemüse', 'knoblauch', 'kohl', 'zucchini', 'aubergine', 'spinat', 'pilz', 'mais', 'rote bete', 'radieschen'],
+      fruit: ['apfel', 'banane', 'erdbeere', 'traube', 'wassermelone', 'melone', 'obst', 'orange', 'zitrone', 'avocado', 'kiwi', 'pfirsich', 'pflaume', 'birne', 'mango', 'granatapfel', 'dattel'],
+      meat: ['huhn', 'rind', 'rindfleisch', 'pute', 'wurst', 'steak', 'frikadelle', 'fleisch', 'leber', 'burger', 'flügel'],
+      clean: ['toilettenpapier', 'seife', 'shampoo', 'feuchttücher', 'bleiche', 'reinigung', 'weichspüler', 'schwamm', 'müllbeutel', 'spülmittel'],
+      frozen: ['eis', 'tiefkühlpizza', 'tiefkühlgemüse', 'gefroren', 'wassereis', 'tiefkühlgarnelen'],
+      snacks: ['snack', 'chips', 'schokolade', 'keks', 'süßigkeit', 'bonbon', 'popcorn', 'cracker'],
+      drinks: ['wasser', 'cola', 'saft', 'limonade', 'bier', 'wein', 'energydrink', 'tee', 'kaffee', 'zucker'],
+      baking: ['mehl', 'zucker', 'hefe', 'gewürz', 'salz', 'öl', 'backpulver', 'vanille', 'kakao', 'honig', 'essig'],
+    },
+    ru: {
+      dairy: ['молоко', 'яйцо', 'сыр', 'йогурт', 'масло', 'сметана', 'творог', 'сливки'],
+      bakery: ['хлеб', 'питa', 'булка', 'багет', 'торт', 'печенье', 'круассан', 'лаваш', 'бублик'],
+      veg: ['помидор', 'огурец', 'салат', 'морковь', 'лук', 'перец', 'картофель', 'овощ', 'чеснок', 'капуста', 'кабачок', 'баклажан', 'шпинат', 'гриб', 'кукуруза', 'свекла', 'редис'],
+      fruit: ['яблоко', 'банан', 'клубника', 'виноград', 'арбуз', 'дыня', 'фрукт', 'апельсин', 'лимон', 'авокадо', 'киви', 'персик', 'слива', 'груша', 'манго', 'гранат', 'финик'],
+      meat: ['курица', 'говядина', 'индейка', 'колбаса', 'стейк', 'котлета', 'мясо', 'печень', 'бургер', 'крылья'],
+      clean: ['туалетная бумага', 'мыло', 'шампунь', 'салфетки', 'отбеливатель', 'уборка', 'кондиционер для белья', 'губка', 'мешок для мусора', 'средство для посуды'],
+      frozen: ['мороженое', 'замороженная пицца', 'замороженные овощи', 'замороженный', 'фруктовый лед', 'замороженные креветки'],
+      snacks: ['снек', 'чипсы', 'шоколад', 'печенье', 'конфета', 'сладости', 'попкорн', 'крекер'],
+      drinks: ['вода', 'кола', 'сок', 'газировка', 'пиво', 'вино', 'энергетик', 'чай', 'кофе', 'сахар', 'лимонад'],
+      baking: ['мука', 'сахар', 'дрожжи', 'специя', 'соль', 'масло', 'разрыхлитель', 'ваниль', 'какао', 'мёд', 'уксус'],
+    },
+    pt: {
+      dairy: ['leite', 'ovo', 'queijo', 'iogurte', 'manteiga', 'creme', 'requeijão', 'nata'],
+      bakery: ['pão', 'pita', 'pãozinho', 'baguete', 'bolo', 'biscoito', 'croissant', 'tortilla', 'bagel'],
+      veg: ['tomate', 'pepino', 'alface', 'cenoura', 'cebola', 'pimentão', 'batata', 'legume', 'alho', 'repolho', 'abobrinha', 'berinjela', 'espinafre', 'cogumelo', 'milho', 'beterraba', 'rabanete'],
+      fruit: ['maçã', 'banana', 'morango', 'uva', 'melancia', 'melão', 'fruta', 'laranja', 'limão', 'abacate', 'kiwi', 'pêssego', 'ameixa', 'pera', 'manga', 'romã', 'tâmara'],
+      meat: ['frango', 'carne bovina', 'peru', 'salsicha', 'bife', 'almôndega', 'carne', 'fígado', 'hambúrguer', 'asinha'],
+      clean: ['papel higiênico', 'sabão', 'shampoo', 'lenço umedecido', 'água sanitária', 'limpeza', 'amaciante', 'esponja', 'saco de lixo', 'detergente'],
+      frozen: ['sorvete', 'pizza congelada', 'vegetal congelado', 'congelado', 'picolé', 'camarão congelado'],
+      snacks: ['salgadinho', 'batata frita', 'chocolate', 'biscoito', 'doce', 'bala', 'pipoca', 'bolacha'],
+      drinks: ['água', 'refrigerante', 'suco', 'cerveja', 'vinho', 'energético', 'chá', 'café', 'açúcar', 'limonada'],
+      baking: ['farinha', 'açúcar', 'fermento', 'tempero', 'sal', 'óleo', 'fermento em pó', 'baunilha', 'cacau', 'mel', 'vinagre'],
+    },
+    zh: {
+      dairy: ['牛奶', '鸡蛋', '奶酪', '酸奶', '黄油', '奶油', '芝士'],
+      bakery: ['面包', '皮塔饼', '小圆面包', '法棍', '蛋糕', '饼干', '牛角包', '百吉饼'],
+      veg: ['西红柿', '番茄', '黄瓜', '生菜', '胡萝卜', '洋葱', '辣椒', '土豆', '蔬菜', '大蒜', '卷心菜', '西葫芦', '茄子', '菠菜', '蘑菇', '玉米', '甜菜', '萝卜'],
+      fruit: ['苹果', '香蕉', '草莓', '葡萄', '西瓜', '甜瓜', '水果', '橙子', '柠檬', '牛油果', '猕猴桃', '桃子', '李子', '梨', '芒果', '石榴', '枣'],
+      meat: ['鸡肉', '牛肉', '火鸡', '香肠', '牛排', '肉丸', '肉', '肝', '汉堡', '鸡翅'],
+      clean: ['卫生纸', '肥皂', '洗发水', '湿巾', '漂白剂', '清洁', '柔顺剂', '海绵', '垃圾袋', '洗洁精'],
+      frozen: ['冰淇淋', '冷冻披萨', '冷冻蔬菜', '冷冻', '冰棍', '冷冻虾'],
+      snacks: ['零食', '薯片', '巧克力', '饼干', '糖果', '爆米花', '饼干'],
+      drinks: ['水', '可乐', '果汁', '汽水', '啤酒', '葡萄酒', '功能饮料', '茶', '咖啡', '糖', '柠檬水'],
+      baking: ['面粉', '糖', '酵母', '香料', '盐', '油', '泡打粉', '香草', '可可', '蜂蜜', '醋'],
+    },
+    hi: {
+      dairy: ['दूध', 'अंडा', 'पनीर', 'दही', 'मक्खन', 'क्रीम'],
+      bakery: ['ब्रेड', 'पिटा', 'बन', 'बैगेट', 'केक', 'कुकी', 'क्रोइसैंट'],
+      veg: ['टमाटर', 'खीरा', 'सलाद पत्ता', 'गाजर', 'प्याज', 'शिमला मिर्च', 'आलू', 'सब्जी', 'लहसुन', 'पत्ता गोभी', 'बैंगन', 'पालक', 'मशरूम', 'मक्का', 'चुकंदर', 'मूली'],
+      fruit: ['सेब', 'केला', 'स्ट्रॉबेरी', 'अंगूर', 'तरबूज', 'खरबूजा', 'फल', 'संतरा', 'नींबू', 'एवोकाडो', 'कीवी', 'आड़ू', 'आलूबुखारा', 'नाशपाती', 'आम', 'अनार', 'खजूर'],
+      meat: ['चिकन', 'बीफ', 'टर्की', 'सॉसेज', 'स्टेक', 'मीटबॉल', 'मांस', 'लिवर', 'बर्गर'],
+      clean: ['टॉयलेट पेपर', 'साबुन', 'शैम्पू', 'वाइप्स', 'ब्लीच', 'सफाई', 'सॉफ्टनर', 'स्पंज', 'कचरा बैग', 'डिश सोप'],
+      frozen: ['आइसक्रीम', 'फ्रोज़न पिज़्ज़ा', 'फ्रोज़न सब्ज़ी', 'फ्रोज़न', 'फ्रोज़न झींगा'],
+      snacks: ['नाश्ता', 'चिप्स', 'चॉकलेट', 'कुकी', 'मिठाई', 'कैंडी', 'पॉपकॉर्न'],
+      drinks: ['पानी', 'कोला', 'जूस', 'सोडा', 'बीयर', 'वाइन', 'एनर्जी ड्रिंक', 'चाय', 'कॉफी', 'चीनी', 'नींबू पानी'],
+      baking: ['आटा', 'चीनी', 'खमीर', 'मसाला', 'नमक', 'तेल', 'बेकिंग पाउडर', 'वेनिला', 'कोको', 'शहद', 'सिरका'],
+    },
+    ar: {
+      dairy: ['حليب', 'بيض', 'جبن', 'زبادي', 'زبدة', 'قشطة', 'لبنة'],
+      bakery: ['خبز', 'بيتا', 'كعك', 'باغيت', 'كيك', 'بسكويت', 'كرواسون', 'خبز التورتيلا'],
+      veg: ['طماطم', 'خيار', 'خس', 'جزر', 'بصل', 'فلفل', 'بطاطا', 'خضار', 'ثوم', 'ملفوف', 'كوسة', 'باذنجان', 'سبانخ', 'فطر', 'ذرة', 'شمندر', 'فجل'],
+      fruit: ['تفاح', 'موز', 'فراولة', 'عنب', 'بطيخ', 'شمام', 'فاكهة', 'برتقال', 'ليمون', 'أفوكادو', 'كيوي', 'خوخ', 'برقوق', 'كمثرى', 'مانجو', 'رمان', 'تمر'],
+      meat: ['دجاج', 'لحم بقري', 'ديك رومي', 'نقانق', 'ستيك', 'كرات لحم', 'لحم', 'كبد', 'برغر', 'أجنحة'],
+      clean: ['ورق تواليت', 'صابون', 'شامبو', 'مناديل مبللة', 'مبيض', 'تنظيف', 'منعم', 'إسفنجة', 'كيس قمامة', 'سائل جلي'],
+      frozen: ['آيس كريم', 'بيتزا مجمدة', 'خضار مجمد', 'مجمد', 'بوظة على عصا', 'روبيان مجمد'],
+      snacks: ['وجبة خفيفة', 'شيبس', 'شوكولاتة', 'بسكويت', 'حلوى', 'سكاكر', 'فشار', 'كراكر'],
+      drinks: ['ماء', 'كولا', 'عصير', 'صودا', 'بيرة', 'نبيذ', 'مشروب طاقة', 'شاي', 'قهوة', 'سكر', 'ليموناضة'],
+      baking: ['طحين', 'سكر', 'خميرة', 'بهار', 'ملح', 'زيت', 'بيكنج باودر', 'فانيليا', 'كاكاو', 'عسل', 'خل'],
+    },
+  };
+  // For languages without a curated keyword list, fall back to English keywords (still functional, just less accurate)
+
+  // The three urgency levels a user can assign to an item (colors only — labels are translated)
+  const URGENCY_LEVELS = {
+    high: { color: '#ff6b6b' },   // red — urgent
+    medium: { color: '#ffd166' }, // yellow — moderate
+    low: { color: '#4ade80' },    // green — plenty left
+  };
+
+  // ============================================================
+  // STATE
+  // ============================================================
+  let currentLang = localStorage.getItem('appLang') || 'he';
+  let currentTheme = localStorage.getItem('appTheme') || 'dark';
+
+  // Shared-list state (backed by Firestore once signed in)
+  let currentUser = null;       // Firebase auth user object
+  let myLists = [];             // [{id, name, code, ownerUid, members}]
+  let activeListId = localStorage.getItem('activeListId') || null;
+  let items = [];               // items of the currently active list (local mirror of Firestore)
+  let purchaseHistory = [];     // purchase history of the currently active list
+  let unsubscribeActiveList = null; // Firestore onSnapshot cleanup function
+  let suppressNextSnapshot = false; // avoids re-rendering from our own writes echoing back
+
+  function t() { return TRANSLATIONS[currentLang]; }
+
+  // Push the current items + purchaseHistory to Firestore for the active list.
+  // (Debounced slightly isn't necessary here since writes are small and infrequent —
+  // one write per user action — but we guard against saving with no active list.)
+  async function save() {
+    if (!activeListId || !window.FB) return;
+    suppressNextSnapshot = true;
+    try {
+      await window.FB.updateDoc(window.FB.doc(window.FB.db, 'lists', activeListId), {
+        items,
+        purchaseHistory,
+      });
+    } catch (err) {
+      console.error('Failed to save list to Firestore:', err);
+    }
+  }
+
+  // ============================================================
+  // CATEGORY GUESSING
+  // ============================================================
+  function guessCategory(name) {
+    const lower = name.trim().toLowerCase();
+    const keywordSet = CATEGORY_KEYWORDS[currentLang] || CATEGORY_KEYWORDS.en;
+    const catColors = {
+      dairy: 'var(--teal)', bakery: 'var(--yellow)', veg: '#4ade80', fruit: '#fb923c',
+      meat: 'var(--coral)', clean: 'var(--purple)',
+      frozen: '#60a5fa', snacks: '#f472b6', drinks: '#38bdf8', baking: '#d97706',
+    };
+
+    for (const key in keywordSet) {
+      if (keywordSet[key].some(k => lower.includes(k))) {
+        return { key, name: t().categories[key], color: catColors[key] };
+      }
+    }
+    return { key: 'other', name: t().categories.other, color: 'var(--pink)' };
+  }
+
+  // ============================================================
+  // RENDERING
+  // ============================================================
+  const listEl = document.getElementById('list');
+  const statsEl = document.getElementById('stats');
+
+  // Fixed display order for category groups — categories not in this list (shouldn't
+  // happen, but as a safety net) fall back to appearing after all of these.
+  const CATEGORY_ORDER = ['dairy', 'bakery', 'veg', 'fruit', 'meat', 'frozen', 'snacks', 'drinks', 'baking', 'clean', 'other'];
+
+  function renderItemCard(item) {
+    const catInfo = { name: t().categories[item.catKey] || item.catName, color: item.catColor };
+    const el = document.createElement('div');
+    el.className = 'item' + (item.bought ? ' bought' : '');
+    el.style.setProperty('--cat-color', catInfo.color);
+    const urgencyColor = URGENCY_LEVELS[item.urgency]?.color || '';
+    el.innerHTML = `
+      <button class="checkbox" data-id="${item.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+      </button>
+      <span class="item-name">${escapeHtml(item.name)}</span>
+      ${urgencyColor ? `<span class="urgency-square" style="--urgency-color:${urgencyColor}"></span>` : ''}
+      <span class="item-cat">${catInfo.name}</span>
+      <div class="urgency-wrap">
+        <button class="urgency-btn" data-id="${item.id}">⋮</button>
+        <div class="urgency-menu" data-menu-for="${item.id}">
+          ${Object.entries(URGENCY_LEVELS).map(([key, level]) => `
+            <button class="urgency-option" data-id="${item.id}" data-urgency="${key}">
+              <span class="dot" style="background:${level.color}"></span>${t().urgencyLabels[key]}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+      <button class="delete-btn" data-id="${item.id}">✕</button>
+    `;
+    return el;
+  }
+
+  function render() {
+    listEl.innerHTML = '';
+
+    if (items.length === 0) {
+      listEl.innerHTML = `<div class="empty-state">${t().emptyState}</div>`;
+      statsEl.textContent = t().statsFn(0, 0);
+      return;
+    }
+
+    const unbought = items.filter(i => !i.bought);
+    const bought = items.filter(i => i.bought);
+
+    // Sort unbought items by CATEGORY_ORDER (grouped visually via each item's own
+    // category tag — no separate group headers), so items of the same category still
+    // end up next to each other without an extra heading line.
+    const sortedUnbought = [...unbought].sort((a, b) => {
+      const ai = CATEGORY_ORDER.indexOf(a.catKey || 'other');
+      const bi = CATEGORY_ORDER.indexOf(b.catKey || 'other');
+      return (ai === -1 ? CATEGORY_ORDER.length : ai) - (bi === -1 ? CATEGORY_ORDER.length : bi);
+    });
+
+    sortedUnbought.forEach(item => listEl.appendChild(renderItemCard(item)));
+
+    if (bought.length > 0) {
+      const boughtHeader = document.createElement('div');
+      boughtHeader.className = 'category-group-title bought-group-title';
+      boughtHeader.textContent = `${t().boughtSectionTitle} · ${bought.length}`;
+      listEl.appendChild(boughtHeader);
+      bought.forEach(item => listEl.appendChild(renderItemCard(item)));
+    }
+
+    const boughtCount = bought.length;
+    statsEl.textContent = t().statsFn(items.length, boughtCount);
+  }
+
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+  function addItem(name) {
+    if (!name.trim()) return;
+    const cat = guessCategory(name);
+    items.push({
+      id: Date.now().toString(),
+      name: name.trim(),
+      bought: false,
+      catKey: cat.key,
+      catName: cat.name,
+      catColor: cat.color,
+    });
+    save();
+    render();
+  }
+
+  function toggleBought(id) {
+    const item = items.find(i => i.id === id);
+    if (item) {
+      item.bought = !item.bought;
+      if (item.bought) {
+        item.boughtAt = Date.now();
+        logPurchase(item);
+      } else {
+        item.boughtAt = null;
+      }
+    }
+    save();
+    render();
+  }
+
+  // Purchase history: a separate, append-only log of {name, catKey, catColor, timestamp}
+  // for every item ever marked bought, stored alongside items in the same list document.
+  // Kept even if the item is later deleted from the active list, so weekly stats stay
+  // accurate. Capped to the most recent 500 entries.
+  function logPurchase(item) {
+    purchaseHistory.push({
+      name: item.name,
+      catKey: item.catKey,
+      catColor: item.catColor,
+      timestamp: item.boughtAt,
+    });
+    if (purchaseHistory.length > 500) purchaseHistory = purchaseHistory.slice(-500);
+  }
+
+  function deleteItem(id) {
+    items = items.filter(i => i.id !== id);
+    save();
+    render();
+  }
+
+  const itemInput = document.getElementById('itemInput');
+  const addBtn = document.getElementById('addBtn');
+
+  addBtn.addEventListener('click', () => {
+    addItem(itemInput.value);
+    itemInput.value = '';
+    itemInput.focus();
+  });
+
+  itemInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      addItem(itemInput.value);
+      itemInput.value = '';
+    }
+  });
+
+  listEl.addEventListener('click', (e) => {
+    const checkboxBtn = e.target.closest('.checkbox');
+    const deleteBtn = e.target.closest('.delete-btn');
+    const urgencyBtn = e.target.closest('.urgency-btn');
+    const urgencyOption = e.target.closest('.urgency-option');
+
+    if (checkboxBtn) toggleBought(checkboxBtn.dataset.id);
+    if (deleteBtn) deleteItem(deleteBtn.dataset.id);
+
+    if (urgencyOption) {
+      // Handle the option click first (it's inside the button, so it would
+      // otherwise also trigger the toggle-open logic below)
+      setUrgency(urgencyOption.dataset.id, urgencyOption.dataset.urgency);
+      return;
+    }
+
+    if (urgencyBtn) {
+      const menu = urgencyBtn.closest('.urgency-wrap').querySelector('.urgency-menu');
+      const wasOpen = menu.classList.contains('show');
+      // Close any other open menu, then toggle this one
+      document.querySelectorAll('.urgency-menu.show').forEach(m => m.classList.remove('show'));
+      if (!wasOpen) menu.classList.add('show');
+    }
+  });
+
+  // Clicking anywhere outside an urgency menu closes it
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.urgency-btn')) {
+      document.querySelectorAll('.urgency-menu.show').forEach(m => m.classList.remove('show'));
+    }
+  });
+
+  function setUrgency(id, urgency) {
+    const item = items.find(i => i.id === id);
+    if (item) item.urgency = urgency;
+    save();
+    render();
+  }
+
+  // ============================================================
+  // SETTINGS PANEL: language + theme
+  // ============================================================
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const langSelect = document.getElementById('langSelect');
+  const darkOption = document.getElementById('darkOption');
+  const lightOption = document.getElementById('lightOption');
+
+  settingsBtn.addEventListener('click', () => settingsOverlay.classList.add('show'));
+  closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.remove('show'));
+  settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) settingsOverlay.classList.remove('show');
+  });
+
+  langSelect.addEventListener('change', () => {
+    currentLang = langSelect.value;
+    localStorage.setItem('appLang', currentLang);
+    applyLanguage();
+  });
+
+  darkOption.addEventListener('click', () => setTheme('dark'));
+  lightOption.addEventListener('click', () => setTheme('light'));
+
+  function setTheme(theme) {
+    currentTheme = theme;
+    localStorage.setItem('appTheme', theme);
+    applyTheme();
+  }
+
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    darkOption.classList.toggle('active', currentTheme === 'dark');
+    lightOption.classList.toggle('active', currentTheme === 'light');
+  }
+
+  function applyLanguage() {
+    const dict = t();
+    document.documentElement.setAttribute('lang', currentLang);
+    document.documentElement.setAttribute('dir', dict.dir);
+    document.getElementById('pageTitle').textContent = dict.pageTitle;
+    document.getElementById('headerTitle').textContent = dict.headerTitle;
+    itemInput.placeholder = dict.itemPlaceholder;
+    document.getElementById('settingsTitle').textContent = dict.settingsTitle;
+    document.getElementById('langLabel').textContent = dict.langLabel;
+    document.getElementById('themeLabel').textContent = dict.themeLabel;
+    document.getElementById('darkLabel').textContent = dict.dark;
+    document.getElementById('lightLabel').textContent = dict.light;
+    document.getElementById('closeSettingsBtn').textContent = dict.close;
+    document.getElementById('navListLabel').textContent = dict.navList;
+    document.getElementById('navStatsLabel').textContent = dict.navStats;
+    document.getElementById('statsWeekTotalLabel').textContent = dict.statsWeekTotal;
+    document.getElementById('statsTopCategoryLabel').textContent = dict.statsTopCategory;
+    document.getElementById('statsChartTitle').textContent = dict.statsChartTitle;
+    document.getElementById('suggestionsTitle').textContent = dict.suggestionsTitle;
+    document.getElementById('loginTitle').textContent = dict.loginTitle;
+    document.getElementById('loginSubtitle').textContent = dict.loginSubtitle;
+    document.getElementById('googleSignInLabel').textContent = dict.googleSignInLabel;
+    document.getElementById('listPickerTitle').textContent = dict.listPickerTitle;
+    document.getElementById('createListLabel').textContent = dict.createListLabel;
+    document.getElementById('joinListLabel').textContent = dict.joinListLabel;
+    document.getElementById('signedInAsLabel').textContent = dict.signedInAsLabel;
+    document.getElementById('signOutBtn').textContent = dict.signOutLabel;
+    newListNameInput.placeholder = dict.createListLabel;
+    joinCodeInput.placeholder = dict.joinCodeLabel;
+    langSelect.value = currentLang;
+    render(); // re-render list + stats + category names in new language
+    renderStats(); // re-render stats screen labels in new language
+  }
+
+  // ============================================================
+  // BOTTOM NAV: switch between List screen and Stats screen
+  // ============================================================
+  const navListBtn = document.getElementById('navListBtn');
+  const navStatsBtn = document.getElementById('navStatsBtn');
+  const listScreenEl = document.getElementById('listScreen');
+  const statsScreenEl = document.getElementById('statsScreen');
+
+  navListBtn.addEventListener('click', () => {
+    navListBtn.classList.add('active');
+    navStatsBtn.classList.remove('active');
+    listScreenEl.classList.add('active');
+    statsScreenEl.classList.remove('active');
+  });
+
+  navStatsBtn.addEventListener('click', () => {
+    navStatsBtn.classList.add('active');
+    navListBtn.classList.remove('active');
+    statsScreenEl.classList.add('active');
+    listScreenEl.classList.remove('active');
+    renderStats();
+  });
+
+  // ============================================================
+  // STATS SCREEN: weekly purchase patterns, computed locally from purchaseHistory
+  // ============================================================
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  function purchasesInRange(startMs, endMs) {
+    return purchaseHistory.filter(p => p.timestamp >= startMs && p.timestamp < endMs);
+  }
+
+  function renderStats() {
+    renderSuggestions();
+
+    const now = Date.now();
+    const thisWeekStart = now - 7 * DAY_MS;
+    const lastWeekStart = now - 14 * DAY_MS;
+
+    const thisWeek = purchasesInRange(thisWeekStart, now);
+    const lastWeek = purchasesInRange(lastWeekStart, thisWeekStart);
+
+    // Total items this week
+    document.getElementById('statsWeekTotalValue').textContent = thisWeek.length;
+
+    // Category breakdown this week
+    const byCategory = {}; // catKey -> { count, color }
+    thisWeek.forEach(p => {
+      const key = p.catKey || 'other';
+      if (!byCategory[key]) byCategory[key] = { count: 0, color: p.catColor || 'var(--purple)' };
+      byCategory[key].count++;
+    });
+    const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1].count - a[1].count);
+
+    // Top category
+    const topCategoryEl = document.getElementById('statsTopCategoryValue');
+    if (sortedCategories.length > 0) {
+      const [topKey] = sortedCategories[0];
+      topCategoryEl.textContent = t().categories[topKey] || topKey;
+    } else {
+      topCategoryEl.textContent = '–';
+    }
+
+    // Week-over-week comparison
+    const compareBox = document.getElementById('statsCompareBox');
+    if (lastWeek.length === 0 && thisWeek.length === 0) {
+      compareBox.innerHTML = `<span>📊</span><span>${t().statsNoDataYet}</span>`;
+    } else if (lastWeek.length === 0) {
+      compareBox.innerHTML = `<span>🆕</span><span>${t().statsFirstWeek}</span>`;
+    } else {
+      const diff = thisWeek.length - lastWeek.length;
+      if (diff > 0) {
+        compareBox.innerHTML = `<span>📈</span><span>${t().statsMoreThanLastWeek(diff)}</span>`;
+      } else if (diff < 0) {
+        compareBox.innerHTML = `<span>📉</span><span>${t().statsLessThanLastWeek(Math.abs(diff))}</span>`;
+      } else {
+        compareBox.innerHTML = `<span>➖</span><span>${t().statsSameAsLastWeek}</span>`;
+      }
+    }
+
+    // Simple bar chart by category
+    const chartEl = document.getElementById('statsChart');
+    if (sortedCategories.length === 0) {
+      chartEl.innerHTML = `<div class="stats-empty">${t().statsEmptyChart}</div>`;
+      return;
+    }
+    const maxCount = sortedCategories[0][1].count;
+    chartEl.innerHTML = sortedCategories.map(([key, data]) => {
+      const label = t().categories[key] || key;
+      const widthPct = Math.max(6, Math.round((data.count / maxCount) * 100));
+      return `
+        <div class="stats-bar-row">
+          <span class="stats-bar-label">${escapeHtml(label)}</span>
+          <div class="stats-bar-track">
+            <div class="stats-bar-fill" style="width:${widthPct}%; background:${data.color}"></div>
+          </div>
+          <span class="stats-bar-count">${data.count}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============================================================
+  // SMART SUGGESTIONS: detect items bought on a consistent, repeating interval
+  // ============================================================
+  const MIN_PURCHASES_FOR_HABIT = 4; // need at least this many recorded purchases of an item
+  const MAX_SUGGESTIONS = 6;
+
+  // A habit is "consistent" if the gaps between purchases don't vary too wildly —
+  // measured as the gaps' standard deviation relative to their average (coefficient
+  // of variation). A lower ratio means a more regular rhythm.
+  function detectHabits() {
+    // Group purchase history by item name (case-insensitive, trimmed)
+    const byName = new Map();
+    purchaseHistory.forEach(p => {
+      const key = p.name.trim().toLowerCase();
+      if (!byName.has(key)) byName.set(key, []);
+      byName.get(key).push(p);
+    });
+
+    const habits = [];
+    byName.forEach((purchases, key) => {
+      if (purchases.length < MIN_PURCHASES_FOR_HABIT) return;
+
+      const sorted = [...purchases].sort((a, b) => a.timestamp - b.timestamp);
+      const gaps = [];
+      for (let i = 1; i < sorted.length; i++) {
+        gaps.push((sorted[i].timestamp - sorted[i - 1].timestamp) / DAY_MS);
+      }
+
+      const avgGap = gaps.reduce((sum, g) => sum + g, 0) / gaps.length;
+      if (avgGap <= 0) return;
+      const variance = gaps.reduce((sum, g) => sum + (g - avgGap) ** 2, 0) / gaps.length;
+      const stdDev = Math.sqrt(variance);
+      const consistency = stdDev / avgGap; // lower = more consistent rhythm
+
+      // Only treat it as a real habit if the rhythm is reasonably regular
+      if (consistency > 0.6) return;
+
+      const latest = sorted[sorted.length - 1];
+      const daysSinceLast = (Date.now() - latest.timestamp) / DAY_MS;
+
+      // Only suggest it if we're at or past the point where it'd usually be bought again
+      if (daysSinceLast < avgGap * 0.7) return;
+
+      habits.push({
+        name: latest.name,
+        catKey: latest.catKey,
+        catColor: latest.catColor,
+        avgGap,
+      });
+    });
+
+    // Most "due" first (furthest past their expected interval)
+    return habits.sort((a, b) => b.avgGap - a.avgGap).slice(0, MAX_SUGGESTIONS);
+  }
+
+  function renderSuggestions() {
+    const card = document.getElementById('suggestionsCard');
+    const listEl = document.getElementById('suggestionsList');
+    const habits = detectHabits();
+
+    if (habits.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    listEl.innerHTML = habits.map(habit => {
+      // Skip suggesting something already sitting in the active list, unbought
+      const alreadyInList = items.some(i => !i.bought && i.name.trim().toLowerCase() === habit.name.trim().toLowerCase());
+      return `
+        <button class="suggestion-chip${alreadyInList ? ' added' : ''}" data-name="${escapeHtml(habit.name)}" data-cat-key="${habit.catKey || ''}" data-cat-color="${habit.catColor || ''}">
+          <span class="plus">${alreadyInList ? '✓' : '+'}</span>${escapeHtml(habit.name)}
+        </button>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('suggestionsList').addEventListener('click', (e) => {
+    const chip = e.target.closest('.suggestion-chip');
+    if (!chip || chip.classList.contains('added')) return;
+    addItem(chip.dataset.name);
+    chip.classList.add('added');
+    chip.querySelector('.plus').textContent = '✓';
+  });
+
+  // ============================================================
+  // AUTH + SHARED LISTS
+  // ============================================================
+  const loginScreen = document.getElementById('loginScreen');
+  const appRoot = document.getElementById('appRoot');
+  const googleSignInBtn = document.getElementById('googleSignInBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const signedInEmail = document.getElementById('signedInEmail');
+  const listPickerBtn = document.getElementById('listPickerBtn');
+  const listPickerOverlay = document.getElementById('listPickerOverlay');
+  const closeListPickerBtn = document.getElementById('closeListPickerBtn');
+  const listPickerItemsEl = document.getElementById('listPickerItems');
+  const newListNameInput = document.getElementById('newListNameInput');
+  const createListBtn = document.getElementById('createListBtn');
+  const joinCodeInput = document.getElementById('joinCodeInput');
+  const joinListBtn = document.getElementById('joinListBtn');
+  const joinListError = document.getElementById('joinListError');
+
+  googleSignInBtn.addEventListener('click', () => {
+    try {
+      if (!window.FB || !window.FB.signInWithGoogle) {
+        showLoginError({ message: 'Firebase עדיין לא נטען - נסה שוב עוד רגע' });
+        return;
+      }
+      window.FB.signInWithGoogle().catch(err => showLoginError(err));
+    } catch (err) {
+      showLoginError(err);
+    }
+  });
+
+  function showLoginError(err) {
+    console.error('Sign-in failed:', err);
+    let existingMsg = document.getElementById('loginErrorMsg');
+    if (!existingMsg) {
+      existingMsg = document.createElement('p');
+      existingMsg.id = 'loginErrorMsg';
+      existingMsg.style.cssText = 'color:#ff6b6b;font-size:12px;margin-top:14px;word-break:break-word;';
+      document.querySelector('.login-box').appendChild(existingMsg);
+    }
+    existingMsg.textContent = `שגיאת התחברות: ${err.code || err.message || err}`;
+  }
+
+  window.addEventListener('firebase-auth-error', (e) => showLoginError(e.detail));
+
+  signOutBtn.addEventListener('click', () => {
+    window.FB.signOutUser();
+  });
+
+  listPickerBtn.addEventListener('click', () => {
+    listPickerOverlay.classList.add('show');
+    renderListPicker();
+  });
+  closeListPickerBtn.addEventListener('click', () => listPickerOverlay.classList.remove('show'));
+  listPickerOverlay.addEventListener('click', (e) => {
+    if (e.target === listPickerOverlay) listPickerOverlay.classList.remove('show');
+  });
+
+  function generateJoinCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous 0/O/1/I
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  createListBtn.addEventListener('click', async () => {
+    const name = newListNameInput.value.trim();
+    if (!name || !currentUser) return;
+    const code = generateJoinCode();
+    const newDoc = window.FB.doc(window.FB.collection(window.FB.db, 'lists'));
+    await window.FB.setDoc(newDoc, {
+      name,
+      code,
+      ownerUid: currentUser.uid,
+      members: [currentUser.uid],
+      items: [],
+      purchaseHistory: [],
+      createdAt: window.FB.serverTimestamp(),
+    });
+    newListNameInput.value = '';
+    await loadMyLists();
+    switchToList(newDoc.id);
+    renderListPicker();
+  });
+
+  joinListBtn.addEventListener('click', async () => {
+    const code = joinCodeInput.value.trim().toUpperCase();
+    joinListError.textContent = '';
+    if (!code || !currentUser) return;
+    try {
+      const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('code', '==', code));
+      const snap = await getDocsCompat(q);
+      if (snap.empty) {
+        joinListError.textContent = t().joinCodeNotFound;
+        return;
+      }
+      const listDoc = snap.docs[0];
+      await window.FB.updateDoc(window.FB.doc(window.FB.db, 'lists', listDoc.id), {
+        members: window.FB.arrayUnion(currentUser.uid),
+      });
+      joinCodeInput.value = '';
+      await loadMyLists();
+      switchToList(listDoc.id);
+      renderListPicker();
+    } catch (err) {
+      console.error('Join failed:', err);
+      // TEMP DEBUG: show the real error code so we can tell "not found" apart
+      // from a Firestore permission-denied (rules) issue.
+      joinListError.textContent = (err.code || err.message || t().joinCodeNotFound);
+    }
+  });
+
+  // getDocs isn't imported by name above (kept the import list minimal) — small helper
+  // that fetches a query's results once, used only for the join-by-code lookup.
+  async function getDocsCompat(q) {
+    const { getDocs } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+    return getDocs(q);
+  }
+
+  async function loadMyLists() {
+    if (!currentUser) { myLists = []; return; }
+    const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('members', 'array-contains', currentUser.uid));
+    const snap = await getDocsCompat(q);
+    myLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  function renderListPicker() {
+    if (myLists.length === 0) {
+      listPickerItemsEl.innerHTML = `<p class="stats-empty">${t().noListsYet}</p>`;
+    } else {
+      listPickerItemsEl.innerHTML = myLists.map(list => `
+        <div class="list-picker-item${list.id === activeListId ? ' active' : ''}" data-id="${list.id}">
+          <div>
+            <div class="list-name">${escapeHtml(list.name)}</div>
+            <div class="list-code">${t().joinCodeLabel}: ${list.code}</div>
+          </div>
+          ${list.id === activeListId ? '✓' : ''}
+        </div>
+      `).join('');
+    }
+    signedInEmail.textContent = currentUser ? currentUser.email : '';
+  }
+
+  listPickerItemsEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.list-picker-item');
+    if (item) {
+      switchToList(item.dataset.id);
+      listPickerOverlay.classList.remove('show');
+    }
+  });
+
+  function switchToList(listId) {
+    activeListId = listId;
+    localStorage.setItem('activeListId', listId);
+    subscribeToActiveList();
+  }
+
+  function subscribeToActiveList() {
+    if (unsubscribeActiveList) { unsubscribeActiveList(); unsubscribeActiveList = null; }
+    if (!activeListId) {
+      items = [];
+      purchaseHistory = [];
+      render();
+      renderStats();
+      updateHeaderForList();
+      return;
+    }
+    unsubscribeActiveList = window.FB.onSnapshot(
+      window.FB.doc(window.FB.db, 'lists', activeListId),
+      (docSnap) => {
+        if (suppressNextSnapshot) { suppressNextSnapshot = false; return; }
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+        items = data.items || [];
+        purchaseHistory = data.purchaseHistory || [];
+        const removedStaleItems = cleanupStaleBoughtItems();
+        render();
+        renderStats();
+        updateHeaderForList(data.name);
+        // If cleanup actually removed something, push that change back to Firestore
+        // so every member's list stays clean, not just this device's local view.
+        if (removedStaleItems) save();
+      },
+      (err) => console.error('List subscription error:', err)
+    );
+  }
+
+  // Removes items that were marked "bought" before today's midnight — a bought item
+  // sticks around for the rest of the day it was checked off (so you can still see
+  // your progress mid-shop), then quietly clears itself the next day.
+  // Returns true if anything was actually removed.
+  function cleanupStaleBoughtItems() {
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const cutoff = todayMidnight.getTime();
+
+    const before = items.length;
+    items = items.filter(item => !(item.bought && item.boughtAt && item.boughtAt < cutoff));
+    return items.length !== before;
+  }
+
+  function updateHeaderForList(name) {
+    const list = myLists.find(l => l.id === activeListId);
+    const displayName = name || (list && list.name);
+    document.getElementById('headerTitle').textContent = displayName
+      ? `${displayName} 🛒`
+      : t().headerTitle;
+  }
+
+  function startAuthListener() {
+    window.FB.onAuthChange(async (user) => {
+      currentUser = user;
+      if (user) {
+        loginScreen.style.display = 'none';
+        appRoot.style.display = 'block';
+        await loadMyLists();
+        // If no active list, or the saved one isn't among ours anymore, fall back to the first available
+        if (!activeListId || !myLists.some(l => l.id === activeListId)) {
+          activeListId = myLists.length > 0 ? myLists[0].id : null;
+          if (activeListId) localStorage.setItem('activeListId', activeListId);
+        }
+        subscribeToActiveList();
+      } else {
+        loginScreen.style.display = 'flex';
+        appRoot.style.display = 'none';
+        if (unsubscribeActiveList) { unsubscribeActiveList(); unsubscribeActiveList = null; }
+      }
+    });
+  }
+
+  // The Firebase module script (type="module") runs asynchronously and may not have
+  // finished by the time this classic script executes, so wait for its ready signal —
+  // unless it already fired before we got here (module scripts can sometimes beat a
+  // classic script that comes after them, depending on load timing).
+  if (window.FB) {
+    startAuthListener();
+  } else {
+    window.addEventListener('firebase-ready', startAuthListener, { once: true });
+  }
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  applyTheme();
+  applyLanguage();
+
+  // In case the app is left open across midnight with no other activity to trigger
+  // a fresh snapshot, periodically re-check for stale bought items on our own.
+  setInterval(() => {
+    if (!activeListId) return;
+    const removed = cleanupStaleBoughtItems();
+    if (removed) { render(); renderStats(); save(); }
+  }, 5 * 60 * 1000); // every 5 minutes
+
+  // Register the service worker so the app can be installed to the home
+  // screen and load reliably even on a flaky connection.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.error('Service worker registration failed:', err));
+    });
+  }
+</script>
+
+</body>
+</html>
