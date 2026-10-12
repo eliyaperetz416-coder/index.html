@@ -1,0 +1,8 @@
+{
+  "name": "shopping-list-app",
+  "private": true,
+  "description": "Local tooling only (Firebase CLI + emulators). The app itself is plain JS in public/.",
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
+  }
+}
