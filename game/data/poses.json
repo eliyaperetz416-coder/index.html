@@ -28,5 +28,29 @@
     "LegLowerL": [90, 0, 0],
     "LegUpperR": [-90, 0, -4],
     "LegLowerR": [90, 0, 0]
+  },
+  "walk_a": {
+    "root": [0, 0, 0],
+    "Torso": [4, -4, 0],
+    "ArmUpperL": [22, 0, 6],
+    "ArmLowerL": [-12, 0, 0],
+    "ArmUpperR": [-24, 0, -6],
+    "ArmLowerR": [-28, 0, 0],
+    "LegUpperL": [-30, 0, 0],
+    "LegLowerL": [12, 0, 0],
+    "LegUpperR": [20, 0, 0],
+    "LegLowerR": [38, 0, 0]
+  },
+  "walk_b": {
+    "root": [0, 0, 0],
+    "Torso": [4, 4, 0],
+    "ArmUpperL": [-24, 0, 6],
+    "ArmLowerL": [-28, 0, 0],
+    "ArmUpperR": [22, 0, -6],
+    "ArmLowerR": [-12, 0, 0],
+    "LegUpperL": [20, 0, 0],
+    "LegLowerL": [38, 0, 0],
+    "LegUpperR": [-30, 0, 0],
+    "LegLowerR": [12, 0, 0]
   }
 }

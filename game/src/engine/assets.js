@@ -6,7 +6,7 @@ const cache = new Map();
 /** Loads a GLB from public/assets (cached) and returns a fresh clone of its scene. */
 export async function loadModel(file) {
   if (!cache.has(file)) {
-    cache.set(file, loader.loadAsync(`${import.meta.env.BASE_URL}assets/${file}`));
+    cache.set(file, loader.loadAsync(`${import.meta.env.BASE_URL}assets/${file}?v=${__BUILD_ID__}`));
   }
   const gltf = await cache.get(file);
   return gltf.scene.clone(true);

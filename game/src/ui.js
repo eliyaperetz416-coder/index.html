@@ -30,6 +30,15 @@ export const ui = {
     $('fade').classList.add('clear');
   },
 
+  async fadeToBlack() {
+    const el = $('fade');
+    if (!el.classList.contains('clear')) return;
+    el.classList.add('fast');
+    el.classList.remove('clear');
+    await wait(500);
+    el.classList.remove('fast');
+  },
+
   letterbox(on) {
     document.body.classList.toggle('cinematic', on);
   },

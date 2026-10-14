@@ -2,7 +2,7 @@
 // Bump VERSION to drop old caches after a release.
 // Only touches caches named dn-*: other apps on the same github.io origin keep theirs.
 const PREFIX = 'dn-';
-const VERSION = `${PREFIX}v1`;
+const VERSION = `${PREFIX}v2`;
 
 self.addEventListener('install', () => self.skipWaiting());
 
