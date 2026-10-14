@@ -1,12 +1,12 @@
 // Global save: L's suspicion meter (0-100), kept across chapters in localStorage.
-const KEY = 'deathnote.save.v1';
-const DEFAULTS = { suspicion: 0 };
+// Each chapter stores its own result, so replaying a chapter replaces its effect instead of stacking it.
+const KEY = 'deathnote.save.v2';
 
 function read() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+    return { chapters: {}, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
   } catch {
-    return { ...DEFAULTS };
+    return { chapters: {} };
   }
 }
 
@@ -19,12 +19,15 @@ function write(save) {
 }
 
 export function getSuspicion() {
-  return read().suspicion;
+  const total = Object.values(read().chapters).reduce((sum, c) => sum + (c.suspicion ?? 0), 0);
+  return Math.max(0, Math.min(100, total));
 }
 
-export function addSuspicion(delta) {
+/** Records a chapter's outcome; returns the meter before and after. */
+export function setChapterResult(chapterId, result) {
+  const before = getSuspicion();
   const save = read();
-  save.suspicion = Math.max(0, Math.min(100, save.suspicion + delta));
+  save.chapters[chapterId] = result;
   write(save);
-  return save.suspicion;
+  return { before, after: getSuspicion() };
 }

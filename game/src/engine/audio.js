@@ -110,6 +110,54 @@ const ONE_SHOTS = {
     n.start(t);
     n.stop(t + 0.3);
   },
+  // Pen on paper: a burst of short scratches.
+  write({ duration = 1 }) {
+    const t0 = ctx.currentTime;
+    const strokes = Math.max(2, Math.round(duration * 7));
+    for (let i = 0; i < strokes; i++) {
+      const t = t0 + (i / strokes) * duration + Math.random() * 0.04;
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'bandpass';
+      hp.frequency.value = 2800 + Math.random() * 1800;
+      hp.Q.value = 0.9;
+      const g = ctx.createGain();
+      envelope(g, t, 0.01, 0.35, 0.06 + Math.random() * 0.06);
+      n.connect(hp).connect(g).connect(master);
+      n.start(t, Math.random());
+      n.stop(t + 0.2);
+    }
+  },
+  // Old TV switching on: static burst over a low hum.
+  tv() {
+    const t = ctx.currentTime;
+    const n = noiseSource();
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 1500;
+    const g = ctx.createGain();
+    envelope(g, t, 0.01, 0.3, 0.5);
+    n.connect(hp).connect(g).connect(master);
+    n.start(t);
+    n.stop(t + 0.6);
+    const hum = ctx.createOscillator();
+    hum.frequency.value = 60;
+    const hg = ctx.createGain();
+    envelope(hg, t, 0.05, 0.08, 1.2);
+    hum.connect(hg).connect(master);
+    hum.start(t);
+    hum.stop(t + 1.3);
+  },
+  tick() {
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 1800;
+    const g = ctx.createGain();
+    envelope(g, t, 0.002, 0.12, 0.05);
+    osc.connect(g).connect(master);
+    osc.start(t);
+    osc.stop(t + 0.08);
+  },
   // Dramatic low swell.
   drone({ duration = 3 }) {
     const t = ctx.currentTime;

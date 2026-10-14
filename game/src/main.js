@@ -6,13 +6,15 @@ import { WalkController } from './engine/walk.js';
 import { initInput, setInputEnabled } from './engine/input.js';
 import { unlockAudio, setAmbience, playSound } from './engine/audio.js';
 import { ui } from './ui.js';
+import { showRules, runNewsPuzzle, showEnd } from './screens.js';
+import { setChapterResult } from './state.js';
 
 const chapters = import.meta.glob('../data/chapters/*.json', { eager: true, import: 'default' });
 const chapter = chapters['../data/chapters/ch1.json'];
 
 const { renderer, camera, fitToScreen } = createRenderer(document.getElementById('app'));
 const timer = new THREE.Timer();
-const game = { stage: null, cutscenes: null, walker: null, timeScale: 1 };
+const game = { stage: null, cutscenes: null, walker: null, timeScale: 1, onFrame: null, result: null };
 
 function frame(time) {
   timer.update(time);
@@ -20,6 +22,7 @@ function frame(time) {
   game.stage?.update(dt);
   game.cutscenes?.update(dt);
   game.walker?.update(dt);
+  game.onFrame?.();
   fitToScreen();
   if (game.stage) renderer.render(game.stage.scene, camera);
 }
@@ -77,6 +80,56 @@ const steps = {
     });
     setInputEnabled(false);
     game.walker.stop();
+  },
+
+  /** Shows a tap button over a 3D object; the player can keep walking until they tap it. */
+  async tap(step) {
+    ui.objective(step.objective);
+    game.walker.resume();
+    setInputEnabled(true);
+    const marker = document.getElementById('tap-marker');
+    marker.textContent = step.label;
+    const target = game.stage.node(step.target);
+    const p = new THREE.Vector3();
+    game.onFrame = () => {
+      target.getWorldPosition(p);
+      p.y += 0.35;
+      p.project(camera);
+      const near = game.walker.distanceTo(step.target) <= step.range;
+      marker.hidden = !near || p.z > 1;
+      marker.style.transform = `translate(${(p.x * 0.5 + 0.5) * innerWidth}px, ${(-p.y * 0.5 + 0.5) * innerHeight}px)`;
+    };
+    await new Promise((resolve) => marker.addEventListener('click', resolve, { once: true }));
+    game.onFrame = null;
+    marker.hidden = true;
+    setInputEnabled(false);
+    game.walker.stop();
+    ui.objective(null);
+  },
+
+  async rules() {
+    await showRules();
+  },
+
+  /** Inner monologue / dialogue lines shown one after another as captions. */
+  async say(step) {
+    for (const line of step.lines) await ui.say(line);
+  },
+
+  /** Time/place card over black, e.g. "That evening". */
+  async card(step) {
+    await ui.fadeToBlack();
+    await ui.titleCard(step.title, step.text);
+  },
+
+  async puzzle(step) {
+    game.result = await runNewsPuzzle(chapter.puzzles[step.id], { say: ui.say });
+  },
+
+  async end(step) {
+    const result = game.result ?? {};
+    const meter = setChapterResult(chapter.id, { suspicion: result.suspicion ?? 0, choice: result.id });
+    await showEnd({ title: step.text, summary: result.summary, ...meter });
   },
 
   async objective(step) {

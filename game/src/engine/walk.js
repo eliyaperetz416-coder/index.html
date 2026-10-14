@@ -70,6 +70,11 @@ export class WalkController {
     this.camera.lookAt(this.look);
   }
 
+  /** Continues walking after stop(), without re-placing the camera. */
+  resume() {
+    this.active = true;
+  }
+
   stop() {
     this.active = false;
     this.character?.walk(0, 0);

@@ -230,6 +230,72 @@
       "objective": "צא מהכיתה ולך לחצר",
       "goal": { "target": "notebook", "radius": 1.0 }
     },
-    { "type": "objective", "text": "הרם את המחברת" }
-  ]
+    { "type": "tap", "target": "notebook", "label": "הרם", "objective": "הרם את המחברת", "range": 2.5 },
+    { "type": "do", "action": "faceTo", "target": "light", "at": "notebook" },
+    { "type": "do", "action": "setPose", "target": "light", "pose": "crouch", "duration": 0.45, "wait": 0.55 },
+    { "type": "do", "action": "hide", "target": "notebook" },
+    { "type": "do", "action": "setPose", "target": "light", "pose": "stand", "duration": 0.45, "wait": 0.6 },
+    { "type": "rules" },
+    {
+      "type": "say",
+      "lines": [
+        { "speaker": "לייט", "thought": true, "text": "...בדיחה של מישהו. ברור.", "for": 2.6 },
+        { "speaker": "לייט", "thought": true, "text": "אבל אם זה אמיתי... יש רק דרך אחת לבדוק.", "for": 3.2 }
+      ]
+    },
+    { "type": "card", "title": "באותו ערב", "text": "החדר של לייט" },
+    { "type": "puzzle", "id": "first_test" },
+    { "type": "end", "text": "סוף פרק 1" }
+  ],
+  "puzzles": {
+    "first_test": {
+      "type": "news",
+      "channel": "חדשות 7",
+      "headline": "מהדורה מיוחדת",
+      "ticker": "המשטרה מחפשת עדיין את השודד מאיקבורו · עצור נוסף בפרשת ההונאה · החוטף בשינג'וקו מסרב לשחרר את בני הערובה",
+      "prompt": "בחר שם לכתוב במחברת",
+      "candidates": [
+        {
+          "id": "otoharada",
+          "name": "קורו אוטוהרדה",
+          "caption": "מחזיק בני ערובה בגן ילדים. שידור חי.",
+          "facts": { "name": true, "face": true },
+          "portrait": { "style": "live", "hair": "#1b1b1d", "skin": "#d9b49a" },
+          "success": {
+            "news": "החוטף קורו אוטוהרדה התמוטט בשידור חי. נקבע מותו מהתקף לב.",
+            "thought": "...זה אמיתי.",
+            "suspicion": 15,
+            "summary": "מוות בשידור חי. כל המדינה ראתה. מישהו בטוח שם לב."
+          }
+        },
+        {
+          "id": "morita",
+          "name": "טאקשי מוריטה",
+          "caption": "נוכל שנעצר אתמול. שם ותמונה פורסמו.",
+          "facts": { "name": true, "face": true },
+          "portrait": { "style": "photo", "hair": "#3a2a20", "skin": "#e2c0a4" },
+          "success": {
+            "news": "עצור בשם טאקשי מוריטה נמצא מת בתאו. התקף לב.",
+            "thought": "...זה אמיתי.",
+            "suspicion": 5,
+            "summary": "מוות שקט בתא מעצר. כמעט אף אחד לא שם לב."
+          }
+        },
+        {
+          "id": "ikebukuro",
+          "name": "השודד מאיקבורו",
+          "caption": "צולם במצלמת אבטחה. שמו לא פורסם.",
+          "facts": { "name": false, "face": true },
+          "portrait": { "style": "cctv", "hair": "#222", "skin": "#c9a88e" }
+        },
+        {
+          "id": "sato",
+          "name": "קנג'י סאטו",
+          "caption": "חשוד בתקיפה, קטין. פניו טושטשו.",
+          "facts": { "name": true, "face": false },
+          "portrait": { "style": "blurred", "hair": "#2b2018", "skin": "#e0bea2" }
+        }
+      ]
+    }
+  }
 }
