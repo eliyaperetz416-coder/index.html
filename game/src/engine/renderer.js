@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const MAX_PIXEL_RATIO = 1.75;
+const MAX_PIXEL_RATIO = 2;
 const DESIGN_ASPECT = 16 / 9;
 
 export function createRenderer(container) {
@@ -13,17 +13,24 @@ export function createRenderer(container) {
   const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
   camera.userData.baseFov = 40;
 
-  function resize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    renderer.setSize(w, h);
+  // The canvas is stretched by CSS to the full screen; its drawing buffer follows the
+  // measured size. iOS home-screen apps report a stale window.innerHeight after
+  // launch/rotation, so the size is checked every frame instead of trusting resize events.
+  let width = 0;
+  let height = 0;
+  function fitToScreen() {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === width && h === height) return;
+    width = w;
+    height = h;
+    renderer.setSize(w, h, false);
     camera.aspect = w / h;
     applyFov(camera, camera.userData.baseFov);
   }
-  window.addEventListener('resize', resize);
-  resize();
+  fitToScreen();
 
-  return { renderer, camera };
+  return { renderer, camera, fitToScreen };
 }
 
 /**
