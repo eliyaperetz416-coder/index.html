@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "publish": "vite build --outDir ../deathnote --emptyOutDir",
-    "assets": "blender -b -P tools/blender/build_assets.py"
+    "assets": "blender -b -P tools/blender/build_assets.py && blender -b -P tools/blender/characters.py",
+    "check-assets": "python3 tools/blender/check_assets.py"
   },
   "dependencies": {
     "three": "^0.186.1"
