@@ -1,0 +1,32 @@
+{
+  "_doc": "Rotations in degrees (x, y, z) per node of a character GLB. 'root' is an offset of the whole body in meters.",
+  "stand": {
+    "root": [0, 0, 0]
+  },
+  "sit_bored": {
+    "root": [0, -0.46, 0],
+    "Torso": [12, 8, 0],
+    "Head": [0, 62, -10],
+    "ArmUpperL": [-50, 0, -30],
+    "ArmLowerL": [-162, -10, -36],
+    "ArmUpperR": [-28, 0, -6],
+    "ArmLowerR": [-62, 0, 0],
+    "LegUpperL": [-90, 0, 4],
+    "LegLowerL": [90, 0, 0],
+    "LegUpperR": [-90, 0, -4],
+    "LegLowerR": [90, 0, 0]
+  },
+  "sit_alert": {
+    "root": [0, -0.46, 0],
+    "Torso": [4, 20, 0],
+    "Head": [-6, 62, 0],
+    "ArmUpperL": [-40, 0, 6],
+    "ArmLowerL": [-55, 0, 0],
+    "ArmUpperR": [-28, 0, -6],
+    "ArmLowerR": [-62, 0, 0],
+    "LegUpperL": [-90, 0, 4],
+    "LegLowerL": [90, 0, 0],
+    "LegUpperR": [-90, 0, -4],
+    "LegLowerR": [90, 0, 0]
+  }
+}
