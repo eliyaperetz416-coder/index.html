@@ -55,7 +55,11 @@ try {
     if (Math.abs(ys(st)) > 0.05) errors.push(`lobby height ${ys(st)} at ${p}`);
   }
   await page.screenshot({ path: `${SHOTS}walk-${SIZE}-lobby.png` });
-  for (const p of [[4.8, -4.5], [9, 1]]) await driveTo(page, p, { tolerance: p[0] > 8 ? 1.02 : 0.25 });
+  await driveTo(page, [4.8, -4.5]);
+  // The walk step ends within 1 m of the notebook and then turns input off.
+  await driveTo(page, [9, 1], {
+    stopWhen: () => document.querySelector('#objective .text').textContent === 'הרם את המחברת',
+  });
   await page.waitForTimeout(600);
   const objective = await page.evaluate(() => document.querySelector('#objective .text').textContent);
   if (objective !== 'הרם את המחברת') errors.push(`did not reach the notebook (objective: ${objective})`);

@@ -46,9 +46,10 @@ async function hold(page, keys) {
 
 /**
  * Drives the player with WASD (relative to the camera) to [x, z]. Calls onStep with the state
- * every poll. Throws if the player does not move for 4 s. Returns the final state.
+ * every poll. Stops early when `stopWhen` (a function run in the page) returns true.
+ * Throws if the player does not move for 4 s. Returns the final state.
  */
-export async function driveTo(page, [tx, tz], { onStep, tolerance = 0.25 } = {}) {
+export async function driveTo(page, [tx, tz], { onStep, tolerance = 0.25, stopWhen } = {}) {
   let last = null;
   let stuckSince = Date.now();
   for (;;) {
@@ -65,7 +66,8 @@ export async function driveTo(page, [tx, tz], { onStep, tolerance = 0.25 } = {})
       return { p: [p.x, p.y, p.z], d, x: (dx * -f.z + dz * f.x) / d, y: (dx * f.x + dz * f.z) / d, area: w.area.id, active: w.active };
     }, [tx, tz]);
     onStep?.(st);
-    if (st.d < tolerance) { await hold(page, []); return st; }
+    // `stopWhen` runs in the page: e.g. the game ended the walk step (it then turns input off).
+    if (st.d < tolerance || (stopWhen && (await page.evaluate(stopWhen)))) { await hold(page, []); return st; }
     const keys = [];
     if (st.y > 0.38) keys.push('w');
     if (st.y < -0.38) keys.push('s');
