@@ -33,6 +33,9 @@ export async function skipToWalking(page) {
   await page.waitForFunction(() => window.__dn.cutscenes?.active, null, { timeout: 60000 });
   await page.evaluate(() => window.__dn.cutscenes.skip());
   await page.waitForFunction(() => window.__dn.walker?.active, null, { timeout: 30000 });
+  // Wait for the fade-in to finish: in software-rendered Chromium the full-screen fade makes
+  // frames very slow, which would look like "stuck" to driveTo.
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('fade')).opacity === '0', null, { timeout: 30000 });
 }
 
 const held = new Set();

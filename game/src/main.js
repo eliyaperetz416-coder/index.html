@@ -161,7 +161,7 @@ window.addEventListener('pointerdown', () => {
   }
 });
 
-if (import.meta.env.DEV) window.__dn = game;
+if (import.meta.env.DEV) window.__dn = Object.assign(game, { renderer });
 
 run().catch((err) => {
   console.error(err);
