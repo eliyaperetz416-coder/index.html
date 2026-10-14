@@ -6,7 +6,8 @@ or with bpy module: python tools/blender/build_assets.py
 Coordinates here are Blender's (Z up, characters face -Y).
 The glTF exporter converts to three.js (Y up, characters face +Z).
 Objects with the custom property "outline" (thickness in meters) get an anime outline in the game.
-Empties with the custom property "collider" are invisible walking blockers (footprint boxes).
+Empties with the custom property "collider" are invisible walking blockers (boxes with height).
+Meshes with the custom property "walk" are invisible surfaces the player stands on.
 """
 import math
 import os
@@ -24,7 +25,7 @@ PALETTE = {
     "wood": "#a07850", "darkwood": "#6e5139", "metal": "#4a4f55", "frame": "#8d9197",
     "curtain": "#cbbf9a", "lamp": "#e8e6dc", "clockface": "#f2efe6",
     "grass": "#2c4a2a", "dirt": "#24211c", "concrete": "#8b8a85", "trunk": "#3b2a1e",
-    "leaves": "#1f3a1f", "facade": "#a7a090", "glass": "#1c2430",
+    "leaves": "#1f3a1f", "facade": "#b9b2a3", "glass": "#1c2430",
     "linoleum": "#4b4a44", "locker": "#56606a",
     "cover": "#0c0c0e", "pages": "#e8e3d3", "title": "#f4f4f4",
 }
@@ -154,10 +155,12 @@ def attach(child, parent):
     child.location = world - world_location(parent)
 
 
-def empty(name, loc, parent=None):
+def empty(name, loc, parent=None, face=None):
+    """Marker. face: direction the marker faces ('-y' default, '+y', '+x', '-x')."""
     obj = bpy.data.objects.new(name, None)
     bpy.context.scene.collection.objects.link(obj)
     obj.location = loc
+    obj.rotation_euler.z = {None: 0, "-y": 0, "+y": math.pi, "+x": math.pi / 2, "-x": -math.pi / 2}[face]
     if parent:
         attach(obj, parent)
     return obj
@@ -166,13 +169,38 @@ def empty(name, loc, parent=None):
 _colliders = []
 
 
-def collider(x0, x1, y0, y1):
-    """Invisible box the player cannot walk through. Only its footprint (x/y) matters."""
-    obj = empty(f"Col_{len(_colliders)}", ((x0 + x1) / 2, (y0 + y1) / 2, 0))
-    obj.scale = ((x1 - x0) / 2, (y1 - y0) / 2, 1)
+def collider(x0, x1, y0, y1, z0=0.0, z1=3.2):
+    """Invisible box the player cannot walk through (only blocks between z0 and z1)."""
+    obj = empty(f"Col_{len(_colliders)}", ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
+    obj.scale = ((x1 - x0) / 2, (y1 - y0) / 2, (z1 - z0) / 2)
     obj["collider"] = 1
     _colliders.append(obj)
     return obj
+
+
+def walk_surface(name, quads):
+    """Invisible mesh the player stands on (floors, stair ramps). quads: lists of 4 (x, y, z) corners."""
+    me = bpy.data.meshes.new(name)
+    verts, faces = [], []
+    for q in quads:
+        faces.append(tuple(range(len(verts), len(verts) + 4)))
+        verts += q
+    me.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(obj)
+    obj["walk"] = 1
+    return obj
+
+
+def flat(x0, x1, y0, y1, z):
+    return [(x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z)]
+
+
+def raise_level(dz):
+    """Moves everything built so far up by dz (used to put a room on floor 2)."""
+    for obj in bpy.context.scene.objects:
+        if obj.parent is None:
+            obj.location.z += dz
 
 
 def reset():
@@ -190,7 +218,22 @@ def export(filename):
     print(f"exported {path} ({os.path.getsize(path) // 1024} KB)")
 
 
-# ---------------------------------------------------------------- Classroom
+# ---------------------------------------------------------------- School layout
+# Floor 1 at z = 0, floor 2 at z = FLOOR2. Light's classroom and the corridor are on floor 2;
+# the stairwell is west of the corridor; the lobby (shoe lockers) is under the corridor and
+# opens east onto the courtyard.
+
+FLOOR2 = 3.6
+STAIR_STEPS = 9            # per flight, plus the landing
+STAIR_RISE = 0.2           # 9 × 0.2 = 1.8 = half a floor
+STAIR_RUN = 0.27
+STAIR_X = -4.2             # where both flights meet the corridor / lobby
+LANDING_X = STAIR_X - STAIR_STEPS * STAIR_RUN   # -6.63
+WELL_X = -8.0              # stairwell inner west wall
+LANE_SPLIT = 4.5           # y: flight B (south, to floor 1) below, flight A (north, from floor 2) above
+
+
+# ---------------------------------------------------------------- Classroom (floor 2)
 
 DESK_COLS = (-2.7, -0.9, 0.9, 2.7)
 DESK_ROWS = (-1.0, 0.4, 1.8)
@@ -199,12 +242,13 @@ DESK_ROWS = (-1.0, 0.4, 1.8)
 def build_classroom():
     reset()
     shell = Part("Shell")
-    shell.span(-4.2, 4.2, -3.2, 3.2, -0.1, 0, "floor")
-    shell.span(-4.2, 4.2, -3.2, 3.2, 3.2, 3.3, "ceiling")
-    shell.span(-4.2, 4.2, -3.2, -3.0, 0, 3.2, "plaster")          # front wall (blackboard)
-    shell.span(-4.2, -4.0, -3.0, 3.0, 0, 3.2, "plaster")          # corridor-side wall
+    # Nothing but the window wall reaches x 4.2: the facade is there, and coplanar faces would flicker.
+    shell.span(-4.2, 4.0, -3.2, 3.2, -0.1, 0, "floor")
+    shell.span(-4.2, 4.0, -3.2, 3.2, 3.2, 3.3, "ceiling")
+    shell.span(-4.2, 4.0, -3.2, -3.0, 0, 3.2, "plaster")          # front wall (blackboard)
+    shell.span(-4.2, -4.0, -3.0, 3.0, 0, 3.2, "plaster")          # west wall
     shell.span(-4.2, -3.4, 3.0, 3.2, 0, 3.2, "plaster")           # back wall, left of door
-    shell.span(-2.4, 4.2, 3.0, 3.2, 0, 3.2, "plaster")            # back wall, right of door
+    shell.span(-2.4, 4.0, 3.0, 3.2, 0, 3.2, "plaster")            # back wall, right of door
     shell.span(-3.4, -2.4, 3.0, 3.2, 2.1, 3.2, "plaster")         # above door
     shell.span(4.0, 4.2, -3.2, 3.2, 0, 0.9, "plaster")            # window wall, below sill
     shell.span(4.0, 4.2, -3.2, 3.2, 2.4, 3.2, "plaster")          # window wall, above
@@ -256,33 +300,38 @@ def build_classroom():
                 desks.box((0.025, 0.025, 0.3), (x + dx, cy + 0.19, 0.58), "metal")
     desks.build(outline=0.006)
 
+    for r, y in enumerate(DESK_ROWS):
+        for c, x in enumerate(DESK_COLS):
+            empty(f"Seat_{r}_{c}", (x, y + 0.42, 0))
     empty("Seat_Light", (2.7, 2.22, 0))
     empty("Spawn_Walk", (1.8, 2.2, 0))         # aisle next to Light's desk
+    empty("Teacher_Spot", (-1.3, -2.45, 0), face="+y")
 
     collider(-4.2, 4.2, -3.2, -3.0)            # front wall
-    collider(-4.2, -4.0, -3.2, 3.2)            # corridor-side wall
+    collider(-4.2, -4.0, -3.2, 3.2)            # west wall
     collider(4.0, 4.2, -3.2, 3.2)              # window wall
     collider(-4.2, -3.4, 3.0, 3.2)             # back wall, left of door
     collider(-2.4, 4.2, 3.0, 3.2)              # back wall, right of door
     collider(-0.6, 0.6, -2.5, -1.9)            # teacher desk
     for x in DESK_COLS:                        # each column of desks + chairs
         collider(x - 0.33, x + 0.33, DESK_ROWS[0] - 0.25, DESK_ROWS[-1] + 0.63)
+    walk_surface("Walk_Classroom", [flat(-4.0, 4.0, -3.0, 3.2, 0)])
+    raise_level(FLOOR2)
     export("classroom.glb")
 
 
-# ---------------------------------------------------------------- Corridor
-# Runs along the classroom's back wall and opens onto the courtyard at its east end.
+# ---------------------------------------------------------------- Corridor (floor 2)
 
 def build_corridor():
     reset()
     shell = Part("CorridorShell")
-    shell.span(-4.2, 4.2, 3.2, 5.8, -0.1, 0, "linoleum")
+    shell.span(-4.2, 4.0, 3.2, 5.8, -0.1, 0, "linoleum")
     shell.span(-4.2, 4.0, 3.2, 5.8, 3.2, 3.3, "ceiling")
     shell.span(-4.2, 4.0, 5.6, 5.8, 0, 1.0, "plaster")       # north wall, below windows
     shell.span(-4.2, 4.0, 5.6, 5.8, 2.2, 3.2, "plaster")     # above windows
     for x0 in (-4.2, -1.6, 1.0, 3.6):                         # pillars between windows
         shell.span(x0, x0 + 0.4, 5.6, 5.8, 1.0, 2.2, "plaster")
-    shell.span(-4.2, -4.0, 3.2, 5.6, 0, 3.2, "plaster")      # west end wall
+    shell.span(-4.3, -4.2, 3.2, LANE_SPLIT, 0, 1.05, "plaster")   # parapet over the lower flight
     shell.build()
 
     detail = Part("CorridorDetail")
@@ -292,14 +341,119 @@ def build_corridor():
         x = -3.6 + i * 0.4
         detail.span(x - 0.19, x + 0.19, 5.15, 5.6, 0, 1.8, "locker")
         detail.span(x - 0.12, x + 0.12, 5.14, 5.15, 1.45, 1.6, "metal")
+    detail.span(2.6, 3.5, 3.0, 3.06, 0, 2.08, "darkwood")      # closed door of the next classroom
+    detail.span(2.85, 3.25, 3.06, 3.07, 1.2, 1.7, "glass")
     for x in (-3.0, -1.0, 1.0, 3.0):
         detail.box((1.2, 0.18, 0.06), (x, 4.4, 3.17), "lamp")
     detail.build(outline=0.01)
 
+    empty("Spot_Corridor_1", (-2.0, 4.85, 0), face="+x")       # pair talking by the lockers
+    empty("Spot_Corridor_2", (-1.35, 4.85, 0), face="-x")
+    empty("Spot_Corridor_3", (1.8, 5.25, 0), face="-y")        # leaning at the window
+    empty("Spot_Corridor_4", (2.45, 4.95, 0), face="-x")
+
     collider(-4.2, 4.0, 5.6, 5.8)               # north wall
-    collider(-4.2, -4.0, 3.2, 5.8)              # west end
     collider(-3.8, -0.6, 5.15, 5.6)             # lockers
+    collider(-4.3, -4.2, 3.2, LANE_SPLIT)       # parapet
+    collider(4.0, 4.2, 3.2, 5.8)                # east end (facade)
+    walk_surface("Walk_Corridor", [flat(-4.2, 4.0, 3.0, 5.8, 0)])
+    raise_level(FLOOR2)
     export("corridor.glb")
+
+
+# ---------------------------------------------------------------- Stairwell (both floors)
+
+def build_stairs():
+    reset()
+    well = Part("StairWell")
+    top = FLOOR2 + 3.8
+    well.span(WELL_X - 0.4, STAIR_X, 2.9, 3.2, -0.1, top, "plaster")        # south wall
+    well.span(WELL_X - 0.4, STAIR_X, 5.8, 6.1, -0.1, top, "plaster")        # north wall
+    well.span(WELL_X - 0.4, WELL_X, 3.2, 5.8, -0.1, top, "plaster")         # west wall
+    well.span(WELL_X - 0.4, STAIR_X, 2.9, 6.1, -0.2, -0.1, "concrete")      # ground slab
+    well.span(WELL_X - 0.4, STAIR_X, 2.9, 6.1, top, top + 0.15, "concrete") # roof
+    well.span(WELL_X, LANDING_X, 3.2, 5.8, 1.6, 1.8, "linoleum")            # landing
+    well.span(WELL_X, STAIR_X, 3.2, LANE_SPLIT - 0.05, FLOOR2 - 0.1, FLOOR2, "linoleum")  # slab over flight B
+    well.span(LANDING_X, STAIR_X, LANE_SPLIT - 0.05, LANE_SPLIT + 0.05, 0, top, "plaster")  # divider
+    well.span(WELL_X - 0.41, WELL_X - 0.39, 4.0, 5.0, FLOOR2 + 0.6, FLOOR2 + 2.2, "glass")  # window
+    well.build()
+
+    steps = Part("StairSteps")
+    for i in range(STAIR_STEPS):
+        # Flight A (north lane): from floor 2 down to the landing, heading west.
+        x1 = STAIR_X - i * STAIR_RUN
+        z = FLOOR2 - (i + 1) * STAIR_RISE
+        steps.span(x1 - STAIR_RUN, x1, LANE_SPLIT + 0.05, 5.8, z - 0.3, z, "linoleum")
+        # Flight B (south lane): from the landing down to floor 1, heading east.
+        x0 = LANDING_X + i * STAIR_RUN
+        z = 1.8 - (i + 1) * STAIR_RISE
+        steps.span(x0, x0 + STAIR_RUN, 3.2, LANE_SPLIT - 0.05, 0, max(z, 0.02), "linoleum")
+    steps.build(outline=0.006)
+
+    collider(WELL_X - 0.4, STAIR_X, 2.9, 3.2, 0, top)          # south wall
+    collider(WELL_X - 0.4, STAIR_X, 5.8, 6.1, 0, top)          # north wall
+    collider(WELL_X - 0.4, WELL_X, 3.2, 5.8, 0, top)           # west wall
+    collider(LANDING_X, STAIR_X, LANE_SPLIT - 0.05, LANE_SPLIT + 0.05, 0, top)  # divider
+    collider(WELL_X, STAIR_X, 3.2, LANE_SPLIT - 0.05, FLOOR2 - 0.1, FLOOR2 + 3.0)  # slab over flight B (floor 2)
+    collider(LANDING_X, STAIR_X, LANE_SPLIT + 0.05, 5.8, 0, 1.6)                # under flight A (floor 1)
+
+    walk_surface("Walk_Stairs", [
+        [(STAIR_X, LANE_SPLIT, FLOOR2), (STAIR_X, 5.8, FLOOR2), (LANDING_X, 5.8, 1.8), (LANDING_X, LANE_SPLIT, 1.8)],
+        flat(WELL_X, LANDING_X, 3.2, 5.8, 1.8),
+        [(LANDING_X, 3.2, 1.8), (LANDING_X, LANE_SPLIT, 1.8), (STAIR_X, LANE_SPLIT, 0), (STAIR_X, 3.2, 0)],
+    ])
+    export("stairs.glb")
+
+
+# ---------------------------------------------------------------- Lobby (floor 1)
+
+def build_lobby():
+    reset()
+    h = FLOOR2 - 0.1
+    shell = Part("LobbyShell")
+    shell.span(-4.2, 4.2, 3.6, 5.4, -0.1, 0, "linoleum")             # threshold under the doors
+    shell.span(-4.2, 4.0, 3.2, 8.0, -0.1, 0, "linoleum")
+    shell.span(-4.2, 4.0, 3.2, 8.0, h - 0.1, h, "ceiling")
+    shell.span(-4.2, 4.0, 3.0, 3.2, 0, h, "plaster")                # south wall (closed room behind)
+    shell.span(-4.2, -4.0, LANE_SPLIT, 8.0, 0, h, "plaster")        # west wall, beside the stairs
+    shell.span(-4.2, 4.0, 8.0, 8.2, 0, h, "plaster")                # north wall
+    # The closed classroom under Light's room: just its outer walls and ceiling.
+    shell.span(-4.2, -4.0, -3.2, 3.0, 0, h, "plaster")
+    shell.span(-4.2, 4.0, -3.2, -3.0, 0, h, "plaster")
+    shell.span(-4.0, 4.0, -3.0, 3.0, h - 0.1, h, "ceiling")
+    shell.span(-4.0, 4.0, -3.0, 3.0, -0.1, 0, "floor")
+    shell.build()
+
+    detail = Part("LobbyDetail")
+    for row_y in (6.3, 7.55):                                       # getabako: shoe locker rows
+        detail.span(-3.4, 1.6, row_y, row_y + 0.45, 0, 1.75, "wood")
+        for i in range(10):
+            x = -3.4 + 0.25 + i * 0.5
+            for k in range(4):
+                z = 0.2 + k * 0.4
+                detail.span(x - 0.2, x + 0.2, row_y - 0.005, row_y, z, z + 0.3, "darkwood")
+    detail.span(-2.6, -0.6, 3.2, 3.24, 1.1, 2.1, "board")             # notice board
+    for i, (x, z) in enumerate(((-2.3, 1.5), (-1.7, 1.75), (-1.1, 1.45), (-1.5, 1.3))):
+        detail.span(x - 0.15, x + 0.15, 3.24, 3.25, z - 0.2, z + 0.2, "pages")
+    detail.span(4.05, 4.1, 3.6, 3.66, 0, 2.6, "frame")                # open glass doors (frames)
+    detail.span(4.05, 4.1, 5.34, 5.4, 0, 2.6, "frame")
+    detail.span(4.05, 4.1, 3.6, 5.4, 2.54, 2.6, "frame")
+    for x in (-2.5, 0.0, 2.5):
+        detail.box((1.2, 0.18, 0.06), (x, 5.0, h - 0.13), "lamp")
+    detail.build(outline=0.008)
+
+    empty("Spot_Lobby_1", (-1.2, 5.55, 0), face="+x")               # pair by the shoe lockers
+    empty("Spot_Lobby_2", (-0.55, 5.6, 0), face="-x")
+    empty("Spot_Lobby_3", (2.3, 6.5, 0), face="-y")
+    empty("Spot_Lobby_4", (2.9, 6.1, 0), face="-x")
+
+    collider(-4.2, 4.2, 3.0, 3.2, 0, h)            # south wall
+    collider(-4.2, -4.0, LANE_SPLIT, 8.0, 0, h)    # west wall
+    collider(-4.2, 4.2, 8.0, 8.2, 0, h)            # north wall
+    collider(-3.4, 1.6, 6.3, 6.75, 0, h)           # shoe lockers
+    collider(-3.4, 1.6, 7.55, 8.0, 0, h)
+    walk_surface("Walk_Lobby", [flat(-4.2, 4.2, 3.2, 8.0, 0)])
+    export("lobby.glb")
 
 
 # ---------------------------------------------------------------- Courtyard
@@ -314,21 +468,26 @@ def build_courtyard():
     ground.span(4.2, 24, -20, 20, -0.1, -0.02, "grass")
     ground.span(4.2, 6.2, -20, 20, -0.1, 0.0, "concrete")
     ground.span(6.2, 24, -1.8, -0.2, -0.1, -0.01, "concrete")    # path to the landing spot
+    ground.span(6.2, 9.0, 3.6, 5.4, -0.1, -0.01, "concrete")     # path from the lobby doors
     ground.build()
 
     facade = Part("SchoolFacade")
-    facade.span(4.0, 4.2, -20, -3.2, 0, 7.4, "facade")
-    facade.span(4.0, 4.2, 3.2, 3.6, 0, 7.4, "facade")
-    facade.span(4.0, 4.2, 3.6, 5.4, 2.6, 7.4, "facade")       # over the corridor exit
-    facade.span(4.0, 4.2, 5.4, 20, 0, 7.4, "facade")
-    facade.span(4.0, 4.2, -3.2, 3.2, 3.2, 7.4, "facade")
-    facade.span(-4.2, 4.2, -20, 20, 7.3, 7.5, "concrete")         # roof slab
-    for y0 in range(-19, 19, 3):
-        if -4 < y0 < 6:                                        # classroom windows + corridor exit
+    top = FLOOR2 + 3.8
+    facade.span(4.0, 4.2, -20, -3.2, 0, top, "facade")
+    facade.span(4.0, 4.2, 3.2, 3.6, 0, top, "facade")
+    facade.span(4.0, 4.2, 3.6, 5.4, 2.6, top, "facade")           # over the lobby doors
+    facade.span(4.0, 4.2, 5.4, 20, 0, top, "facade")
+    facade.span(4.0, 4.2, -3.2, 3.2, 0, FLOOR2, "facade")         # floor 1 under Light's classroom
+    facade.span(4.0, 4.2, -3.2, 3.2, FLOOR2 + 3.2, top, "facade")
+    facade.span(-8.4, 4.2, -20, 20, top - 0.1, top + 0.1, "concrete")  # roof slab
+    for y0 in range(-19, 19, 3):                                   # floor 1 windows
+        if 2 < y0 < 6:
             continue
         facade.span(4.19, 4.24, y0 + 0.3, y0 + 2.5, 1.0, 2.4, "glass")
-    for y0 in range(-19, 19, 3):
-        facade.span(4.19, 4.24, y0 + 0.3, y0 + 2.5, 4.4, 5.8, "glass")
+    for y0 in range(-19, 19, 3):                                   # floor 2 windows (not on the classroom)
+        if -4 < y0 < 3:
+            continue
+        facade.span(4.19, 4.24, y0 + 0.3, y0 + 2.5, FLOOR2 + 0.9, FLOOR2 + 2.4, "glass")
     facade.build(outline=0.03)
 
     walls = Part("Walls")
@@ -349,13 +508,15 @@ def build_courtyard():
 
     empty("Landing_Notebook", (9, -1, 0))
 
-    collider(4.0, 4.2, -20, 3.6)                # school facade, south of the exit
-    collider(4.0, 4.2, 5.4, 20)                 # north of the exit
-    collider(24, 24.3, -20, 20)                 # perimeter walls
-    collider(4.2, 24.3, -20.3, -20)
-    collider(4.2, 24.3, 20, 20.3)
+    collider(4.0, 4.2, -20, 3.6, 0, top)        # school facade, south of the doors
+    collider(4.0, 4.2, 5.4, 20, 0, top)         # north of the doors
+    collider(4.0, 4.2, 3.6, 5.4, 2.6, top)      # over the doors
+    collider(24, 24.3, -20, 20, 0, 1.8)         # perimeter walls
+    collider(4.2, 24.3, -20.3, -20, 0, 1.8)
+    collider(4.2, 24.3, 20, 20.3, 0, 1.8)
     for x, y in TREES:
-        collider(x - 0.25, x + 0.25, y - 0.25, y + 0.25)
+        collider(x - 0.25, x + 0.25, y - 0.25, y + 0.25, 0, 2.5)
+    walk_surface("Walk_Courtyard", [flat(4.0, 24.0, -20.0, 20.0, 0)])
     export("courtyard.glb")
 
 
@@ -376,5 +537,7 @@ def build_notebook():
 if __name__ == "__main__":
     build_classroom()
     build_corridor()
+    build_stairs()
+    build_lobby()
     build_courtyard()
     build_notebook()

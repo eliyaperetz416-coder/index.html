@@ -22,6 +22,14 @@ CHARACTER_FILES = [
 ]
 MAX_CHAR_TRIS = 4000
 
+SCHOOL_FILES = ["classroom.glb", "corridor.glb", "stairs.glb", "lobby.glb", "courtyard.glb"]
+MAX_SCHOOL_TRIS = 30000
+SCHOOL_MARKERS = (
+    [f"Seat_{r}_{c}" for r in range(3) for c in range(4)]
+    + ["Teacher_Spot", "Spawn_Walk", "Seat_Light", "Landing_Notebook"]
+    + [f"Spot_Corridor_{i}" for i in range(1, 5)] + [f"Spot_Lobby_{i}" for i in range(1, 5)]
+)
+
 
 def read_glb(path):
     """Returns the glTF JSON of a .glb file."""
@@ -80,6 +88,35 @@ def check_character(path, expected_files_only=False):
     return errors
 
 
+def check_school():
+    errors = []
+    names = set()
+    total = 0
+    for f in SCHOOL_FILES:
+        path = os.path.join(ASSETS, f)
+        if not os.path.exists(path):
+            errors.append(f"{f}: missing")
+            continue
+        g = read_glb(path)
+        total += triangles(g)
+        names |= {n.get("name") for n in g["nodes"]}
+        if not any(n.get("extras", {}).get("walk") for n in g["nodes"]):
+            errors.append(f"{f}: no Walk_* surface (extras.walk)")
+        for n in g["nodes"]:
+            if n.get("extras", {}).get("collider"):
+                sy = n.get("scale", [1, 1, 1])[1]   # Blender Z scale = glTF Y scale = half height
+                if sy <= 0:
+                    errors.append(f"{f}: collider {n.get('name')} has no height")
+    missing = [m for m in SCHOOL_MARKERS if m not in names]
+    if missing:
+        errors.append(f"school: missing markers {missing}")
+    if total > MAX_SCHOOL_TRIS:
+        errors.append(f"school: {total} triangles > {MAX_SCHOOL_TRIS}")
+    if not errors:
+        print(f"ok  school: {total} tris in {len(SCHOOL_FILES)} files")
+    return errors
+
+
 def check_characters():
     errors = []
     for f in CHARACTER_FILES:
@@ -95,6 +132,7 @@ def main(argv):
             errors += check_character(os.path.join(ASSETS, f))
     else:
         errors += check_characters()
+        errors += check_school()
     for e in errors:
         print("FAIL", e)
     return 1 if errors else 0
