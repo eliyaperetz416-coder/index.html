@@ -65,5 +65,65 @@
     "LowerLegL": [105, 0, 0],
     "UpperLegR": [-40, 0, -4],
     "LowerLegR": [95, 0, 0]
+  },
+  "sit_write": {
+    "root": [0, -0.46, 0],
+    "Spine": [18, 0, 0],
+    "Head": [22, 0, 0],
+    "UpperArmL": [-35, 0, 12],
+    "LowerArmL": [-70, 0, 0],
+    "UpperArmR": [-42, 0, -10],
+    "LowerArmR": [-68, 0, 0],
+    "UpperLegL": [-80, 0, 4],
+    "LowerLegL": [80, 0, 0],
+    "UpperLegR": [-80, 0, -4],
+    "LowerLegR": [80, 0, 0]
+  },
+  "sit_listen": {
+    "root": [0, -0.46, 0],
+    "Spine": [4, 0, 0],
+    "Head": [-3, 0, 0],
+    "UpperArmL": [-30, 0, 6],
+    "LowerArmL": [-62, 0, 0],
+    "UpperArmR": [-30, 0, -6],
+    "LowerArmR": [-62, 0, 0],
+    "UpperLegL": [-80, 0, 4],
+    "LowerLegL": [80, 0, 0],
+    "UpperLegR": [-80, 0, -4],
+    "LowerLegR": [80, 0, 0]
+  },
+  "stand_talk": {
+    "root": [0, 0, 0],
+    "UpperArmR": [-15, 0, -8],
+    "LowerArmR": [-60, 0, 0],
+    "UpperArmL": [0, 0, 6]
+  },
+  "stand_lean": {
+    "root": [0, 0, 0],
+    "Spine": [-4, 0, 5],
+    "Head": [0, 10, -4],
+    "UpperArmL": [10, 0, 18],
+    "LowerArmL": [-12, 0, 0],
+    "UpperArmR": [8, 0, -8],
+    "LowerArmR": [-25, 0, 0],
+    "UpperLegR": [-10, 0, -6],
+    "LowerLegR": [12, 0, 0]
+  },
+  "teacher_board": {
+    "root": [0, 0, 0],
+    "Head": [0, -25, 0],
+    "UpperArmR": [0, 0, -75],
+    "LowerArmR": [-30, 0, 0],
+    "UpperArmL": [-20, 0, 4],
+    "LowerArmL": [-70, 0, 0]
+  },
+  "teacher_books": {
+    "root": [0, 0, 0],
+    "Spine": [18, 0, 0],
+    "Head": [20, 0, 0],
+    "UpperArmL": [-40, 0, 10],
+    "LowerArmL": [-62, 0, 0],
+    "UpperArmR": [-40, 0, -10],
+    "LowerArmR": [-62, 0, 0]
   }
 }
