@@ -37,13 +37,28 @@ export class CutscenePlayer {
     this.update(0);
   }
 
+  /**
+   * Jumps to the end: fast-forwards the rest silently, so everything the
+   * cutscene changes (notebook landed, poses, lights) ends up in its final state.
+   */
+  skip() {
+    if (!this.active) return;
+    this.skipping = true;
+    const step = 1 / 20;
+    while (this.active) {
+      this.stage.update(step);
+      this.update(step);
+    }
+    this.skipping = false;
+  }
+
   fire(event) {
     const { stage } = this;
-    if (event.sound) playSound(event.sound, event);
+    if (event.sound && !this.skipping) playSound(event.sound, event);
     if (event.action) stage[event.action](event);
     if (event.pose) stage.setPose({ target: event.target, pose: event.pose, duration: event.duration });
     if (event.lights) stage.setLights(event);
-    if (event.shake) this.active.shake = { amount: event.shake, t: 0, duration: event.duration ?? 0.3 };
+    if (event.shake && !this.skipping) this.active.shake = { amount: event.shake, t: 0, duration: event.duration ?? 0.3 };
   }
 
   update(dt) {

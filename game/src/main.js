@@ -96,6 +96,18 @@ async function run() {
   for (const step of chapter.flow) await steps[step.type](step);
 }
 
+// Double tap anywhere skips the running cutscene.
+let lastTap = 0;
+window.addEventListener('pointerdown', () => {
+  const now = performance.now();
+  if (game.cutscenes?.active && now - lastTap < 400) {
+    game.cutscenes.skip();
+    lastTap = 0;
+  } else {
+    lastTap = now;
+  }
+});
+
 if (import.meta.env.DEV) window.__dn = game;
 
 run().catch((err) => {
