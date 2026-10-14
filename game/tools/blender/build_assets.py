@@ -23,8 +23,8 @@ PALETTE = {
     "floor": "#5b4636", "ceiling": "#cfcac0", "plaster": "#b9b2a3", "board": "#1f3a2e",
     "wood": "#a07850", "darkwood": "#6e5139", "metal": "#4a4f55", "frame": "#8d9197",
     "curtain": "#cbbf9a", "lamp": "#e8e6dc", "clockface": "#f2efe6",
-    "grass": "#3d4a35", "dirt": "#3a352c", "concrete": "#6f6b64", "trunk": "#3b2a1e",
-    "leaves": "#24331f", "facade": "#9a9384", "glass": "#1c2430",
+    "grass": "#2c4a2a", "dirt": "#24211c", "concrete": "#8b8a85", "trunk": "#3b2a1e",
+    "leaves": "#1f3a1f", "facade": "#a7a090", "glass": "#1c2430",
     "linoleum": "#4b4a44", "locker": "#56606a",
     "cover": "#0c0c0e", "pages": "#e8e3d3", "title": "#f4f4f4",
 }

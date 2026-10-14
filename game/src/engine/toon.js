@@ -13,7 +13,8 @@ function makeGradient(steps) {
   return tex;
 }
 
-const gradientMap = makeGradient([70, 150, 255]);
+// Shadow / mid / lit bands. A dark shadow band keeps contrast high (no washed-out look).
+const gradientMap = makeGradient([45, 150, 255]);
 const toonCache = new Map();
 const outlineMaterials = new Map();
 
