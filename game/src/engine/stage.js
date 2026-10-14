@@ -27,6 +27,13 @@ function makeSky({ top, horizon }) {
   return sky;
 }
 
+// Collider empties are unit boxes scaled to half-extents; only the x/z footprint matters.
+function footprint(empty) {
+  const p = empty.getWorldPosition(new THREE.Vector3());
+  const s = empty.getWorldScale(new THREE.Vector3());
+  return { minX: p.x - s.x, maxX: p.x + s.x, minZ: p.z - s.z, maxZ: p.z + s.z };
+}
+
 export class Stage {
   constructor(sceneData) {
     this.data = sceneData;
@@ -34,6 +41,7 @@ export class Stage {
     this.objects = {};     // id -> Object3D (assets with an "id")
     this.characters = {};  // id -> Character
     this.markers = {};     // empties from GLBs, e.g. Seat_Light
+    this.colliders = [];   // walking blockers: { minX, maxX, minZ, maxZ }
     this.tweens = [];
   }
 
@@ -58,6 +66,12 @@ export class Stage {
     this.key.shadow.normalBias = 0.04;
     this.scene.add(this.key, this.key.target);
 
+    for (const p of lighting.points ?? []) {
+      const point = new THREE.PointLight(p.color, p.intensity, p.distance, 2);
+      point.position.set(...p.position);
+      this.scene.add(point);
+    }
+
     const models = await Promise.all(this.data.assets.map((asset) => loadModel(asset.file)));
     // Static models first, so their markers exist when placing the rest.
     this.data.assets.forEach((asset, i) => {
@@ -70,8 +84,18 @@ export class Stage {
 
   addStatic(model) {
     toonify(model);
-    model.traverse((o) => { if (!o.isMesh && o.name && o.children.length === 0) this.markers[o.name] = o; });
     this.scene.add(model);
+    model.updateMatrixWorld(true);
+    model.traverse((o) => {
+      if (o.isMesh || !o.name || o.children.length) return;
+      if (o.userData.collider) this.colliders.push(footprint(o));
+      else this.markers[o.name] = o;
+    });
+  }
+
+  /** A placed asset by id, or any named node in the scene (e.g. "Door"). */
+  node(name) {
+    return this.objects[name] ?? this.scene.getObjectByName(name);
   }
 
   addPlaced(asset, model) {
@@ -109,6 +133,22 @@ export class Stage {
       const rest = 1 - e;
       obj.rotation.set(endRot.x + spin.x * rest, endRot.y + spin.y * rest, endRot.z + spin.z * rest);
     });
+  }
+
+  /** Moves a placed asset onto a marker (position + facing). */
+  place({ target, at }) {
+    const obj = this.objects[target];
+    const marker = this.markers[at];
+    marker.getWorldPosition(obj.position);
+    marker.getWorldQuaternion(obj.quaternion);
+  }
+
+  /** Slides a node by an offset, e.g. opening the classroom door. */
+  move({ node, by, duration = 0.6 }) {
+    const obj = this.node(node);
+    const start = obj.position.clone();
+    const end = start.clone().add(new THREE.Vector3(...by));
+    this.addTween(duration, (k) => obj.position.lerpVectors(start, end, k * (2 - k)));
   }
 
   setPose({ target, pose, duration }) {

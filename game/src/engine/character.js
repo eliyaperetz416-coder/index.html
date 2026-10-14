@@ -26,21 +26,47 @@ export class Character {
       this.rest[o.name] = o.quaternion.clone();
     });
     this.tween = null;
+    this.walkPhase = 0;
+    this.walkBlend = 0;
+    this.walkPoses = null;
+  }
+
+  /** Pose rotations are relative to the rest pose; joints a pose does not mention return to rest. */
+  resolve(name) {
+    const target = poseTargets(name);
+    for (const [joint, rest] of Object.entries(this.rest)) {
+      target.joints[joint] = rest.clone().multiply(target.joints[joint] ?? new THREE.Quaternion());
+    }
+    return target;
   }
 
   /** Jumps to a pose, or blends to it over `duration` seconds. */
   setPose(name, duration = 0) {
-    const target = poseTargets(name);
+    const target = this.resolve(name);
     const from = {
       root: this.model.position.clone(),
       joints: Object.fromEntries(Object.values(this.joints).map((j) => [j.name, j.quaternion.clone()])),
     };
-    // Pose rotations are relative to the rest pose; joints a pose does not mention return to rest.
-    for (const [name, rest] of Object.entries(this.rest)) {
-      target.joints[name] = rest.clone().multiply(target.joints[name] ?? new THREE.Quaternion());
-    }
     this.tween = { from, target, t: 0, duration };
     if (duration <= 0) this.update(0);
+  }
+
+  /**
+   * Walk cycle: swings between the walk_a and walk_b poses. `amount` is 0 (idle) to 1 (full speed).
+   * Starts from the standing rest pose, so call setPose('stand') before walking.
+   */
+  walk(dt, amount) {
+    if (this.tween) return;
+    this.walkPoses ??= { a: this.resolve('walk_a'), b: this.resolve('walk_b') };
+    this.walkBlend += (amount - this.walkBlend) * Math.min(1, dt * 10);
+    this.walkPhase += dt * 9 * Math.max(amount, 0.35);
+    const k = 0.5 + 0.5 * Math.sin(this.walkPhase);
+    const q = new THREE.Quaternion();
+    for (const [name, qa] of Object.entries(this.walkPoses.a.joints)) {
+      q.slerpQuaternions(qa, this.walkPoses.b.joints[name], k);
+      this.joints[name].quaternion.slerpQuaternions(this.rest[name], q, this.walkBlend);
+    }
+    this.model.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.025 * this.walkBlend;
   }
 
   update(dt) {

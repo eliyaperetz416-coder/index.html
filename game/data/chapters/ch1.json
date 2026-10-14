@@ -3,9 +3,10 @@
   "title": "פרק 1",
   "subtitle": "המחברת נופלת",
   "scenes": {
-    "classroom": {
+    "school": {
       "assets": [
         { "file": "classroom.glb" },
+        { "file": "corridor.glb" },
         { "file": "courtyard.glb" },
         { "file": "notebook.glb", "id": "notebook", "at": "Landing_Notebook", "hidden": true },
         { "file": "light.glb", "id": "light", "at": "Seat_Light", "pose": "sit_bored" }
@@ -19,17 +20,54 @@
           "intensity": 2.6,
           "position": [18, 6.5, 5],
           "target": [2, 0, -1]
-        }
+        },
+        "points": [
+          {
+            "position": [0, 2.8, -4.4],
+            "color": "#c4cedc",
+            "intensity": 4,
+            "distance": 9
+          }
+        ]
       },
       "ambience": [
         "roomTone",
         "clock"
+      ],
+      "areas": [
+        {
+          "id": "classroom",
+          "rect": [-4, -3, 4, 3],
+          "camera": {
+            "offset": [0, 2.5, 2.4],
+            "clamp": [-3.7, -2.75, 3.7, 2.75],
+            "fov": 55
+          }
+        },
+        {
+          "id": "corridor",
+          "rect": [-4, -5.8, 4, -3],
+          "camera": {
+            "offset": [-2.4, 1.9, 0.9],
+            "clamp": [-3.8, -5.4, 3.8, -3.4],
+            "fov": 60
+          }
+        },
+        {
+          "id": "courtyard",
+          "rect": [4, -25, 30, 25],
+          "camera": {
+            "offset": [-3, 2.6, -2.2],
+            "clamp": [4.5, -19, 23, 19],
+            "fov": 55
+          }
+        }
       ]
     }
   },
   "cutscenes": {
     "notebook_falls": {
-      "scene": "classroom",
+      "scene": "school",
       "shots": [
         {
           "duration": 5.5,
@@ -168,6 +206,21 @@
   "flow": [
     { "type": "title" },
     { "type": "cutscene", "id": "notebook_falls" },
-    { "type": "objective", "text": "צא מהכיתה ולך לחצר" }
+    {
+      "type": "do",
+      "action": "move",
+      "node": "Door",
+      "by": [0.95, 0, 0],
+      "duration": 0.8
+    },
+    {
+      "type": "walk",
+      "scene": "school",
+      "character": "light",
+      "spawn": "Spawn_Walk",
+      "objective": "צא מהכיתה ולך לחצר",
+      "goal": { "target": "notebook", "radius": 1.0 }
+    },
+    { "type": "objective", "text": "הרם את המחברת" }
   ]
 }

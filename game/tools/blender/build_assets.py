@@ -6,6 +6,7 @@ or with bpy module: python tools/blender/build_assets.py
 Coordinates here are Blender's (Z up, characters face -Y).
 The glTF exporter converts to three.js (Y up, characters face +Z).
 Objects with the custom property "outline" (thickness in meters) get an anime outline in the game.
+Empties with the custom property "collider" are invisible walking blockers (footprint boxes).
 """
 import math
 import os
@@ -24,6 +25,7 @@ PALETTE = {
     "curtain": "#cbbf9a", "lamp": "#e8e6dc", "clockface": "#f2efe6",
     "grass": "#3d4a35", "dirt": "#3a352c", "concrete": "#6f6b64", "trunk": "#3b2a1e",
     "leaves": "#24331f", "facade": "#9a9384", "glass": "#1c2430",
+    "linoleum": "#4b4a44", "locker": "#56606a",
     "cover": "#0c0c0e", "pages": "#e8e3d3", "title": "#f4f4f4",
 }
 
@@ -161,7 +163,20 @@ def empty(name, loc, parent=None):
     return obj
 
 
+_colliders = []
+
+
+def collider(x0, x1, y0, y1):
+    """Invisible box the player cannot walk through. Only its footprint (x/y) matters."""
+    obj = empty(f"Col_{len(_colliders)}", ((x0 + x1) / 2, (y0 + y1) / 2, 0))
+    obj.scale = ((x1 - x0) / 2, (y1 - y0) / 2, 1)
+    obj["collider"] = 1
+    _colliders.append(obj)
+    return obj
+
+
 def reset():
+    _colliders.clear()
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
@@ -292,8 +307,49 @@ def build_classroom():
     desks.build(outline=0.006)
 
     empty("Seat_Light", (2.7, 2.22, 0))
-    empty("Exit_Door", (-2.9, 2.7, 0))
+    empty("Spawn_Walk", (1.8, 2.2, 0))         # aisle next to Light's desk
+
+    collider(-4.2, 4.2, -3.2, -3.0)            # front wall
+    collider(-4.2, -4.0, -3.2, 3.2)            # corridor-side wall
+    collider(4.0, 4.2, -3.2, 3.2)              # window wall
+    collider(-4.2, -3.4, 3.0, 3.2)             # back wall, left of door
+    collider(-2.4, 4.2, 3.0, 3.2)              # back wall, right of door
+    collider(-0.6, 0.6, -2.5, -1.9)            # teacher desk
+    for x in DESK_COLS:                        # each column of desks + chairs
+        collider(x - 0.33, x + 0.33, DESK_ROWS[0] - 0.25, DESK_ROWS[-1] + 0.63)
     export("classroom.glb")
+
+
+# ---------------------------------------------------------------- Corridor
+# Runs along the classroom's back wall and opens onto the courtyard at its east end.
+
+def build_corridor():
+    reset()
+    shell = Part("CorridorShell")
+    shell.span(-4.2, 4.2, 3.2, 5.8, -0.1, 0, "linoleum")
+    shell.span(-4.2, 4.0, 3.2, 5.8, 3.2, 3.3, "ceiling")
+    shell.span(-4.2, 4.0, 5.6, 5.8, 0, 1.0, "plaster")       # north wall, below windows
+    shell.span(-4.2, 4.0, 5.6, 5.8, 2.2, 3.2, "plaster")     # above windows
+    for x0 in (-4.2, -1.6, 1.0, 3.6):                         # pillars between windows
+        shell.span(x0, x0 + 0.4, 5.6, 5.8, 1.0, 2.2, "plaster")
+    shell.span(-4.2, -4.0, 3.2, 5.6, 0, 3.2, "plaster")      # west end wall
+    shell.build()
+
+    detail = Part("CorridorDetail")
+    for x0, x1 in ((-3.8, -1.6), (-1.2, 1.0), (1.4, 3.6)):
+        detail.span(x0, x1, 5.66, 5.72, 1.0, 2.2, "glass")
+    for i in range(8):                                          # lockers
+        x = -3.6 + i * 0.4
+        detail.span(x - 0.19, x + 0.19, 5.15, 5.6, 0, 1.8, "locker")
+        detail.span(x - 0.12, x + 0.12, 5.14, 5.15, 1.45, 1.6, "metal")
+    for x in (-3.0, -1.0, 1.0, 3.0):
+        detail.box((1.2, 0.18, 0.06), (x, 4.4, 3.17), "lamp")
+    detail.build(outline=0.01)
+
+    collider(-4.2, 4.0, 5.6, 5.8)               # north wall
+    collider(-4.2, -4.0, 3.2, 5.8)              # west end
+    collider(-3.8, -0.6, 5.15, 5.6)             # lockers
+    export("corridor.glb")
 
 
 # ---------------------------------------------------------------- Courtyard
@@ -312,11 +368,13 @@ def build_courtyard():
 
     facade = Part("SchoolFacade")
     facade.span(4.0, 4.2, -20, -3.2, 0, 7.4, "facade")
-    facade.span(4.0, 4.2, 3.2, 20, 0, 7.4, "facade")
+    facade.span(4.0, 4.2, 3.2, 3.6, 0, 7.4, "facade")
+    facade.span(4.0, 4.2, 3.6, 5.4, 2.6, 7.4, "facade")       # over the corridor exit
+    facade.span(4.0, 4.2, 5.4, 20, 0, 7.4, "facade")
     facade.span(4.0, 4.2, -3.2, 3.2, 3.2, 7.4, "facade")
     facade.span(-4.2, 4.2, -20, 20, 7.3, 7.5, "concrete")         # roof slab
     for y0 in range(-19, 19, 3):
-        if -4 < y0 < 3:
+        if -4 < y0 < 6:                                        # classroom windows + corridor exit
             continue
         facade.span(4.19, 4.24, y0 + 0.3, y0 + 2.5, 1.0, 2.4, "glass")
     for y0 in range(-19, 19, 3):
@@ -340,6 +398,14 @@ def build_courtyard():
     trees.build(outline=0.04)
 
     empty("Landing_Notebook", (9, -1, 0))
+
+    collider(4.0, 4.2, -20, 3.6)                # school facade, south of the exit
+    collider(4.0, 4.2, 5.4, 20)                 # north of the exit
+    collider(24, 24.3, -20, 20)                 # perimeter walls
+    collider(4.2, 24.3, -20.3, -20)
+    collider(4.2, 24.3, 20, 20.3)
+    for x, y in TREES:
+        collider(x - 0.25, x + 0.25, y - 0.25, y + 0.25)
     export("courtyard.glb")
 
 
@@ -360,5 +426,6 @@ def build_notebook():
 if __name__ == "__main__":
     build_light()
     build_classroom()
+    build_corridor()
     build_courtyard()
     build_notebook()

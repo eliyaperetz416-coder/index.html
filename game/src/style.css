@@ -17,6 +17,7 @@ html, body {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  -webkit-touch-callout: none;
 }
 
 #app, #app canvas { position: fixed; inset: 0; display: block; }
@@ -40,6 +41,7 @@ body.cinematic .bar { transform: scaleY(1); }
   transition: opacity 2.2s ease;
 }
 #fade.clear { opacity: 0; }
+#fade.fast { transition-duration: 0.45s; }
 
 #title-card {
   position: fixed; inset: 0; display: grid; place-content: center; text-align: center;
@@ -84,3 +86,22 @@ body.cinematic .bar { transform: scaleY(1); }
 }
 #start-hint { color: var(--muted); font-size: 14px; animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.35; } }
+
+/* Floating joystick: appears under the thumb while walking is enabled */
+#joystick {
+  position: fixed; left: 0; top: 0; width: 112px; height: 112px; border-radius: 50%;
+  border: 2px solid rgba(242, 239, 232, 0.35); background: rgba(0, 0, 0, 0.25);
+  opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
+}
+#joystick.active { opacity: 1; }
+#joystick .knob {
+  position: absolute; left: 34px; top: 34px; width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(242, 239, 232, 0.75); box-shadow: 0 0 0 3px rgba(179, 36, 43, 0.6);
+}
+
+#walk-hint {
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22px); transform: translateX(-50%);
+  font-size: 13px; color: var(--muted); letter-spacing: 0.05em; pointer-events: none;
+  opacity: 0; transition: opacity 0.6s ease;
+}
+body.can-walk:not(.has-walked) #walk-hint { opacity: 1; }
