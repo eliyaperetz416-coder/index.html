@@ -63,11 +63,13 @@ def check_character(path, expected_files_only=False):
     tris = triangles(g)
     if tris > MAX_CHAR_TRIS:
         errors.append(f"{name}: {tris} triangles > {MAX_CHAR_TRIS}")
+    if len(g.get("images", [])) != 1:
+        errors.append(f"{name}: {len(g.get('images', []))} images, expected 1 face texture")
     if len(g.get("materials", [])) != 1:
         errors.append(f"{name}: {len(g.get('materials', []))} materials, expected 1")
     for mesh in g.get("meshes", []):
         for prim in mesh["primitives"]:
-            for attr in ("COLOR_0", "JOINTS_0", "WEIGHTS_0"):
+            for attr in ("COLOR_0", "JOINTS_0", "WEIGHTS_0", "TEXCOORD_0"):
                 if attr not in prim["attributes"]:
                     errors.append(f"{name}: primitive without {attr}")
     palettes = [n["extras"]["palette"] for n in g["nodes"] if "palette" in n.get("extras", {})]
