@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { loadModel } from './assets.js';
 import { toonify } from './toon.js';
 import { Character } from './character.js';
+import { footprint } from './collision.js';
 
 function makeSky({ top, horizon }) {
   const mat = new THREE.ShaderMaterial({
@@ -27,13 +28,6 @@ function makeSky({ top, horizon }) {
   return sky;
 }
 
-// Collider empties are unit boxes scaled to half-extents; only the x/z footprint matters.
-function footprint(empty) {
-  const p = empty.getWorldPosition(new THREE.Vector3());
-  const s = empty.getWorldScale(new THREE.Vector3());
-  return { minX: p.x - s.x, maxX: p.x + s.x, minZ: p.z - s.z, maxZ: p.z + s.z };
-}
-
 export class Stage {
   constructor(sceneData) {
     this.data = sceneData;
@@ -41,7 +35,8 @@ export class Stage {
     this.objects = {};     // id -> Object3D (assets with an "id")
     this.characters = {};  // id -> Character
     this.markers = {};     // empties from GLBs, e.g. Seat_Light
-    this.colliders = [];   // walking blockers: { minX, maxX, minZ, maxZ }
+    this.colliders = [];   // walking blockers: boxes { minX..maxZ } and circles { x, z, r, minY, maxY }
+    this.walkSurfaces = []; // invisible meshes the player stands on
     this.tweens = [];
   }
 
@@ -61,7 +56,7 @@ export class Stage {
     this.key.target.position.set(...k.target);
     this.key.castShadow = true;
     this.key.shadow.mapSize.set(1024, 1024);
-    Object.assign(this.key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 45 });
+    Object.assign(this.key.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 });
     this.key.shadow.bias = -0.0015;
     this.key.shadow.normalBias = 0.04;
     this.scene.add(this.key, this.key.target);
@@ -87,6 +82,11 @@ export class Stage {
     this.scene.add(model);
     model.updateMatrixWorld(true);
     model.traverse((o) => {
+      if (o.isMesh && o.userData.walk) {
+        o.visible = false;
+        this.walkSurfaces.push(o);
+        return;
+      }
       if (o.isMesh || !o.name || o.children.length) return;
       if (o.userData.collider) this.colliders.push(footprint(o));
       else this.markers[o.name] = o;

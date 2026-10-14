@@ -1,10 +1,56 @@
-// Rigid-part characters (no skinning): poses are joint rotations from data/poses.json.
+// Skinned characters: poses from data/poses.json drive the skeleton's bones.
+// Pose angles are written in character space (x = bend forward, y = turn, z = tilt sideways),
+// whatever the bone's own rest orientation is; poseToLocal converts them per bone.
 import * as THREE from 'three';
 import poses from '../../data/poses.json';
 
 const DEG = Math.PI / 180;
 
-function poseTargets(name) {
+/** Small deterministic random generator, one per character so idle motions don't sync up. */
+function mulberry32(seed) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Idle motions: degrees (x, y, z) per bone in character space, as a function of time.
+ * 'breath' is always on; the others are chosen with setIdle(). Amplitudes stay small
+ * (≤ 8°) except 'look', which turns the head towards random targets (≤ 24°).
+ */
+const IDLES = {
+  breath: (t) => ({
+    Chest: [1.2 * Math.sin(t * 1.6), 0, 0],
+    ShoulderL: [0, 0, 1.0 * Math.sin(t * 1.6)],
+    ShoulderR: [0, 0, -1.0 * Math.sin(t * 1.6)],
+  }),
+  write: (t) => ({
+    Head: [3 + 2 * Math.sin(t * 0.7), 0, 0],
+    LowerArmR: [0, 4 * Math.sin(t * 9), 0],
+    HandR: [6 * Math.sin(t * 13), 0, 0],
+  }),
+  talk: (t) => ({
+    Head: [3 * Math.sin(t * 1.7), 6 * Math.sin(t * 0.9), 0],
+    UpperArmR: [-6 * (0.5 + 0.5 * Math.sin(t * 1.3)), 0, 0],
+    LowerArmR: [-7 * (0.5 + 0.5 * Math.sin(t * 2.1 + 1)), 0, 0],
+    UpperArmL: [0, 0, 3 * Math.sin(t * 0.8)],
+  }),
+  look: (t, c) => ({ Head: [0, c.lookYaw, 0] }),
+};
+
+/**
+ * Local rotation for a bone so that it is rotated by `rot` (character space) about its joint,
+ * relative to its parent at rest: rest · restWorld⁻¹ · rot · restWorld.
+ */
+export function poseToLocal(rest, restWorld, rot) {
+  return rest.clone().multiply(restWorld.clone().invert()).multiply(rot).multiply(restWorld);
+}
+
+function poseRotations(name) {
   const pose = poses[name];
   if (!pose) throw new Error(`Unknown pose: ${name}`);
   const joints = {};
@@ -20,22 +66,35 @@ export class Character {
     this.model = model;
     this.joints = {};
     this.rest = {};
+    this.restWorld = {};
+    model.updateMatrixWorld(true);
+    const rootInv = model.getWorldQuaternion(new THREE.Quaternion()).invert();
     model.traverse((o) => {
-      if (!o.name || this.joints[o.name]) return;
+      if (!o.isBone || this.joints[o.name]) return;
       this.joints[o.name] = o;
       this.rest[o.name] = o.quaternion.clone();
+      this.restWorld[o.name] = rootInv.clone().multiply(o.getWorldQuaternion(new THREE.Quaternion()));
     });
+    this.base = Object.fromEntries(Object.entries(this.rest).map(([n, q]) => [n, q.clone()]));
     this.tween = null;
+    this.idleKind = null;
+    this.idleWeight = 0;
+    this.random = mulberry32(Math.floor(Math.random() * 2 ** 31));
+    this.idleTime = this.random() * 100;
+    this.lookYaw = 0;
+    this.lookTarget = 0;
+    this.nextLook = 0;
     this.walkPhase = 0;
     this.walkBlend = 0;
     this.walkPoses = null;
   }
 
-  /** Pose rotations are relative to the rest pose; joints a pose does not mention return to rest. */
+  /** Target bone rotations for a pose; bones the pose does not mention return to rest. */
   resolve(name) {
-    const target = poseTargets(name);
-    for (const [joint, rest] of Object.entries(this.rest)) {
-      target.joints[joint] = rest.clone().multiply(target.joints[joint] ?? new THREE.Quaternion());
+    const { root, joints } = poseRotations(name);
+    const target = { root, joints: {} };
+    for (const [bone, rest] of Object.entries(this.rest)) {
+      target.joints[bone] = joints[bone] ? poseToLocal(rest, this.restWorld[bone], joints[bone]) : rest.clone();
     }
     return target;
   }
@@ -45,7 +104,7 @@ export class Character {
     const target = this.resolve(name);
     const from = {
       root: this.model.position.clone(),
-      joints: Object.fromEntries(Object.values(this.joints).map((j) => [j.name, j.quaternion.clone()])),
+      joints: Object.fromEntries(Object.entries(this.base).map(([n, q]) => [n, q.clone()])),
     };
     this.tween = { from, target, t: 0, duration };
     if (duration <= 0) this.update(0);
@@ -69,17 +128,58 @@ export class Character {
     this.model.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.025 * this.walkBlend;
   }
 
+  /** 'breath' | 'write' | 'talk' | 'look' | null. Breathing is always layered on top. */
+  setIdle(kind) {
+    if (kind && !IDLES[kind]) throw new Error(`Unknown idle: ${kind}`);
+    if (kind) this.idleKind = kind;
+    this.idleTarget = kind ? 1 : 0;
+  }
+
+  /** Idle offsets for this frame, in character-space degrees per bone. */
+  idle(dt) {
+    this.idleTime += dt;
+    this.idleWeight += ((this.idleTarget ?? 0) - this.idleWeight) * Math.min(1, dt * 10);
+    if (this.idleKind === 'look') {
+      if (this.idleTime >= this.nextLook) {
+        this.lookTarget = (this.random() * 2 - 1) * 24;
+        this.nextLook = this.idleTime + 4 + this.random() * 5;
+      }
+      this.lookYaw += (this.lookTarget - this.lookYaw) * Math.min(1, dt * 2.5);
+    }
+    const out = IDLES.breath(this.idleTime, this);
+    if (this.idleKind && this.idleWeight > 1e-3) {
+      for (const [bone, [x, y, z]] of Object.entries(IDLES[this.idleKind](this.idleTime, this))) {
+        const prev = out[bone] ?? [0, 0, 0];
+        const w = this.idleWeight;
+        out[bone] = [prev[0] + x * w, prev[1] + y * w, prev[2] + z * w];
+      }
+    }
+    return out;
+  }
+
   update(dt) {
     const tw = this.tween;
-    if (!tw) return;
-    tw.t += dt;
-    const k = tw.duration > 0 ? Math.min(tw.t / tw.duration, 1) : 1;
-    const e = k * k * (3 - 2 * k);
-    this.model.position.lerpVectors(tw.from.root, tw.target.root, e);
-    for (const [name, q] of Object.entries(tw.target.joints)) {
-      const joint = this.joints[name];
-      if (joint) joint.quaternion.slerpQuaternions(tw.from.joints[name], q, e);
+    if (tw) {
+      tw.t += dt;
+      const k = tw.duration > 0 ? Math.min(tw.t / tw.duration, 1) : 1;
+      const e = k * k * (3 - 2 * k);
+      this.model.position.lerpVectors(tw.from.root, tw.target.root, e);
+      for (const [name, q] of Object.entries(tw.target.joints)) {
+        this.base[name].slerpQuaternions(tw.from.joints[name], q, e);
+      }
+      if (k >= 1) this.tween = null;
     }
-    if (k >= 1) this.tween = null;
+    // Pose (base) + idle offsets. An offset is a character-space rotation about the joint,
+    // expressed in the bone's local frame: restWorld⁻¹ · R · restWorld.
+    const offsets = this.idle(dt);
+    const r = new THREE.Quaternion();
+    for (const [name, joint] of Object.entries(this.joints)) {
+      joint.quaternion.copy(this.base[name]);
+      const o = offsets[name];
+      if (!o) continue;
+      r.setFromEuler(new THREE.Euler(o[0] * DEG, o[1] * DEG, o[2] * DEG));
+      const rw = this.restWorld[name];
+      joint.quaternion.multiply(rw.clone().invert().multiply(r).multiply(rw));
+    }
   }
 }

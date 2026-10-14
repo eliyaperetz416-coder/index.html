@@ -1,4 +1,5 @@
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 
 const loader = new GLTFLoader();
 const cache = new Map();
@@ -9,5 +10,6 @@ export async function loadModel(file) {
     cache.set(file, loader.loadAsync(`${import.meta.env.BASE_URL}assets/${file}?v=${__BUILD_ID__}`));
   }
   const gltf = await cache.get(file);
-  return gltf.scene.clone(true);
+  // SkeletonUtils.clone rebinds skinned meshes to the cloned bones (Object3D.clone does not).
+  return cloneSkinned(gltf.scene);
 }

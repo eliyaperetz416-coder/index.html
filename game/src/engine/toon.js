@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const OUTLINE_COLOR = 0x0a0a0d;
+const CHARACTER_OUTLINE = 0.006; // meters, for skinned characters (no outline extras in their GLBs)
 
 function makeGradient(steps) {
   const data = new Uint8Array(steps.length * 4);
@@ -20,7 +21,9 @@ const outlineMaterials = new Map();
 
 function toonMaterial(src) {
   if (!toonCache.has(src.uuid)) {
-    toonCache.set(src.uuid, new THREE.MeshToonMaterial({ color: src.color, gradientMap, name: src.name }));
+    toonCache.set(src.uuid, new THREE.MeshToonMaterial({
+      color: src.color, map: src.map, vertexColors: src.vertexColors, gradientMap, name: src.name,
+    }));
   }
   return toonCache.get(src.uuid);
 }
@@ -50,6 +53,16 @@ function outlineGeometry(geometry) {
 }
 
 function addOutline(mesh, thickness) {
+  if (mesh.isSkinnedMesh) {
+    // Characters are smooth-shaded, so their own normals give a closed hull; it shares the skeleton.
+    const hull = new THREE.SkinnedMesh(mesh.geometry, outlineMaterial(thickness));
+    hull.name = `${mesh.name}_outline`;
+    hull.bind(mesh.skeleton, mesh.bindMatrix);
+    hull.raycast = () => {};
+    hull.frustumCulled = false;
+    mesh.parent.add(hull);
+    return;
+  }
   const hull = new THREE.Mesh(outlineGeometry(mesh.geometry), outlineMaterial(thickness));
   hull.name = `${mesh.name}_outline`;
   hull.raycast = () => {};
@@ -68,7 +81,8 @@ export function toonify(root) {
       obj.material = Array.isArray(obj.material) ? obj.material.map(toonMaterial) : toonMaterial(obj.material);
       obj.castShadow = true;
       obj.receiveShadow = true;
-      if (thickness) outlined.push([obj, thickness]);
+      if (thickness || obj.isSkinnedMesh) outlined.push([obj, thickness || CHARACTER_OUTLINE]);
+      if (obj.isSkinnedMesh) obj.frustumCulled = false; // bounds don't follow poses
     }
     for (const child of obj.children) walk(child, thickness);
   })(root, 0);

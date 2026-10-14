@@ -3,15 +3,17 @@
 import * as THREE from 'three';
 import { readInput } from './input.js';
 import { applyFov } from './renderer.js';
+import { resolveCollisions } from './collision.js';
+import { FloorSampler } from './floor.js';
 
 const SPEED = 1.7;        // m/s at full stick
-const RADIUS = 0.2;       // player's footprint
 const TURN = 12;          // how fast the character turns to face movement
 const CAM_FOLLOW = 4;     // camera smoothing (higher = snappier)
 const LOOK_HEIGHT = 1.1;  // camera aims at the chest/head, not the feet
 
-function contains([x0, z0, x1, z1], p) {
-  return p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1;
+/** An area matches by its x/z rect and, if given, its height range y: [min, max]. */
+function contains({ rect: [x0, z0, x1, z1], y }, p) {
+  return p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1 && (!y || (p.y >= y[0] && p.y <= y[1]));
 }
 
 function clampTo(rect, v) {
@@ -22,34 +24,6 @@ function clampTo(rect, v) {
   return v;
 }
 
-/** Pushes a circle at (p.x, p.z) out of every box it overlaps (sliding along walls). */
-function resolveCollisions(p, colliders) {
-  for (let pass = 0; pass < 2; pass++) {
-    for (const c of colliders) {
-      const cx = THREE.MathUtils.clamp(p.x, c.minX, c.maxX);
-      const cz = THREE.MathUtils.clamp(p.z, c.minZ, c.maxZ);
-      const dx = p.x - cx;
-      const dz = p.z - cz;
-      const d2 = dx * dx + dz * dz;
-      if (d2 >= RADIUS * RADIUS) continue;
-      if (d2 > 1e-8) {
-        const d = Math.sqrt(d2);
-        p.x += (dx / d) * (RADIUS - d);
-        p.z += (dz / d) * (RADIUS - d);
-      } else {
-        // Center is inside the box: leave through the nearest side.
-        const exits = [
-          [c.minX - RADIUS - p.x, 0], [c.maxX + RADIUS - p.x, 0],
-          [0, c.minZ - RADIUS - p.z], [0, c.maxZ + RADIUS - p.z],
-        ];
-        exits.sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]));
-        p.x += exits[0][0];
-        p.z += exits[0][1];
-      }
-    }
-  }
-}
-
 export class WalkController {
   constructor({ stage, camera, areas }) {
     this.stage = stage;
@@ -58,6 +32,7 @@ export class WalkController {
     this.active = false;
     this.area = areas[0];
     this.look = new THREE.Vector3();
+    this.floor = new FloorSampler(stage.walkSurfaces);
   }
 
   start(id) {
@@ -82,7 +57,7 @@ export class WalkController {
 
   updateArea() {
     const p = this.body.position;
-    const area = this.areas.find((a) => contains(a.rect, p));
+    const area = this.areas.find((a) => contains(a, p));
     if (area && area !== this.area) this.area = area;
     applyFov(this.camera, this.area.camera.fov ?? 50);
   }
@@ -107,6 +82,9 @@ export class WalkController {
       const p = this.body.position;
       p.addScaledVector(move, SPEED * dt);
       resolveCollisions(p, this.stage.colliders);
+      // Stand on the floor / stairs below; over a gap keep the last height (never fall through).
+      const h = this.floor.heightAt(p.x, p.z, p.y);
+      if (h !== null) p.y = h;
 
       const yaw = Math.atan2(move.x, move.z);
       let diff = yaw - this.body.rotation.y;
