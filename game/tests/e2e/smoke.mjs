@@ -1,7 +1,6 @@
-// Plays the opening, walks to the notebook, checks for console errors and saves screenshots.
-import { launch, start, skipToWalking, driveTo, report, SHOTS } from './helpers.mjs';
-
-const ROUTE = [[1.8, -2.72], [-2.9, -2.72], [-2.9, -4.4], [4.6, -4.4], [9, 1]];
+// Plays the opening cutscene, skips it, checks the player can walk, and saves screenshots.
+// The full route to the notebook is covered by walk.mjs.
+import { launch, start, skipToWalking, report, SHOTS } from './helpers.mjs';
 
 const { browser, page, errors } = await launch({ size: process.env.SIZE ?? '844x390' });
 try {
@@ -10,16 +9,13 @@ try {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${SHOTS}smoke-cutscene.png` });
   await skipToWalking(page);
-  await page.waitForTimeout(800);
   await page.screenshot({ path: `${SHOTS}smoke-walk-start.png` });
-  for (const [i, point] of ROUTE.entries()) {
-    // The walk step ends within 1 m of the notebook, so the last point only needs that radius.
-    await driveTo(page, point, { tolerance: i === ROUTE.length - 1 ? 1.02 : 0.25 });
-  }
-  await page.waitForTimeout(800);
-  await page.screenshot({ path: `${SHOTS}smoke-notebook.png` });
-  const objective = await page.evaluate(() => document.querySelector('#objective .text').textContent);
-  if (objective !== 'הרם את המחברת') errors.push(`walk step did not end at the notebook (objective: ${objective})`);
+  const state = await page.evaluate(() => ({
+    notebook: window.__dn.stage.objects.notebook.visible,
+    y: window.__dn.walker.body.position.y,
+  }));
+  if (!state.notebook) errors.push('notebook is not on the ground after the cutscene');
+  if (Math.abs(state.y - 3.6) > 0.05) errors.push(`Light should start on floor 2 (y 3.6), got ${state.y}`);
 } catch (e) {
   errors.push(String(e));
 } finally {
