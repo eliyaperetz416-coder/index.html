@@ -9,7 +9,7 @@
         { "file": "corridor.glb" },
         { "file": "courtyard.glb" },
         { "file": "notebook.glb", "id": "notebook", "at": "Landing_Notebook", "hidden": true },
-        { "file": "light.glb", "id": "light", "at": "Seat_Light", "pose": "sit_bored" }
+        { "file": "char_light.glb", "id": "light", "at": "Seat_Light", "pose": "sit_bored" }
       ],
       "lighting": {
         "sky": { "top": "#2e3446", "horizon": "#7a5040" },

@@ -190,56 +190,6 @@ def export(filename):
     print(f"exported {path} ({os.path.getsize(path) // 1024} KB)")
 
 
-# ---------------------------------------------------------------- Light
-
-def build_light():
-    reset()
-    root = empty("Light", (0, 0, 0))
-
-    torso = Part("Torso", (0, 0, 0.95))
-    torso.box((0.34, 0.2, 0.16), (0, 0, 0.99), "pants")
-    torso.box((0.42, 0.23, 0.42), (0, 0, 1.27), "jacket")
-    torso.box((0.36, 0.21, 0.08), (0, 0, 1.06), "jacket")
-    torso.box((0.15, 0.05, 0.07), (0, -0.105, 1.465), "shirt")
-    torso.box((0.05, 0.012, 0.22), (0, -0.118, 1.36), "tie")
-    torso.cyl(0.045, 0.1, (0, 0, 1.52), "skin")
-    torso = torso.build(root, outline=0.008)
-
-    head = Part("Head", (0, 0, 1.54))
-    head.sphere(0.115, (0, 0, 1.665), "skin", scale=(0.92, 1.0, 1.12))
-    for x in (-0.04, 0.04):
-        head.box((0.034, 0.012, 0.012), (x, -0.112, 1.668), "eye")
-        head.box((0.04, 0.01, 0.007), (x, -0.111, 1.689), "hair", rot=(0, math.copysign(0.18, x), 0))
-    hair_verts = head.sphere(0.126, (0, 0.012, 1.69), "hair", scale=(1.0, 1.02, 0.96), segs=14, rings=9)
-    cut = [v for v in hair_verts if (v.co.z + 1.54 < 1.692 and v.co.y < -0.01) or v.co.z + 1.54 < 1.6]
-    bmesh.ops.delete(head.bm, geom=cut, context="VERTS")
-    for x in (-0.075, -0.035, 0.005, 0.045, 0.08):
-        head.cyl(0.03, 0.06, (x, -0.104, 1.722), "hair", rot=(math.radians(-15), 0, 0), segs=4, r2=0.0)
-    for x in (-0.108, 0.108):
-        head.box((0.03, 0.09, 0.13), (x, -0.025, 1.64), "hair")
-    head.build(torso, outline=0.008)
-
-    for side, sx in (("L", 1), ("R", -1)):
-        up = Part(f"ArmUpper{side}", (0.25 * sx, 0, 1.43))
-        up.box((0.11, 0.12, 0.31), (0.25 * sx, 0, 1.29), "jacket")
-        up = up.build(torso, outline=0.008)
-        low = Part(f"ArmLower{side}", (0.25 * sx, 0, 1.14))
-        low.box((0.095, 0.105, 0.24), (0.25 * sx, 0, 1.02), "jacket")
-        low.box((0.085, 0.095, 0.03), (0.25 * sx, 0, 0.895), "shirt")
-        low.sphere(0.045, (0.25 * sx, -0.005, 0.845), "skin", scale=(0.75, 1.0, 1.25), segs=8, rings=6)
-        low.build(up, outline=0.008)
-
-        leg = Part(f"LegUpper{side}", (0.1 * sx, 0, 0.92))
-        leg.box((0.145, 0.165, 0.45), (0.1 * sx, 0, 0.7), "pants")
-        leg = leg.build(root, outline=0.008)
-        shin = Part(f"LegLower{side}", (0.1 * sx, 0, 0.48))
-        shin.box((0.125, 0.145, 0.42), (0.1 * sx, 0, 0.27), "pants")
-        shin.box((0.125, 0.25, 0.08), (0.1 * sx, -0.045, 0.04), "shoe")
-        shin.build(leg, outline=0.008)
-
-    export("light.glb")
-
-
 # ---------------------------------------------------------------- Classroom
 
 DESK_COLS = (-2.7, -0.9, 0.9, 2.7)
@@ -424,7 +374,6 @@ def build_notebook():
 
 
 if __name__ == "__main__":
-    build_light()
     build_classroom()
     build_corridor()
     build_courtyard()

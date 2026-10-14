@@ -1,10 +1,20 @@
-// Rigid-part characters (no skinning): poses are joint rotations from data/poses.json.
+// Skinned characters: poses from data/poses.json drive the skeleton's bones.
+// Pose angles are written in character space (x = bend forward, y = turn, z = tilt sideways),
+// whatever the bone's own rest orientation is; poseToLocal converts them per bone.
 import * as THREE from 'three';
 import poses from '../../data/poses.json';
 
 const DEG = Math.PI / 180;
 
-function poseTargets(name) {
+/**
+ * Local rotation for a bone so that it is rotated by `rot` (character space) about its joint,
+ * relative to its parent at rest: rest · restWorld⁻¹ · rot · restWorld.
+ */
+export function poseToLocal(rest, restWorld, rot) {
+  return rest.clone().multiply(restWorld.clone().invert()).multiply(rot).multiply(restWorld);
+}
+
+function poseRotations(name) {
   const pose = poses[name];
   if (!pose) throw new Error(`Unknown pose: ${name}`);
   const joints = {};
@@ -20,10 +30,14 @@ export class Character {
     this.model = model;
     this.joints = {};
     this.rest = {};
+    this.restWorld = {};
+    model.updateMatrixWorld(true);
+    const rootInv = model.getWorldQuaternion(new THREE.Quaternion()).invert();
     model.traverse((o) => {
-      if (!o.name || this.joints[o.name]) return;
+      if (!o.isBone || this.joints[o.name]) return;
       this.joints[o.name] = o;
       this.rest[o.name] = o.quaternion.clone();
+      this.restWorld[o.name] = rootInv.clone().multiply(o.getWorldQuaternion(new THREE.Quaternion()));
     });
     this.tween = null;
     this.walkPhase = 0;
@@ -31,11 +45,12 @@ export class Character {
     this.walkPoses = null;
   }
 
-  /** Pose rotations are relative to the rest pose; joints a pose does not mention return to rest. */
+  /** Target bone rotations for a pose; bones the pose does not mention return to rest. */
   resolve(name) {
-    const target = poseTargets(name);
-    for (const [joint, rest] of Object.entries(this.rest)) {
-      target.joints[joint] = rest.clone().multiply(target.joints[joint] ?? new THREE.Quaternion());
+    const { root, joints } = poseRotations(name);
+    const target = { root, joints: {} };
+    for (const [bone, rest] of Object.entries(this.rest)) {
+      target.joints[bone] = joints[bone] ? poseToLocal(rest, this.restWorld[bone], joints[bone]) : rest.clone();
     }
     return target;
   }
@@ -45,7 +60,7 @@ export class Character {
     const target = this.resolve(name);
     const from = {
       root: this.model.position.clone(),
-      joints: Object.fromEntries(Object.values(this.joints).map((j) => [j.name, j.quaternion.clone()])),
+      joints: Object.fromEntries(Object.entries(this.joints).map(([n, j]) => [n, j.quaternion.clone()])),
     };
     this.tween = { from, target, t: 0, duration };
     if (duration <= 0) this.update(0);
@@ -77,8 +92,7 @@ export class Character {
     const e = k * k * (3 - 2 * k);
     this.model.position.lerpVectors(tw.from.root, tw.target.root, e);
     for (const [name, q] of Object.entries(tw.target.joints)) {
-      const joint = this.joints[name];
-      if (joint) joint.quaternion.slerpQuaternions(tw.from.joints[name], q, e);
+      this.joints[name].quaternion.slerpQuaternions(tw.from.joints[name], q, e);
     }
     if (k >= 1) this.tween = null;
   }

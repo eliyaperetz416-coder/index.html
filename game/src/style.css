@@ -109,9 +109,9 @@ body.can-walk:not(.has-walked) #walk-hint { opacity: 1; }
 
 #skip-hint {
   position: fixed; left: calc(env(safe-area-inset-left) + 16px); bottom: calc(var(--bar) * 0.5 - 8px);
-  font-size: 12px; color: var(--muted); opacity: 0; transition: opacity 0.8s ease 1.5s; pointer-events: none;
+  font-size: 12px; color: var(--muted); opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
 }
-body.cinematic #skip-hint { opacity: 0.7; }
+body.cinematic #skip-hint { opacity: 0.7; transition: opacity 0.8s ease 1.5s; }
 
 /* ---------------------------------------------------------------- tap marker */
 #tap-marker {
