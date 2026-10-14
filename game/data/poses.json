@@ -52,5 +52,18 @@
     "LegLowerL": [38, 0, 0],
     "LegUpperR": [-30, 0, 0],
     "LegLowerR": [12, 0, 0]
+  },
+  "crouch": {
+    "root": [0, -0.3, 0],
+    "Torso": [38, 0, 0],
+    "Head": [10, 0, 0],
+    "ArmUpperL": [-20, 0, 8],
+    "ArmLowerL": [-20, 0, 0],
+    "ArmUpperR": [-55, 0, -4],
+    "ArmLowerR": [-10, 0, 0],
+    "LegUpperL": [-75, 0, 4],
+    "LegLowerL": [105, 0, 0],
+    "LegUpperR": [-40, 0, -4],
+    "LegLowerR": [95, 0, 0]
   }
 }

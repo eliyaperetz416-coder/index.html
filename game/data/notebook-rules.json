@@ -1,8 +1,19 @@
 {
+  "_doc": "requires: what the writer must have for the rule to be satisfied. check: 'before' = cannot even write; 'after' = written, but nothing happens after 40 seconds.",
   "title": "HOW TO USE IT",
   "rules": [
-    { "id": "name", "text": "האדם ששמו נכתב במחברת הזאת ימות." },
-    { "id": "face", "text": "המחברת לא תשפיע אם הכותב לא מדמיין את פני האדם בזמן כתיבת שמו. לכן אנשים בעלי אותו שם לא ייפגעו." },
+    {
+      "id": "name",
+      "text": "האדם ששמו נכתב במחברת הזאת ימות.",
+      "requires": "name", "check": "before",
+      "fail": "אין שם לכתוב. בלי שם, המחברת לא יכולה לעשות כלום."
+    },
+    {
+      "id": "face",
+      "text": "המחברת לא תשפיע אם הכותב לא מדמיין את פני האדם בזמן כתיבת שמו. לכן אנשים בעלי אותו שם לא ייפגעו.",
+      "requires": "face", "check": "after",
+      "fail": "40 שניות עברו. שום דבר לא קרה. לייט לא ראה את הפנים שלו."
+    },
     { "id": "cause40", "text": "אם סיבת המוות נכתבת תוך 40 שניות מכתיבת השם, היא תתרחש." },
     { "id": "heart", "text": "אם לא נכתבת סיבת מוות, האדם ימות מהתקף לב." },
     { "id": "details", "text": "אחרי כתיבת סיבת המוות, יש לכתוב את פרטי המוות תוך 6 דקות ו-40 שניות." }

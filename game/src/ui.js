@@ -52,8 +52,17 @@ export const ui = {
     el.classList.add('show');
   },
 
+  /** Shows one caption line for its duration. */
+  async say(line) {
+    ui.caption(line);
+    await wait((line.for ?? 2.5) * 1000);
+    ui.caption(null);
+    await wait(350);
+  },
+
   objective(text) {
     const el = $('objective');
+    if (!text) { el.classList.remove('show'); return; }
     el.querySelector('.text').textContent = text;
     el.classList.add('show');
   },

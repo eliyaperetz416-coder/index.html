@@ -143,6 +143,20 @@ export class Stage {
     marker.getWorldQuaternion(obj.quaternion);
   }
 
+  /** Turns a placed asset (e.g. a character) to face another node. */
+  faceTo({ target, at, duration = 0.3 }) {
+    const obj = this.objects[target];
+    const p = this.node(at).getWorldPosition(new THREE.Vector3());
+    const from = obj.rotation.y;
+    let to = Math.atan2(p.x - obj.position.x, p.z - obj.position.z);
+    to = from + Math.atan2(Math.sin(to - from), Math.cos(to - from));
+    this.addTween(duration, (k) => { obj.rotation.y = THREE.MathUtils.lerp(from, to, k); });
+  }
+
+  hide({ target }) {
+    this.node(target).visible = false;
+  }
+
   /** Slides a node by an offset, e.g. opening the classroom door. */
   move({ node, by, duration = 0.6 }) {
     const obj = this.node(node);
