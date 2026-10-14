@@ -1,13 +1,15 @@
 // Offline cache: pages are network-first, everything else cache-first.
 // Bump VERSION to drop old caches after a release.
-const VERSION = 'dn-v1';
+// Only touches caches named dn-*: other apps on the same github.io origin keep theirs.
+const PREFIX = 'dn-';
+const VERSION = `${PREFIX}v1`;
 
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith(PREFIX) && k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
