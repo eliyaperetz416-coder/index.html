@@ -1,7 +1,8 @@
 // Player walking: camera-relative movement, collision against the stage's
 // collider boxes, and a follow camera whose angle comes from the area the player is in.
 import * as THREE from 'three';
-import { readInput } from './input.js';
+import { readInput, takeLook } from './input.js';
+import { orbitOffset, addLook } from './orbit.js';
 import { applyFov } from './renderer.js';
 import { resolveCollisions } from './collision.js';
 import { FloorSampler } from './floor.js';
@@ -32,6 +33,7 @@ export class WalkController {
     this.active = false;
     this.area = areas[0];
     this.look = new THREE.Vector3();
+    this.view = { yaw: 0, tilt: 0 };   // player-controlled camera angle, relative to the area's default
     this.floor = new FloorSampler(stage.walkSurfaces);
   }
 
@@ -58,12 +60,15 @@ export class WalkController {
   updateArea() {
     const p = this.body.position;
     const area = this.areas.find((a) => contains(a, p));
-    if (area && area !== this.area) this.area = area;
+    if (area && area !== this.area) {
+      this.area = area;
+      this.view = { yaw: 0, tilt: 0 };   // each area has its own framing: start from it again
+    }
     applyFov(this.camera, this.area.camera.fov ?? 50);
   }
 
   cameraTarget() {
-    const target = this.body.position.clone().add(new THREE.Vector3(...this.area.camera.offset));
+    const target = this.body.position.clone().add(orbitOffset(this.area.camera.offset, this.view.yaw, this.view.tilt));
     return clampTo(this.area.camera.clamp, target);
   }
 
@@ -94,6 +99,8 @@ export class WalkController {
     this.character.walk(dt, amount);
 
     this.updateArea();
+    const drag = takeLook();
+    if (drag.dx || drag.dy) this.view = addLook(this.view, drag.dx, drag.dy);
     const k = 1 - Math.exp(-dt * CAM_FOLLOW);
     this.camera.position.lerp(this.cameraTarget(), k);
     const lookTarget = this.body.position.clone();

@@ -1,11 +1,15 @@
-// Movement input: a floating virtual joystick (touch or mouse drag) plus WASD / arrow keys.
-// read() returns { x, y } in -1..1, where y = forward (away from the camera) and x = right.
+// Movement input: a floating virtual joystick plus WASD / arrow keys, and camera look.
+//   Touch: a finger down on the left half of the screen is the joystick; on the right half it
+//          drags the camera. Mouse: dragging anywhere turns the camera (move with WASD).
+// readInput() returns { x, y } in -1..1, where y = forward (away from the camera) and x = right.
+// takeLook() returns the camera drag in pixels since the last call.
 
 const RADIUS = 56;   // px the knob can travel from the joystick center
 const DEAD = 0.12;   // ignore tiny drags
 
 const keys = new Set();
 const stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
+const look = { id: null, lx: 0, ly: 0, dx: 0, dy: 0 };
 let enabled = false;
 let base;
 let knob;
@@ -25,7 +29,16 @@ function show(x, y) {
 }
 
 function onDown(e) {
-  if (!enabled || stick.id !== null || e.target.closest('button')) return;
+  if (!enabled || e.target.closest('button')) return;
+  const wantsLook = e.pointerType === 'mouse' || e.clientX >= window.innerWidth / 2;
+  if (wantsLook) {
+    if (look.id !== null) return;
+    look.id = e.pointerId;
+    look.lx = e.clientX;
+    look.ly = e.clientY;
+    return;
+  }
+  if (stick.id !== null) return;
   stick.id = e.pointerId;
   stick.ox = e.clientX;
   stick.oy = e.clientY;
@@ -34,6 +47,13 @@ function onDown(e) {
 }
 
 function onMove(e) {
+  if (e.pointerId === look.id) {
+    look.dx += e.clientX - look.lx;
+    look.dy += e.clientY - look.ly;
+    look.lx = e.clientX;
+    look.ly = e.clientY;
+    return;
+  }
   if (e.pointerId !== stick.id) return;
   let dx = e.clientX - stick.ox;
   let dy = e.clientY - stick.oy;
@@ -46,6 +66,7 @@ function onMove(e) {
 }
 
 function onUp(e) {
+  if (e.pointerId === look.id) look.id = null;
   if (e.pointerId !== stick.id) return;
   stick.id = null;
   stick.x = stick.y = 0;
@@ -70,7 +91,16 @@ export function setInputEnabled(on) {
   if (!on) {
     keys.clear();
     onUp({ pointerId: stick.id });
+    look.id = null;
+    look.dx = look.dy = 0;
   }
+}
+
+/** Camera drag (pixels) accumulated since the last call. */
+export function takeLook() {
+  const out = { dx: look.dx, dy: look.dy };
+  look.dx = look.dy = 0;
+  return out;
 }
 
 export function readInput() {
