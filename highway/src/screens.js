@@ -4,6 +4,7 @@ import { CARS, TIERS, STAT_RANGE, carById } from './data/cars.js';
 import { UPGRADES, MAX_LEVEL } from './data/upgrades.js';
 import { save } from './storage.js';
 import { h, fmt } from './ui.js';
+import { CONTROL_MODES } from './controls.js';
 import { carStats, levelsOf, isOwned, buyCar, selectCar, buyUpgrade, upgradeCost, ensureMissions, missionText } from './progression.js';
 
 const tierName = (id) => TIERS.find((t) => t.id === id)?.name || id;
@@ -26,8 +27,43 @@ export class Screens {
     const garage = h('button', 'btn ghost', 'Garage'); garage.onclick = () => g.enterGarage();
     const missions = h('button', 'btn ghost', 'Missions'); missions.onclick = () => this.missions(() => this.menu());
     row.append(garage, missions); card.append(row);
+    const row2 = h('div', 'btn-row');
+    const settings = h('button', 'btn ghost', 'Settings'); settings.onclick = () => this.settings(() => this.menu());
+    row2.append(settings); card.append(row2);
     card.append(coinPill());
     card.append(h('div', 'hint', '← → / A D lanes · Space nitro · P pause'));
+    const w = this.wrap(); w.append(card); this.show(w);
+  }
+
+  // ---------------- settings ----------------
+  settings(back) {
+    const g = this.game, S = save.data.settings;
+    const card = h('div', 'card');
+    card.append(h('h2', '', 'SETTINGS'));
+    const seg = (label, opts, get, set, note) => {
+      const row = h('div', 'set-row'); row.append(h('b', '', label));
+      const sg = h('div', 'seg');
+      const nt = note ? h('small', '', note(get())) : null;
+      for (const o of opts) {
+        const b = h('button', get() === o.id ? 'on' : '', o.name);
+        b.onclick = () => { set(o.id); save.save(); [...sg.children].forEach((c) => c.classList.remove('on')); b.classList.add('on'); if (nt) nt.textContent = note(o.id); };
+        sg.append(b);
+      }
+      row.append(sg); if (nt) row.append(nt); card.append(row);
+    };
+    seg('Controls', CONTROL_MODES, () => S.control, (v) => { S.control = v; g.applyControls(); g.controls.show(false); }, (id) => CONTROL_MODES.find((m) => m.id === id)?.desc || '');
+    seg('Sound', [{ id: true, name: 'On' }, { id: false, name: 'Off' }], () => S.sound, (v) => { S.sound = v; g.audio?.setEnabled(v); });
+    seg('Graphics', [{ id: 'low', name: 'Low' }, { id: 'medium', name: 'Medium' }, { id: 'high', name: 'High' }], () => S.quality, (v) => { S.quality = v; g.applyQuality(); },
+      (id) => ({ low: 'Fastest: no post-processing, fewer buildings', medium: 'Speed blur, balanced', high: 'Bloom glow + speed blur (best looking)' }[id]));
+    seg('Haptics', [{ id: true, name: 'On' }, { id: false, name: 'Off' }], () => S.haptics, (v) => { S.haptics = v; }, () => 'Vibration on hits (Android/desktop browsers; iPhone ignores it)');
+    const reset = h('button', 'btn danger', 'Reset progress');
+    let armed = false;
+    reset.onclick = () => {
+      if (!armed) { armed = true; reset.textContent = 'Tap again to erase everything'; setTimeout(() => { armed = false; reset.textContent = 'Reset progress'; }, 3500); return; }
+      g.resetProgress(); this.settings(back);
+    };
+    card.append(reset);
+    const b = h('button', 'btn ghost', 'Back'); b.onclick = back; card.append(b);
     const w = this.wrap(); w.append(card); this.show(w);
   }
 

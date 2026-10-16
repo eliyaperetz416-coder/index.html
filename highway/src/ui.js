@@ -10,10 +10,9 @@ export const fmt = (n) => Math.round(n).toLocaleString('en-US');
 export class UI {
   constructor() {
     this.hudEl = document.getElementById('hud');
-    this.controlsEl = document.getElementById('controls');
     this.screensEl = document.getElementById('screens');
     this._buildHud();
-    this.btnLeft = null; this.btnRight = null;
+    this.nitroBtn = null;
   }
 
   _buildHud() {
@@ -65,27 +64,6 @@ export class UI {
     if (this._last.k !== k) { this.elSpeed.textContent = k; this._last.k = k; }
   }
   showHud(v) { this.hudEl.style.display = v ? '' : 'none'; }
-
-  // ---- controls ----
-  buildButtons(onLane, onNitro) {
-    this.controlsEl.innerHTML = '';
-    if (onNitro) {
-      const n = h('div', 'nitro-btn', 'N<small>NITRO</small>');
-      n.addEventListener('pointerdown', (e) => { e.preventDefault(); onNitro(true); });
-      const up = () => onNitro(false);
-      n.addEventListener('pointerup', up); n.addEventListener('pointercancel', up); n.addEventListener('pointerleave', up);
-      this.controlsEl.append(n); this.nitroBtn = n;
-    }
-    const mk = (cls, label, dir) => {
-      const b = h('div', 'side-btn ' + cls, label);
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.classList.add('down'); onLane(dir); });
-      const up = () => b.classList.remove('down');
-      b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
-      this.controlsEl.append(b); return b;
-    };
-    this.btnLeft = mk('left', '◀', -1); this.btnRight = mk('right', '▶', 1);
-  }
-  showControls(v) { this.controlsEl.style.display = v ? '' : 'none'; }
 
   // ---- screens ----
   clearScreens() { this.screensEl.innerHTML = ''; }

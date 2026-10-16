@@ -13,6 +13,7 @@ import { Scoring } from './scoring.js';
 import { Effects } from './effects.js';
 import { haptic } from './haptics.js';
 import { Screens } from './screens.js';
+import { Controls } from './controls.js';
 import { statsFor, coinsForScore, applyRunToMissions, ensureMissions } from './progression.js';
 
 export class Game {
@@ -46,7 +47,11 @@ export class Game {
     this.input.onLane = (d) => { if (this.state === 'playing') this.player.changeLane(d); };
     this.input.onNitro = (v) => { this.nitroWanted = v; };
     this.input.onAnyStart = () => { if (this.state === 'title' || this.state === 'gameover') this.startRun(); };
-    this.ui.buildButtons((d) => { if (this.state === 'playing') this.player.changeLane(d); }, (v) => { this.nitroWanted = v; });
+    this.controls = new Controls(document.getElementById('controls'), {
+      onLane: (d) => { if (this.state === 'playing') this.player.changeLane(d); },
+      onNitro: (v) => { this.nitroWanted = v; },
+    });
+    this.applyControls();
 
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 200));
@@ -65,16 +70,39 @@ export class Game {
   setState(s) {
     this.state = s;
     if (s === 'title') {
-      this.ui.showControls(false); this.ui.showHud(false);
+      this.controls.show(false); this.ui.showHud(false);
       this.traffic.reset();
       this.screens.menu();
     }
   }
 
+  // ---- settings application ----
+  applyControls() { this.controls.setMode(save.data.settings.control); this.ui.nitroBtn = this.controls.nitroBtn; this.controls.show(this.state === 'playing'); }
+  applyQuality() {
+    const q = save.data.settings.quality;
+    this.resize(); this.fx.setQuality(q);
+    this.loadWorld(this.worldDef.id);
+  }
+  loadWorld(id) {
+    const def = WORLDS[id] || WORLDS[DEFAULT_WORLD];
+    if (this.world) this.world.dispose();
+    if (this.traffic) this.traffic.dispose();
+    this.worldDef = def;
+    this.world = new World(this.scene, def, save.data.settings.quality);
+    this.traffic = new Traffic(this.scene, def);
+    this.player.setWorld(def);
+  }
+  resetProgress() {
+    save.reset();
+    const car = carById(save.data.selectedCar);
+    this.player.setCar(car, this.statsFor(car)); this.fx.attachPlayer(this.player);
+    ensureMissions(); this.applyControls(); this.applyQuality();
+  }
+
   // ---- garage ----
   enterGarage() {
     this.state = 'garage';
-    this.traffic.reset(); this.ui.showHud(false); this.ui.showControls(false);
+    this.traffic.reset(); this.ui.showHud(false); this.controls.show(false);
     this.garageAngle = 0.6;
     this.screens.garage();
   }
@@ -96,7 +124,7 @@ export class Game {
     this.scoring = new Scoring(this.player.stats.comboMult);
     this.run = { time: 0, topKmh: 0, distance: 0, crashT: 0 };
     this.nitroWanted = this.input.nitroHeld;
-    this.ui.clearScreens(); this.ui.showControls(true); this.ui.showHud(true);
+    this.ui.clearScreens(); this.controls.show(true); this.ui.showHud(true);
     this.ui.setCombo(0, 1, 0);
     this.state = 'playing';
   }
@@ -116,7 +144,7 @@ export class Game {
     save.data.coins += coins;
     const missions = applyRunToMissions({ closeCalls: sc.closeCalls, tightCalls: sc.tightCalls, maxKmh: r.topKmh, score, bestCombo: sc.bestCombo, distanceKm: r.distance / 1000 });
     save.save();
-    this.ui.showControls(false); this.ui.setCombo(0, 1, 0);
+    this.controls.show(false); this.ui.setCombo(0, 1, 0);
     this.screens.gameOver({
       score, best: save.data.bestByCar[id] || 0, newBest, kmh: r.topKmh, closeCalls: sc.closeCalls, bestCombo: sc.bestCombo,
       coins, missionsDone: missions.completed, carName: this.player.car.name,

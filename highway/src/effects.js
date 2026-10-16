@@ -49,7 +49,7 @@ export class Effects {
     if (this.composer) { this.composer.dispose?.(); this.composer = null; }
     this.bloom = null; this.speedPass = null;
     if (q !== 'low') {
-      const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: q === 'high' ? 0 : 0 });
+      const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: q === 'high' ? 4 : 0 });
       this.composer = new EffectComposer(r, rt);
       this.composer.addPass(new RenderPass(this.scene, this.camera));
       if (q === 'high') {

@@ -10,6 +10,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 #app { position: fixed; inset: 0; }
 #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #hud, #controls, #screens { position: absolute; inset: 0; pointer-events: none; }
+#controls > * { pointer-events: auto; }
 #screens > * { pointer-events: auto; }
 
 /* ---- HUD ---- */
@@ -73,7 +74,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 .flash.red { background: radial-gradient(ellipse at center, rgba(255,40,70,0) 30%, rgba(255,40,70,.55)); animation: flash .5s ease-out; }
 .flash.white { background: rgba(255,255,255,.35); animation: flash .25s ease-out; }
 @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
-.nitro-btn { position: absolute; right: calc(var(--sar) + 22px); bottom: calc(var(--sab) + 18px + min(30%, 200px) + 16px); width: 76px; height: 76px; border-radius: 50%; pointer-events: auto; touch-action: none;
+.nitro-btn { position: absolute; right: calc(var(--sar) + 22px); bottom: calc(var(--sab) + 22px); width: 76px; height: 76px; border-radius: 50%; pointer-events: auto; touch-action: none;
   display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 26px; font-style: italic; border: 2px solid var(--cyan); color: var(--cyan);
   background: radial-gradient(circle, rgba(0,229,255,.25), rgba(0,229,255,.05)); box-shadow: 0 0 18px rgba(0,229,255,.4); }
 .nitro-btn small { font-size: 9px; letter-spacing: .15em; font-style: normal; }
@@ -124,3 +125,22 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
   .stat-row { padding: 4px 4px; font-size: 13px; } .btn { padding: 10px 14px; margin-top: 8px; font-size: 14px; } .card .sub { margin-bottom: 8px; }
   .mission { padding: 7px 4px; } .menu-car { margin-bottom: 8px; }
 }
+
+.mode-buttons .nitro-btn { bottom: calc(var(--sab) + 18px + min(30%, 200px) + 16px); }
+.wheel { position: absolute; left: calc(var(--sal) + 20px); bottom: calc(var(--sab) + 16px); width: min(36vw, 34vh, 190px); aspect-ratio: 1; touch-action: none; }
+.wheel .w-rim { position: absolute; inset: 0; border-radius: 50%; border: 11px solid rgba(120,100,255,.55); box-shadow: 0 0 18px rgba(0,229,255,.45), inset 0 0 14px rgba(0,229,255,.3); }
+.wheel .w-hub { position: absolute; left: 36%; top: 36%; width: 28%; height: 28%; border-radius: 50%; background: radial-gradient(circle, #1b1440, #0a0620); border: 3px solid var(--cyan); }
+.wheel i { position: absolute; background: rgba(120,100,255,.55); } .wheel .w-s1 { left: 50%; top: 4%; width: 7%; height: 32%; margin-left: -3.5%; }
+.wheel .w-s2 { left: 5%; top: 50%; width: 32%; height: 7%; margin-top: -3.5%; } .wheel .w-s3 { right: 5%; top: 50%; width: 32%; height: 7%; margin-top: -3.5%; }
+.wheel .w-mark { left: 50%; top: 0; width: 11%; height: 17%; margin-left: -5.5%; background: var(--pink); box-shadow: 0 0 10px var(--pink); border-radius: 3px; }
+.swipe-layer { position: absolute; inset: 0; touch-action: none; }
+.swipe-hint { position: absolute; left: 0; right: 0; bottom: calc(var(--sab) + 26px); text-align: center; font-size: 12px; letter-spacing: .4em; color: rgba(255,255,255,.35); text-transform: uppercase; animation: hintfade 4s ease forwards; }
+@keyframes hintfade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- settings ---- */
+.set-row { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; }
+.set-row > b { display: block; margin-bottom: 8px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.seg { display: flex; gap: 6px; } .seg button { flex: 1; padding: 10px 6px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; }
+.seg button.on { border-color: var(--cyan); background: rgba(0,229,255,.2); box-shadow: 0 0 10px rgba(0,229,255,.3); }
+.set-row small { display: block; color: var(--dim); margin-top: 6px; font-size: 12px; }
+.btn.danger { border-color: #ff4d6d; color: #ff9db0; background: rgba(255,60,90,.1); }
