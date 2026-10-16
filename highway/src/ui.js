@@ -23,7 +23,8 @@ export class UI {
     const nitro = h('div', 'hud-nitro', '<div class="n-lbl">NITRO</div><div class="n-bar"><i></i></div>');
     this.popups = h('div', 'popups');
     this.flash = h('div', 'flash');
-    this.hudEl.append(score, speed, combo, nitro, this.popups, this.flash);
+    const pauseBtn = h('div', 'pause-btn', '❚❚'); pauseBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); this.onPause && this.onPause(); });
+    this.hudEl.append(score, speed, combo, nitro, this.popups, this.flash, pauseBtn);
     this.elScore = score.querySelector('[data-k=score]');
     this.elSpeed = speed.querySelector('[data-k=speed]');
     this.elCombo = combo; this.elComboCount = combo.querySelector('.c-count'); this.elComboMult = combo.querySelector('.c-mult');
@@ -59,9 +60,15 @@ export class UI {
   }
 
   setHud({ score, kmh }) {
-    const s = fmt(score), k = String(Math.round(kmh));
-    if (this._last.s !== s) { this.elScore.textContent = s; this._last.s = s; }
+    const si = Math.floor(score), k = String(Math.round(kmh));
+    if (this._last.si !== si) { this._last.si = si; this.elScore.textContent = fmt(si); }
     if (this._last.k !== k) { this.elSpeed.textContent = k; this._last.k = k; }
+  }
+  /** black fade out -> cb() -> fade back in */
+  fade(cb) {
+    const f = h('div', 'fader'); document.getElementById('app').append(f);
+    requestAnimationFrame(() => { f.classList.add('on'); });
+    setTimeout(() => { cb(); requestAnimationFrame(() => { f.classList.remove('on'); setTimeout(() => f.remove(), 260); }); }, 230);
   }
   showHud(v) { this.hudEl.style.display = v ? '' : 'none'; }
 

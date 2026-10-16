@@ -46,7 +46,7 @@ export class Effects {
     this.quality = q;
     const r = this.renderer;
     const w = r.domElement.width, h = r.domElement.height;
-    if (this.composer) { this.composer.dispose?.(); this.composer = null; }
+    if (this.composer) { this.composer.passes.forEach((p) => p.dispose && p.dispose()); this.composer.dispose(); this.composer = null; }
     this.bloom = null; this.speedPass = null;
     if (q !== 'low') {
       const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: q === 'high' ? 4 : 0 });

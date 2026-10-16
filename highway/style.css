@@ -159,3 +159,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 .strip { margin: 8px 0; } .strip i { height: 6px; border-radius: 2px; background: rgba(255,255,255,.1); } .strip i.on { background: var(--ec); box-shadow: 0 0 6px var(--ec); }
 .e-blurb { font-size: 13px; color: #cfc8ee; } .e-perks { font-size: 12px; color: var(--cyan); margin-top: 4px; } .e-goal { margin-top: 8px; } .e-reward { font-size: 12px; margin-top: 8px; color: var(--amber); }
 .event-done { margin: 10px 0; padding: 10px; border-radius: 12px; border: 1px solid var(--lime); background: rgba(198,255,0,.1); color: var(--lime); font-weight: 800; } .event-done small { color: var(--ink); font-weight: 600; }
+
+/* ---- pause / fade ---- */
+.pause-btn { position: absolute; top: calc(var(--sat) + 74px); left: calc(var(--sal) + 14px); width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: rgba(10,5,30,.5); color: rgba(255,255,255,.8); font-size: 13px; letter-spacing: -2px; display: flex; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; }
+.fader { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .22s ease; z-index: 50; pointer-events: auto; } .fader.on { opacity: 1; }

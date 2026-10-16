@@ -16,6 +16,7 @@ import { Screens } from './screens.js';
 import { Controls } from './controls.js';
 import { statsFor, coinsForScore, applyRunToMissions, ensureMissions } from './progression.js';
 import { applyRunToEvent, globalCoinMult } from './events.js';
+import { AudioSys } from './audio.js';
 
 export class Game {
   constructor(canvas) {
@@ -42,17 +43,25 @@ export class Game {
     this.scoring = new Scoring(this.player.stats.comboMult);
     this.fx = new Effects(this.renderer, this.scene, this.camera, q);
     this.fx.attachPlayer(this.player);
-    this.nitroWanted = false;
+    this.nitroWanted = false; this._wasNitro = false;
+    this.audio = new AudioSys(); this.audio.setWorld(this.worldDef);
+    this._unlock = () => { this.audio.unlock(); };
+    for (const ev of ['pointerdown', 'keydown', 'touchend']) window.addEventListener(ev, this._unlock, { passive: true });
+    document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.btn, .g-nav, .seg button, .world-chips button, .pause-btn')) this.audio.sfx('click'); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { if (this.state === 'playing') this.pause(); this.audio.suspend(); } else this.audio.resume(); });
+    this.frames = { n: 0, t: 0, fast: 0 }; this.resScale = 1;
     this._shake = new THREE.Vector3(); this._tmp = new THREE.Vector3();
 
     this.input.onLane = (d) => { if (this.state === 'playing') this.player.changeLane(d); };
     this.input.onNitro = (v) => { this.nitroWanted = v; };
+    this.input.onPause = () => { if (this.state === 'playing') this.pause(); else if (this.state === 'paused') this.resumeRun(); };
     this.input.onAnyStart = () => { if (this.state === 'title') this.startRun(); else if (this.state === 'gameover') this.startRun(this.lastRunOpts); };
     this.controls = new Controls(document.getElementById('controls'), {
       onLane: (d) => { if (this.state === 'playing') this.player.changeLane(d); },
       onNitro: (v) => { this.nitroWanted = v; },
     });
     this.applyControls();
+    this.ui.onPause = () => { if (this.state === 'playing') this.pause(); };
 
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 200));
@@ -74,6 +83,7 @@ export class Game {
       this.controls.show(false); this.ui.showHud(false);
       if (this.worldDef.id !== save.data.settings.world) this.loadWorld(save.data.settings.world);
       this.traffic.reset();
+      this.audio.setMusicMode('menu');
       this.screens.menu();
     }
   }
@@ -93,6 +103,7 @@ export class Game {
     this.world = new World(this.scene, def, save.data.settings.quality);
     this.traffic = new Traffic(this.scene, def);
     this.player.setWorld(def);
+    this.audio.setWorld(def);
   }
   resetProgress() {
     save.reset();
@@ -132,7 +143,24 @@ export class Game {
     this.nitroWanted = this.input.nitroHeld;
     this.ui.clearScreens(); this.controls.show(true); this.ui.showHud(true);
     this.ui.setCombo(0, 1, 0);
-    this.state = 'playing';
+    this.state = 'playing'; this.audio.setMusicMode('play'); this.audio.sfx('go');
+    this.ui.popup('GO!', 'tight');
+  }
+
+  // ---- pause ----
+  pause() {
+    if (this.state !== 'playing') return;
+    this.state = 'paused'; this.nitroWanted = false;
+    this.audio.updateEngine(0, 300, 0, false);
+    this.screens.pause({
+      resume: () => this.resumeRun(),
+      restart: () => this.startRun(this.lastRunOpts),
+      menu: () => this.ui.fade(() => { this.ui.showHud(false); this.setState('title'); }),
+    });
+  }
+  resumeRun() {
+    if (this.state !== 'paused') return;
+    this.ui.clearScreens(); this.state = 'countdown'; this.countdown = 3.0; this._cd = 4;
   }
 
   endRun() {
@@ -157,7 +185,8 @@ export class Game {
     this.screens.gameOver({
       score, best: save.data.bestByCar[id] || 0, newBest, kmh: r.topKmh, closeCalls: sc.closeCalls, bestCombo: sc.bestCombo,
       coins, bonus, missionsDone: missions.completed, carName: this.player.car.name, event: this.runEvent, eventRes,
-    }, { retry: () => this.startRun(this.lastRunOpts), garage: () => this.enterGarage(), menu: () => this.setState('title') });
+    }, { retry: () => this.startRun(this.lastRunOpts), garage: () => this.enterGarage(), menu: () => this.ui.fade(() => this.setState('title')) });
+    this.audio.setMusicMode('menu'); if (coins > 0) this.audio.sfx('coin'); if (eventRes && eventRes.completed) this.audio.sfx('win');
   }
 
   // ---- loop ----
@@ -167,6 +196,18 @@ export class Game {
     this.clock.last = t;
     this.update(dt);
     this.fx.render();
+    this._adaptResolution(dt);
+  }
+
+  // dynamic resolution: if frames get slow, render fewer pixels (and creep back up when there is headroom)
+  _adaptResolution(dt) {
+    if (this.state === 'paused' || document.hidden) return;
+    const f = this.frames; f.n++; f.t += dt;
+    if (f.n < 50) return;
+    const avg = f.t / f.n; f.n = 0; f.t = 0;
+    if (avg > 0.0215 && this.resScale > 0.55) { this.resScale = Math.max(0.55, this.resScale - 0.1); f.fast = 0; this.resize(); }
+    else if (avg < 0.0145) { if (++f.fast >= 4 && this.resScale < 1) { this.resScale = Math.min(1, this.resScale + 0.1); f.fast = 0; this.resize(); } }
+    else f.fast = 0;
   }
 
   update(dt) {
@@ -176,7 +217,7 @@ export class Game {
       p.update(dt, this.nitroWanted);
       const r = this.run, sc = this.scoring;
       r.time += dt; r.distance += p.speed * dt; r.topKmh = Math.max(r.topKmh, p.kmh);
-      if (sc.update(dt, p.kmh) === 'expired') this.ui.popup('COMBO LOST', 'warn');
+      if (sc.update(dt, p.kmh) === 'expired') { this.ui.popup('COMBO LOST', 'warn'); this.audio.sfx('lost'); }
       const difficulty = Math.min(1, r.time / 180);
       const events = this.traffic.update(dt, p.speed, difficulty, p.len, p.x);
       for (const e of events) if (e.type === 'close') this.onCloseCall(e);
@@ -188,6 +229,13 @@ export class Game {
       this.ui.setHud({ score: sc.score, kmh: p.kmh });
       this.ui.setCombo(sc.combo, sc.mult, sc.comboTimer / SCORE.comboWindow);
       this.ui.setNitro(p.nitro.meter, p.nitro.active, p.nitro.locked);
+    } else if (this.state === 'countdown') {
+      this.countdown -= dt; const n = Math.ceil(this.countdown);
+      if (n !== this._cd) { this._cd = n; if (n > 0) { this.ui.popup(String(n), 'tight'); this.audio.sfx('tick'); } }
+      if (this.countdown <= 0) { this.state = 'playing'; this.audio.sfx('go'); this.ui.popup('GO!', 'tight'); }
+      worldSpeed = 0;
+    } else if (this.state === 'paused') {
+      worldSpeed = 0;
     } else if (this.state === 'crashing') {
       p.update(dt, false);
       this.run.crashT += dt;
@@ -203,9 +251,13 @@ export class Game {
       p.model.rotation.y = this.garageAngle; p.root.position.x = 0;
     } else { worldSpeed = 0; }
 
-    this.world.update(dt, worldSpeed);
+    const frozen = this.state === 'paused' || this.state === 'countdown';
+    if (!frozen) this.world.update(dt, worldSpeed);
     const sf = worldSpeed / CFG.kmhToMs / 300;
-    this.fx.update(dt, sf, p.boostFrac, this.camera, worldSpeed);
+    if (!frozen) this.fx.update(dt, sf, p.boostFrac, this.camera, worldSpeed);
+    const driving = this.state === 'playing';
+    this.audio.updateEngine(p.kmh, p.stats.topSpeed, p.boostFrac, driving);
+    if (driving && p.nitro.active !== this._wasNitro) { this._wasNitro = p.nitro.active; if (p.nitro.active) this.audio.sfx('nitro'); }
     this.updateCamera(dt, sf);
   }
 
@@ -214,7 +266,7 @@ export class Game {
     const pts = sc.closeCall(e.tight);
     p.addNitro(e.tight ? 16 : 9);
     this.ui.popup(e.tight ? `TIGHT! +${pts.toLocaleString('en-US')}` : `CLOSE CALL +${pts.toLocaleString('en-US')}`, e.tight ? 'tight' : '');
-    haptic(e.tight ? [12, 20, 12] : 10);
+    haptic(e.tight ? [12, 20, 12] : 10); this.audio.sfx(e.tight ? 'tight' : 'close'); this.audio.sfx('whoosh');
   }
 
   onHit(car) {
@@ -227,12 +279,12 @@ export class Game {
       if (this.scoring.breakCombo()) this.ui.popup('COMBO LOST', 'warn');
       this.scoring.lightHits++;
       this.fx.burst(cx, 0.6, 0, 16, 0xffb02e, 5);
-      this.fx.shake(0.55); this.ui.flashScreen('white'); haptic(35);
+      this.fx.shake(0.55); this.ui.flashScreen('white'); haptic(35); this.audio.sfx('light');
     } else {
       this.scoring.breakCombo();
       p.crash();
       this.fx.burst(cx, 0.8, -1, 40, 0xff7a2e, 9);
-      this.fx.shake(1); this.ui.flashScreen('red'); haptic([60, 40, 90]);
+      this.fx.shake(1); this.ui.flashScreen('red'); haptic([60, 40, 90]); this.audio.sfx('crash');
       this.ui.setCombo(0, 1, 0);
       this.state = 'crashing'; this.run.crashT = 0;
     }
@@ -268,7 +320,7 @@ export class Game {
     const w = window.innerWidth, h = window.innerHeight;
     const q = save.data.settings.quality;
     const cap = q === 'high' ? 2 : q === 'medium' ? 1.5 : 1;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cap));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cap) * (this.resScale || 1));
     this.renderer.setSize(w, h, false);
     this.aspect = w / h;
     const dist = this.aspect < 1 ? 13 : 8.6;

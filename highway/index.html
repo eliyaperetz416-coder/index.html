@@ -7,17 +7,41 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Neon Lanes">
+<meta name="apple-mobile-web-app-title" content="NEON LANES">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<title>Neon Lanes</title>
+<title>NEON LANES</title>
+<!-- splash:start -->
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1242x2208.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-750x1334.png">
+<!-- splash:end -->
 <link rel="stylesheet" href="style.css">
+<style>
+#loader{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 60%,#2a0a4a,#06030f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#f4f1ff;font-family:-apple-system,system-ui,sans-serif;transition:opacity .45s ease}
+#loader.done{opacity:0;pointer-events:none}
+#loader h1{margin:0;font-size:34px;font-style:italic;font-weight:900;letter-spacing:.1em;text-shadow:0 0 22px #ff2e9a}
+#loader .bar{width:min(60vw,260px);height:5px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+#loader .bar i{display:block;width:40%;height:100%;border-radius:4px;background:linear-gradient(90deg,#00e5ff,#ff2e9a);animation:ld 1.1s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+#loader p{margin:0;font-size:12px;color:#9a90c4;letter-spacing:.2em;text-transform:uppercase}
+#loader .err{display:none;max-width:80vw;text-align:center;color:#ff9db0;letter-spacing:0;text-transform:none;font-size:14px}
+</style>
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/jsm/" } }
 </script>
 </head>
 <body>
+<div id="loader"><h1 id="loader-name">Loading</h1><div class="bar"><i></i></div><p>Loading</p><p class="err" id="loader-err"></p></div>
 <div id="app">
   <canvas id="gl"></canvas>
   <div id="hud"></div>
@@ -26,6 +50,12 @@
   <div id="toast"></div>
 </div>
 <noscript>This game needs JavaScript.</noscript>
+<script>
+// old-browser / failed-load safety net (the game needs ES modules + WebGL; iOS 16.4+)
+window.__ready = false;
+setTimeout(function () { if (!window.__ready) { var e = document.getElementById("loader-err"); e.style.display = "block"; e.textContent = "Still loading… if this stays here, your browser may be too old (iOS 16.4+ / a recent Chrome is required) or WebGL is disabled."; } }, 9000);
+window.addEventListener("error", function (ev) { var e = document.getElementById("loader-err"); if (e && !window.__ready) { e.style.display = "block"; e.textContent = "Could not start: " + (ev.message || "unknown error"); } });
+</script>
 <script type="module" src="src/main.js"></script>
 </body>
 </html>

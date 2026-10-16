@@ -18,6 +18,25 @@ export class Screens {
   wrap(cls = '') { return h('div', 'screen ' + cls); }
   show(node) { this.ui.showScreen(node); return node; }
 
+  // ---------------- pause ----------------
+  pause(handlers) {
+    const g = this.game;
+    const card = h('div', 'card');
+    card.append(h('h2', '', 'PAUSED'));
+    const r = h('button', 'btn', 'Resume'); r.onclick = handlers.resume; card.append(r);
+    const row = h('div', 'btn-row');
+    const snd = h('button', 'btn ghost', save.data.settings.sound ? 'Sound: On' : 'Sound: Off');
+    snd.onclick = () => { save.data.settings.sound = !save.data.settings.sound; save.save(); g.audio.setEnabled(save.data.settings.sound); snd.textContent = save.data.settings.sound ? 'Sound: On' : 'Sound: Off'; };
+    const ctl = h('button', 'btn ghost', 'Controls: ' + save.data.settings.control);
+    ctl.onclick = () => { const ids = CONTROL_MODES.map((m) => m.id); const n = ids[(ids.indexOf(save.data.settings.control) + 1) % ids.length]; save.data.settings.control = n; save.save(); g.applyControls(); g.controls.show(false); ctl.textContent = 'Controls: ' + n; };
+    row.append(snd, ctl); card.append(row);
+    const row2 = h('div', 'btn-row');
+    const rs = h('button', 'btn ghost', 'Restart'); rs.onclick = handlers.restart;
+    const q = h('button', 'btn ghost danger', 'Quit run'); q.onclick = handlers.menu;
+    row2.append(rs, q); card.append(row2);
+    const w = this.wrap(); w.append(card); this.show(w);
+  }
+
   // ---------------- main menu ----------------
   menu() {
     const g = this.game; const car = carById(save.data.selectedCar);

@@ -1,6 +1,7 @@
 # Generates PWA icons (neon road + car silhouette) into icons/. Run: python3 tools/make-icons.py
-from PIL import Image, ImageDraw, ImageFilter
-import os
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import os, sys
+NAME = sys.argv[1] if len(sys.argv) > 1 else 'NEON LANES'
 os.makedirs('icons', exist_ok=True)
 
 def make(size, maskable=False):
@@ -43,3 +44,22 @@ for s in (180, 192, 512):
     make(s, s == 180).save(f'icons/icon-{s}.png')   # apple-touch icon must be opaque square (iOS rounds it)
 make(512, True).save('icons/icon-maskable-512.png')
 print('icons ok')
+
+# ---- iOS splash screens (portrait) ----
+SIZES = [(1320, 2868), (1206, 2622), (1290, 2796), (1179, 2556), (1284, 2778), (1170, 2532), (1125, 2436), (1242, 2688), (828, 1792), (1242, 2208), (750, 1334)]
+icon = Image.open('icons/icon-512.png').convert('RGBA')
+FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+for (w, h) in SIZES:
+    bg = Image.new('RGB', (w, h), (6, 3, 15)); d = ImageDraw.Draw(bg)
+    for y in range(h):
+        t = y / h; d.line([(0, y), (w, y)], fill=(int(6 + 50 * t ** 2.2), int(3 + 8 * t), int(15 + 60 * t ** 2.2)))
+    isz = int(w * 0.34); ic = icon.resize((isz, isz), Image.LANCZOS)
+    bg.paste(ic, ((w - isz) // 2, int(h * 0.36)), ic)
+    try:
+        f = ImageFont.truetype(FONT, int(w * 0.075))
+    except Exception:
+        f = ImageFont.load_default()
+    tw = d.textlength(NAME, font=f)
+    d.text(((w - tw) / 2, int(h * 0.36) + isz + int(w * 0.06)), NAME, font=f, fill=(244, 241, 255))
+    bg.save(f'icons/splash-{w}x{h}.png', optimize=True)
+print('splash ok')

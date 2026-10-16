@@ -14,6 +14,8 @@ export const CFG = {
   closeCallX: 3.7,           // |dx| below this while passing = close call
   tightCallX: 2.75,          // |dx| below this = tight call (double bonus)
   kmhToMs: 1 / 3.6,
+  fairWindow: 1.3,           // seconds: cars arriving within this window count as 'at the same time'
+  maxBlockedOthers: 1,       // at most this many OTHER lanes may be blocked at the same time (so >= half of the road stays free)
 };
 
 // Scoring / feel tuning (kept here so balance changes don't touch game logic)

@@ -203,10 +203,11 @@ export const models = {
   /** Overhead sign gantry spanning the road (for instancing). */
   createGantryKit(roadWidth, color = 0x00e5ff) {
     const parts = [
-      box(0.5, 7.4, 0.5, -roadWidth / 2 - 0.6, 3.7, 0, 0x22222e), box(0.5, 7.4, 0.5, roadWidth / 2 + 0.6, 3.7, 0, 0x22222e),
+      box(0.5, 8.6, 0.5, -roadWidth / 2 - 0.6, 4.3, 0, 0x22222e), box(0.5, 8.6, 0.5, roadWidth / 2 + 0.6, 4.3, 0, 0x22222e),
       box(roadWidth + 1.7, 0.5, 0.5, 0, 7.2, 0, 0x22222e),
     ];
-    const neon = [box(roadWidth + 1.2, 0.14, 0.14, 0, 6.85, 0.3, color), box(roadWidth * 0.5, 1.5, 0.12, 0, 6.0, 0.05, color)];
+    const dim = new THREE.Color(color).multiplyScalar(0.28).getHex();
+    const neon = [box(roadWidth + 1.2, 0.14, 0.14, 0, 6.85, 0.3, color), box(roadWidth * 0.46, 0.9, 0.1, 0, 7.9, 0.05, dim), box(roadWidth * 0.46 - 0.4, 0.1, 0.12, 0, 7.9, 0.1, color)];
     return { frame: mergeGeometries(parts), neon: mergeGeometries(neon) };
   },
 

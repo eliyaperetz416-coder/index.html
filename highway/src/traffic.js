@@ -90,9 +90,9 @@ export class Traffic {
     for (const c of this.active) {
       if (c.lane === li || seen.has(c.lane) || c.z > 10) continue;
       const t = -c.z / c.relSpeed;
-      if (Math.abs(t - tNew) < 0.9 + 3.5 / playerSpeed * 10) { blocked++; seen.add(c.lane); }
+      if (Math.abs(t - tNew) < CFG.fairWindow) { blocked++; seen.add(c.lane); }
     }
-    return blocked < this.world.lanes.length - 1;
+    return blocked <= CFG.maxBlockedOthers;
   }
 
   _spawn(li, rel) {
