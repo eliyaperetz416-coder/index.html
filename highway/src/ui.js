@@ -22,10 +22,43 @@ export class UI {
     this.hudEl.innerHTML = '';
     const score = h('div', 'hud-score', '<div class="lbl">Score</div><div class="val" data-k="score">0</div>');
     const speed = h('div', 'hud-speed', '<div class="lbl">Speed</div><div><span class="val" data-k="speed">0</span><span class="unit">km/h</span></div>');
-    this.hudEl.append(score, speed);
+    const combo = h('div', 'hud-combo', '<div class="c-count"></div><div class="c-mult"></div><div class="c-bar"><i></i></div>');
+    const nitro = h('div', 'hud-nitro', '<div class="n-lbl">NITRO</div><div class="n-bar"><i></i></div>');
+    this.popups = h('div', 'popups');
+    this.flash = h('div', 'flash');
+    this.hudEl.append(score, speed, combo, nitro, this.popups, this.flash);
     this.elScore = score.querySelector('[data-k=score]');
     this.elSpeed = speed.querySelector('[data-k=speed]');
+    this.elCombo = combo; this.elComboCount = combo.querySelector('.c-count'); this.elComboMult = combo.querySelector('.c-mult');
+    this.elComboBar = combo.querySelector('.c-bar i');
+    this.elNitro = nitro; this.elNitroBar = nitro.querySelector('.n-bar i');
     this._last = {};
+  }
+
+  setCombo(combo, mult, timeFrac) {
+    const on = combo > 0;
+    this.elCombo.classList.toggle('on', on);
+    if (!on) { this._last.combo = 0; return; }
+    if (this._last.combo !== combo) {
+      this.elComboCount.textContent = combo + ' COMBO'; this.elComboMult.textContent = '×' + mult.toFixed(1);
+      this.elCombo.classList.remove('pulse'); void this.elCombo.offsetWidth; this.elCombo.classList.add('pulse');
+      this._last.combo = combo;
+    }
+    this.elComboBar.style.transform = `scaleX(${Math.max(0, Math.min(1, timeFrac))})`;
+  }
+  setNitro(meter, active, locked) {
+    this.elNitroBar.style.transform = `scaleX(${meter / 100})`;
+    this.elNitro.classList.toggle('active', active); this.elNitro.classList.toggle('locked', locked);
+    if (this.nitroBtn) { this.nitroBtn.classList.toggle('active', active); this.nitroBtn.classList.toggle('locked', locked); }
+  }
+  popup(text, kind = '') {
+    const e = h('div', 'popup ' + kind, text);
+    this.popups.append(e);
+    while (this.popups.children.length > 4) this.popups.firstChild.remove();
+    e.addEventListener('animationend', () => e.remove());
+  }
+  flashScreen(kind = 'red') {
+    this.flash.className = 'flash'; void this.flash.offsetWidth; this.flash.className = 'flash ' + kind;
   }
 
   setHud({ score, kmh }) {
@@ -36,8 +69,15 @@ export class UI {
   showHud(v) { this.hudEl.style.display = v ? '' : 'none'; }
 
   // ---- controls ----
-  buildButtons(onLane) {
+  buildButtons(onLane, onNitro) {
     this.controlsEl.innerHTML = '';
+    if (onNitro) {
+      const n = h('div', 'nitro-btn', 'N<small>NITRO</small>');
+      n.addEventListener('pointerdown', (e) => { e.preventDefault(); onNitro(true); });
+      const up = () => onNitro(false);
+      n.addEventListener('pointerup', up); n.addEventListener('pointercancel', up); n.addEventListener('pointerleave', up);
+      this.controlsEl.append(n); this.nitroBtn = n;
+    }
     const mk = (cls, label, dir) => {
       const b = h('div', 'side-btn ' + cls, label);
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.classList.add('down'); onLane(dir); });
@@ -62,13 +102,15 @@ export class UI {
     this.showScreen(wrap);
   }
 
-  showGameOver({ score, best, newBest, kmh }, onRestart) {
+  showGameOver({ score, best, newBest, kmh, closeCalls = 0, bestCombo = 0 }, onRestart) {
     const card = h('div', 'card');
     card.append(h('h2', '', 'CRASHED'));
     if (newBest) card.append(h('div', 'newbest', 'NEW BEST'));
     card.append(h('div', 'big', fmt(score)));
     card.append(h('div', 'stat-row', `<span>Best</span><b>${fmt(best)}</b>`));
     card.append(h('div', 'stat-row', `<span>Top speed</span><b>${Math.round(kmh)} km/h</b>`));
+    card.append(h('div', 'stat-row', `<span>Close calls</span><b>${closeCalls}</b>`));
+    card.append(h('div', 'stat-row', `<span>Best combo</span><b>${bestCombo}</b>`));
     const b = h('button', 'btn pink', 'Restart'); b.onclick = onRestart; card.append(b);
     const wrap = h('div', 'screen'); wrap.append(card);
     this.showScreen(wrap);
