@@ -1,0 +1,25 @@
+{
+  "name": "stunt-racer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "publish": "vite build --outDir ../stunt --emptyOutDir",
+    "icons": "python3 tools/make-icons.py",
+    "test": "vitest run",
+    "e2e": "node tests/e2e/smoke.mjs",
+    "e2e:pwa": "vite build && node tests/e2e/pwa.mjs",
+    "frames": "node tests/e2e/frames.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}

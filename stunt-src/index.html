@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="%THEME_COLOR%" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="%GAME_NAME%" />
+  <meta name="description" content="%GAME_NAME%: a one-finger 3D stunt racing game." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <title>%GAME_NAME%</title>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="touch"></div>
+  <div id="hud" hidden></div>
+  <div id="screens" hidden></div>
+  <div id="loading">
+    <div class="loading-logo">%GAME_NAME%</div>
+    <div class="loading-bar"><i></i></div>
+  </div>
+  <div id="rotate"><div>Turn your phone upright</div></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
