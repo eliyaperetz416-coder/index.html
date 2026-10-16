@@ -60,11 +60,83 @@ describe('Race (headless)', () => {
   });
 
   it('a hit slows the car down but the race goes on', () => {
-    const race = new Race({ track: TRACKS[0], stats: effectiveStats(CARS[0]) });
+    const track = { id: 'flat', pieces: [{ type: 'start' }, { type: 'straight', length: 600 }, { type: 'finish' }] };
+    const race = new Race({ track, stats: effectiveStats(CARS[0]) });
     for (let i = 0; i < 600; i++) race.update(1 / 60, { throttle: 1, steer: 0, brake: 0 });
+    expect(race.car.mode).toBe('ground');
     const v = race.car.v;
     race.car.hit({ slow: 0.4, push: 3 });
     expect(race.car.v).toBeCloseTo(v * 0.4, 3);
     expect(race.state).toBe('racing');
+  });
+});
+
+describe('Track items and game feel', () => {
+  const base = { id: 'items', world: 'neon' };
+  const drive = (race, seconds, steer = 0, extra = {}) => {
+    for (let t = 0; t < seconds; t += 1 / 60) {
+      race.update(1 / 60, { throttle: 1, steer: typeof steer === 'function' ? steer(race.car) : steer, brake: 0, ...extra });
+    }
+  };
+
+  it('a boost pad speeds the car past its top speed', () => {
+    const track = { ...base, pieces: [{ type: 'start' }, { type: 'straight', length: 300, items: [{ type: 'boost', at: 200 }] }, { type: 'finish' }] };
+    const race = new Race({ track, stats: effectiveStats(CARS[0]) });
+    const pad = race.items.find((it) => it.type === 'boost');
+    while (race.car.s < pad.s - 15) race.update(1 / 60, { throttle: 1, steer: 0, brake: 0 });
+    const before = race.car.v;
+    expect(race.score.boosts).toBe(0);
+    drive(race, 1);
+    expect(race.score.boosts).toBe(1);
+    expect(race.car.v).toBeGreaterThan(before);
+    expect(race.car.v).toBeGreaterThan(CARS[0].stats.topSpeed);
+    expect(race.events.some((e) => e.type === 'boost')).toBe(true);
+  });
+
+  it('coins on the centre line are collected', () => {
+    const track = { ...base, pieces: [{ type: 'start' }, { type: 'straight', length: 200, items: [{ type: 'coins', at: 40, count: 5 }] }, { type: 'finish' }] };
+    const race = new Race({ track, stats: effectiveStats(CARS[0]) });
+    drive(race, 10);
+    expect(race.score.coins).toBe(5);
+  });
+
+  it('hitting a barrier slows the car; squeezing past one is a near miss', () => {
+    const hitTrack = { ...base, pieces: [{ type: 'start' }, { type: 'straight', length: 300, items: [{ type: 'barrier', at: 150, x: 0 }] }, { type: 'finish' }] };
+    const r1 = new Race({ track: hitTrack, stats: effectiveStats(CARS[0]) });
+    let vBefore = 0;
+    for (let t = 0; t < 12 && r1.score.hits === 0; t += 1 / 60) {
+      vBefore = r1.car.v;
+      r1.update(1 / 60, { throttle: 1, steer: 0, brake: 0 });
+    }
+    expect(r1.score.hits).toBe(1);
+    expect(r1.car.v).toBeLessThan(vBefore * 0.7);
+    expect(r1.state).toBe('racing');
+
+    const missTrack = { ...base, pieces: [{ type: 'start' }, { type: 'straight', length: 300, items: [{ type: 'barrier', at: 150, x: -2.8 }] }, { type: 'finish' }] };
+    const r2 = new Race({ track: missTrack, stats: effectiveStats(CARS[0]) });
+    drive(r2, 12, (car) => (0.9 - car.x) * 0.5); // hold the car at x = 0.9: 0.2 m clear of the barrier
+    expect(r2.score.hits).toBe(0);
+    expect(r2.score.nearMiss).toBe(1);
+  });
+
+  it('nitro needs fuel, then boosts; hard steering at speed drifts and fills the tank', () => {
+    const track = { ...base, pieces: [{ type: 'start' }, { type: 'straight', length: 1500, walls: true }, { type: 'finish' }] };
+    const race = new Race({ track, stats: effectiveStats(CARS[0]) });
+    drive(race, 3 + 6);
+    race.nitro = 0.1;
+    expect(race.fireNitro()).toBe(false);
+    race.nitro = 1;
+    const v = race.car.v;
+    expect(race.fireNitro()).toBe(true);
+    drive(race, 1);
+    expect(race.car.v).toBeGreaterThan(v + 3);
+    race.nitro = 0;
+    let drifted = false;
+    for (let t = 0; t < 2; t += 1 / 60) {
+      race.update(1 / 60, { throttle: 1, steer: t < 1 ? 1 : -1, brake: 0 });
+      drifted ||= race.car.drifting;
+    }
+    expect(drifted).toBe(true);
+    expect(race.nitro).toBeGreaterThan(0.1);
   });
 });

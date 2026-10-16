@@ -19,7 +19,11 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ## Play
 
 - **Phone:** hold anywhere to accelerate, slide your finger left/right to steer, lift to brake.
-- **Desktop:** W / Up / Space accelerate, A D / Left Right steer, S / Down brake. The mouse works like a finger.
+  Steer hard at speed to **drift**. Flick up (or tap with a second finger, or tap NITRO) to fire **nitro**.
+- **Desktop:** W / Up / Space accelerate, A D / Left Right steer, S / Down brake, Shift / N nitro.
+  The mouse works like a finger.
+- Nitro fills by drifting, near misses, air time, flips and boost pads. Hits and crashes only slow you down.
+- Add `?quality=low|medium|high` to the URL to force a graphics preset (high = bloom).
 
 ## Install on iPhone
 
@@ -37,7 +41,8 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/track/` | `pieces.js` (track piece types) and `path.js` (centreline + frames, queries) |
 | `src/physics/` | `car.js`: arcade car on the track (ground and air modes, jump assist, crashes, respawn) |
 | `src/game/` | `race.js` (pure race simulation), `raceView.js` (draws it), `game.js` (menus <-> races) |
-| `src/render/` | Renderer, chase camera, track meshes, world/sky/scenery, procedural textures, **model layer** |
+| `src/hazards/` | Track items: boost pads, coins, hazards. One file per type, config driven |
+| `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
 | `src/ui/` | HUD and screens (plain DOM) |
 | `src/sw.js` | Service worker template (file list filled in at build time) |
 | `tests/` | `unit/` (Vitest) and `e2e/` (Playwright scripts) |
@@ -67,6 +72,20 @@ Add an object to `TRACKS` in `src/config/tracks.js`. A track is a list of pieces
 
 Any piece takes `width` (default 14) and `walls: false`. All piece types are in `src/track/pieces.js`.
 `npm test` checks that every track builds.
+
+Pieces carry **items** (boost pads, coins, hazards): `at` is metres from the piece start (or `t`,
+a 0..1 fraction of the piece), `x` is metres from the centre line (+ right):
+
+```js
+{ type: 'straight', length: 140, items: [
+  { type: 'boost', at: 120 },
+  { type: 'coins', at: 20, count: 6, pattern: 'zigzag' },   // 'line' | 'zigzag' | 'arc'
+  { type: 'barrier', at: 70, x: -3.5 },
+] }
+```
+
+Each item type lives in `src/hazards/<type>.js` (logic + view, registered by name) and is
+listed in `src/hazards/index.js`. Defaults can be overridden per item.
 
 ## Add a car
 

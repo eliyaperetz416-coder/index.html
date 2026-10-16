@@ -1,7 +1,7 @@
 // Input: one finger (or mouse) plus keyboard, turned into { throttle, steer, brake, nitro }.
 //
 // Hold-and-drag (default): touching anywhere accelerates, sliding left/right steers (the further,
-// the harder), lifting the finger brakes. A quick upward flick fires nitro.
+// the harder), lifting the finger brakes. A quick upward flick (or a second finger) fires nitro.
 // Keyboard: W / Up / Space accelerate, A D / Left Right steer, S / Down brake, Shift / N nitro.
 
 import { clamp } from './math.js';
@@ -50,7 +50,11 @@ export class Input {
   }
 
   down(e) {
-    if (this.pointer) return;
+    if (this.pointer) {
+      // A second finger tapping while the first one drives: nitro.
+      if (e.pointerId !== this.pointer.id) this.nitroQueued = true;
+      return;
+    }
     this.pointer = { id: e.pointerId, anchor: e.clientX, x: e.clientX, y: e.clientY, y0: e.clientY, t0: performance.now() };
     try {
       this.target.setPointerCapture(e.pointerId);

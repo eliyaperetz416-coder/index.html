@@ -49,6 +49,34 @@ export const RACE = {
   countdown: 3, // seconds of 3-2-1
   finishCoast: 4, // seconds of auto-drive after the line before the result screen
   baseReward: 100,
+  hitImmunity: 1.2, // seconds after a hit before the next one counts
+  startBoost: 0.25, // holding at GO gives a short boost
+};
+
+// Nitro tank (0..1): how it fills and what a full tank does.
+export const NITRO = {
+  start: 0.35,
+  minFire: 0.25, // fire with at least this much; strength scales with the amount
+  passive: 0.025, // per second
+  perDriftSecond: 0.22,
+  perNearMiss: 0.2,
+  perAirSecond: 0.12,
+  perFlip: 0.35,
+  perPad: 0.08,
+  power: 0.22, // + top speed fraction ...
+  powerPerStat: 0.25, // ... plus this times the car's nitro stat
+  duration: 1.6,
+  durationPerStat: 1.4,
+};
+
+// Coins earned for stunts on the result screen.
+export const SCORE = {
+  coin: 2, // per coin picked up
+  nearMiss: 15, // times the combo count
+  comboWindow: 3, // seconds to chain the next near miss
+  perAirSecond: 6,
+  perDriftSecond: 4,
+  flip: 25,
 };
 
 export const CAMERA = {

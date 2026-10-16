@@ -16,9 +16,11 @@ import { RACE } from '../config/game.js';
 export class Game {
   constructor() {
     this.save = storage.load();
-    this.renderer = new Renderer($('#stage'), resolveQuality(this.save.settings.quality));
+    // ?quality=low|medium|high overrides the saved setting (handy for testing).
+    const forced = new URLSearchParams(location.search).get('quality');
+    this.renderer = new Renderer($('#stage'), resolveQuality(forced ?? this.save.settings.quality));
     this.input = new Input($('#touch'));
-    this.hud = new Hud($('#hud'));
+    this.hud = new Hud($('#hud'), { onNitro: () => (this.input.nitroQueued = true) });
     this.screens = new Screens($('#screens'), {
       ride: (e) => this.ride(e),
       next: () => this.next(),
@@ -106,10 +108,20 @@ export class Game {
     const hud = this.hud;
     switch (e.type) {
       case 'count': hud.flash(String(e.n)); break;
-      case 'go': hud.flash('GO!', 'go'); break;
+      case 'go':
+        hud.flash('GO!', 'go');
+        if (e.perfect) hud.popup('GREAT START!', 'good');
+        break;
       case 'finish': hud.flash('FINISH', 'go'); break;
-      case 'crash': hud.popup('CRASH!', 'bad'); break;
+      case 'crash': hud.popup('CRASH!', 'bad'); hud.edge('hit'); break;
       case 'respawn': hud.popup('BACK ON TRACK', 'bad'); break;
+      case 'hit': hud.popup('SLOWED!', 'bad'); hud.edge('hit'); break;
+      case 'boost': hud.popup('BOOST!', 'gold'); hud.edge('boost'); break;
+      case 'nitro': hud.popup('NITRO!', 'good'); hud.edge('boost'); break;
+      case 'nearMiss': hud.popup(`NEAR MISS +${e.points}`, 'gold'); break;
+      case 'drift':
+        if (e.time > 0.6) hud.popup(`DRIFT ${e.time.toFixed(1)}s`, 'good');
+        break;
       case 'land':
         if (e.airTime > 1.2) hud.popup(`BIG AIR ${e.airTime.toFixed(1)}s`, 'good');
         break;

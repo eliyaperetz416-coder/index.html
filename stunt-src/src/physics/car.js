@@ -48,7 +48,12 @@ export class Car {
     this.v = v;
     this.vx = 0;
     this.slip = 0; // visual yaw from sideways motion (rad)
-    this.drift = 0; // extra visual yaw while drifting (rad), set by game feel code
+    this.drift = 0; // extra visual yaw while drifting (rad)
+    this.drifting = false;
+    this.driftDir = 0;
+    this.driftTime = 0;
+    this.driftHold = 0;
+    this.invuln = 0; // seconds of immunity after a hit
     this.airTime = 0;
     this.lastGroundS = s;
     this.boostTime = 0;
@@ -74,11 +79,14 @@ export class Car {
     return this.stats.topSpeed * (1 + (this.boostTime > 0 ? this.boostPower : 0));
   }
 
-  /** Short speed boost (pads and nitro). Stacks by taking the stronger one. */
-  boost(power, duration) {
+  /**
+   * Short speed boost (pads and nitro). Stacks by taking the stronger one.
+   * kick: also jump straight to near top speed (pads); off for the launch boost.
+   */
+  boost(power, duration, kick = true) {
     this.boostPower = Math.max(this.boostTime > 0 ? this.boostPower : 0, power);
     this.boostTime = Math.max(this.boostTime, duration);
-    if (this.mode === 'ground') this.v = Math.max(this.v, this.stats.topSpeed * (0.85 + power * 0.5));
+    if (kick && this.mode === 'ground') this.v = Math.max(this.v, this.stats.topSpeed * (0.85 + power * 0.5));
   }
 
   /**
@@ -88,6 +96,7 @@ export class Car {
    */
   step(dt, input) {
     if (this.boostTime > 0) this.boostTime -= dt;
+    if (this.invuln > 0) this.invuln -= dt;
     this.throttle = input.throttle;
     if (this.mode === 'ground') this.stepGround(dt, input);
     else this.stepAir(dt, input);
@@ -115,10 +124,14 @@ export class Car {
     if (v < 0) v = 0;
     this.v = v;
 
+    // Drift: hard steering at speed. Looser grip, wider slide, the tail swings out.
+    this.updateDrift(dt, input, v);
+
     // Across the track: steering pulls the sideways speed towards a target; grip decides how fast.
     const speedFactor = 0.45 + 0.55 * Math.min(1, v / 25);
-    const target = input.steer * st.steerSpeed * speedFactor * (v > 1 ? 1 : v);
-    this.vx += (target - this.vx) * damp(st.grip * this.traction, dt);
+    const driftK = this.drifting ? 1.15 : 1;
+    const target = input.steer * st.steerSpeed * speedFactor * driftK * (v > 1 ? 1 : v);
+    this.vx += (target - this.vx) * damp(st.grip * this.traction * (this.drifting ? 0.55 : 1), dt);
     const ax = -v * v * f.kR * P.centrifugal + -P.gravity * f.R.y * P.lateralGravity * (loop ? 0 : 1);
     this.vx += ax * dt;
     this.x += this.vx * dt;
@@ -164,6 +177,30 @@ export class Car {
     this.sync();
   }
 
+  updateDrift(dt, input, v) {
+    const steer = input.steer;
+    const want = Math.abs(steer) > 0.7 && v > 24 && this.traction > 0.9;
+    this.driftHold = want ? this.driftHold + dt : 0;
+    if (!this.drifting && this.driftHold > 0.18) {
+      this.drifting = true;
+      this.driftDir = Math.sign(steer);
+      this.driftTime = 0;
+      this.emit('driftStart', { dir: this.driftDir });
+    }
+    if (this.drifting) {
+      this.driftTime += dt;
+      if (Math.abs(steer) < 0.35 || Math.sign(steer) !== this.driftDir || v < 16) this.endDrift();
+    }
+    const target = this.drifting ? -this.driftDir * 0.42 : 0;
+    this.drift += (target - this.drift) * damp(this.drifting ? 6 : 8, dt);
+  }
+
+  endDrift() {
+    if (!this.drifting) return;
+    this.drifting = false;
+    this.emit('drift', { time: this.driftTime });
+  }
+
   /** Recompute world position, velocity and orientation from track coordinates. */
   sync(frameS = this.s) {
     const f = this.path.sampleAt(frameS, this.frame);
@@ -183,6 +220,7 @@ export class Car {
 
   /** Leave the road. `fromEdge` = we reached the end of the solid road (a gap). */
   launch(fromEdge) {
+    this.endDrift();
     this.mode = 'air';
     this.airTime = 0;
     this.airBase.copy(this.quat);

@@ -1,6 +1,10 @@
 // WebGL renderer, scene and camera, sized to the window.
 
 import { WebGLRenderer, Scene, PerspectiveCamera, PMREMGenerator, SRGBColorSpace, Mesh, BoxGeometry, MeshBasicMaterial, BackSide, Color } from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { QUALITY } from '../config/game.js';
 
 export function resolveQuality(name) {
@@ -31,6 +35,17 @@ export class Renderer {
     this.quality = quality;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
     this.scene.environment = quality.standardMaterials ? this.envMap : null;
+    // Bloom makes the neon glow for real; only on high quality (it costs fill rate).
+    if (quality.bloom && !this.composer) {
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
+      this.bloom = new UnrealBloomPass(undefined, 0.75, 0.45, 0.62);
+      this.composer.addPass(this.bloom);
+      this.composer.addPass(new OutputPass());
+    } else if (!quality.bloom && this.composer) {
+      this.composer.dispose();
+      this.composer = null;
+    }
     this.resize();
   }
 
@@ -70,12 +85,17 @@ export class Renderer {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h);
+    if (this.composer) {
+      this.composer.setPixelRatio(this.renderer.getPixelRatio());
+      this.composer.setSize(w, h);
+    }
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     for (const fn of this.onResize ?? []) fn(w, h);
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    if (this.composer) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
   }
 }
