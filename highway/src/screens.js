@@ -5,6 +5,8 @@ import { UPGRADES, MAX_LEVEL } from './data/upgrades.js';
 import { save } from './storage.js';
 import { h, fmt } from './ui.js';
 import { CONTROL_MODES } from './controls.js';
+import { WORLDS } from './data/worlds.js';
+import { listEvents, activeEvents, countdown, progressOf, isClaimed, DAY, occurrences, eventById } from './events.js';
 import { carStats, levelsOf, isOwned, buyCar, selectCar, buyUpgrade, upgradeCost, ensureMissions, missionText } from './progression.js';
 
 const tierName = (id) => TIERS.find((t) => t.id === id)?.name || id;
@@ -22,6 +24,13 @@ export class Screens {
     const card = h('div', 'card');
     card.append(h('h1', '', GAME_NAME), h('div', 'sub', GAME_TAGLINE));
     card.append(h('div', 'menu-car', `<span>${tierName(car.tier)}</span> ${car.name}`));
+    const worlds = h('div', 'world-chips');
+    for (const w of Object.values(WORLDS)) {
+      const b = h('button', save.data.settings.world === w.id ? 'on' : '', w.name);
+      b.onclick = () => { save.data.settings.world = w.id; save.save(); g.loadWorld(w.id); [...worlds.children].forEach((c) => c.classList.toggle('on', c === b)); };
+      worlds.append(b);
+    }
+    card.append(worlds);
     const play = h('button', 'btn', 'Play'); play.onclick = () => g.startRun(); card.append(play);
     const row = h('div', 'btn-row');
     const garage = h('button', 'btn ghost', 'Garage'); garage.onclick = () => g.enterGarage();
@@ -29,7 +38,9 @@ export class Screens {
     row.append(garage, missions); card.append(row);
     const row2 = h('div', 'btn-row');
     const settings = h('button', 'btn ghost', 'Settings'); settings.onclick = () => this.settings(() => this.menu());
-    row2.append(settings); card.append(row2);
+    const nAct = activeEvents().length;
+    const events = h('button', 'btn ghost', `Events${nAct ? ` <span class="badge">${nAct}</span>` : ''}`); events.onclick = () => this.events(() => this.menu());
+    row2.append(events, settings); card.append(row2);
     card.append(coinPill());
     card.append(h('div', 'hint', '← → / A D lanes · Space nitro · P pause'));
     const w = this.wrap(); w.append(card); this.show(w);
@@ -63,6 +74,54 @@ export class Screens {
       g.resetProgress(); this.settings(back);
     };
     card.append(reset);
+    const b = h('button', 'btn ghost', 'Back'); b.onclick = back; card.append(b);
+    const w = this.wrap(); w.append(card); this.show(w);
+  }
+
+  // ---------------- events / calendar ----------------
+  events(back) {
+    const g = this.game, now = Date.now();
+    const card = h('div', 'card wide');
+    card.append(h('h2', '', 'EVENTS'), h('div', 'sub', 'Limited-time events · next 14 days'));
+    const today = new Date(); today.setHours(0, 0, 0, 0); const t0 = today.getTime();
+    const dayNames = Array.from({ length: 14 }, (_, i) => new Date(t0 + i * DAY).toLocaleDateString(undefined, { weekday: 'narrow' }));
+    const list = listEvents(now);
+    if (!list.length) card.append(h('div', 'hint', 'No events scheduled right now.'));
+    const head = h('div', 'cal-head'); dayNames.forEach((d, i) => head.append(h('i', i === 0 ? 'today' : '', d))); 
+    card.append(h('div', 'cal-legend', '<span></span>'), head);
+    for (const st of list) {
+      const ev = st.ev, active = st.state === 'active';
+      const box = h('div', 'event' + (active ? ' active' : ''));
+      box.style.setProperty('--ec', ev.color);
+      box.append(h('div', 'e-top', `<b>${ev.name}</b><span class="chip ${active ? 'on' : ''}">${active ? 'ACTIVE · ends in ' + countdown(st.end - now) : 'Starts in ' + countdown(st.start - now)}</span>`));
+      // 14 day strip
+      const strip = h('div', 'strip');
+      const occs = occurrences(ev, t0, t0 + 14 * DAY);
+      for (let i = 0; i < 14; i++) {
+        const a = t0 + i * DAY, b = a + DAY;
+        strip.append(h('i', occs.some((o) => o.start < b && o.end > a) ? 'on' : ''));
+      }
+      box.append(strip);
+      box.append(h('div', 'e-blurb', ev.blurb));
+      const perks = [];
+      if (ev.world) perks.push(`World: ${WORLDS[ev.world]?.name || ev.world}`);
+      if (ev.modifiers?.coinMult) perks.push(`×${ev.modifiers.coinMult} coins`);
+      if (perks.length) box.append(h('div', 'e-perks', perks.join(' · ')));
+      if (ev.goal) {
+        const done = isClaimed(st.key), p = done ? ev.goal.target : progressOf(st.key);
+        const pct = Math.min(100, (p / ev.goal.target) * 100);
+        box.append(h('div', 'e-goal', `<div class="m-top"><span>${ev.goal.text.replace('{n}', fmt(ev.goal.target))}</span><b>${done ? '✓ done' : ''}</b></div><div class="m-bar"><i style="width:${pct}%"></i></div><div class="m-prog">${ev.goal.stat === 'distanceKm' ? p.toFixed(1) : fmt(p)} / ${fmt(ev.goal.target)}</div>`));
+      }
+      if (ev.reward) {
+        const car = ev.reward.car ? CARS.find((c) => c.id === ev.reward.car) : null;
+        box.append(h('div', 'e-reward', `Reward: ${ev.reward.coins ? `<i class="coin"></i>${fmt(ev.reward.coins)}` : ''}${car ? ` · <b>${car.name}</b> (event-only car)` : ''}`));
+      }
+      if (active && ev.world) {
+        const done = ev.goal && isClaimed(st.key);
+        const b = h('button', 'btn pink', done ? 'Play again' : 'Play event'); b.onclick = () => g.startRun({ event: st }); box.append(b);
+      }
+      card.append(box);
+    }
     const b = h('button', 'btn ghost', 'Back'); b.onclick = back; card.append(b);
     const w = this.wrap(); w.append(card); this.show(w);
   }
@@ -136,11 +195,17 @@ export class Screens {
         a.disabled = sel; a.onclick = () => { selectCar(car.id); render(); };
         panel.append(a);
       } else {
-        const a = h('button', 'btn pink', `Buy <i class="coin"></i>${fmt(car.price)}`);
-        a.disabled = save.data.coins < car.price;
-        a.onclick = () => { if (buyCar(car.id)) { selectCar(car.id); render(); } };
-        panel.append(a);
-        if (save.data.coins < car.price) panel.append(h('div', 'g-note', `Need ${fmt(car.price - save.data.coins)} more coins`));
+        if (car.event) {
+          const ev = eventById(car.event);
+          const a = h('button', 'btn ghost', 'Event reward'); a.disabled = true; panel.append(a);
+          panel.append(h('div', 'g-note', `Only available by completing the event “${ev ? ev.name : car.event}”.`));
+        } else {
+          const a = h('button', 'btn pink', `Buy <i class="coin"></i>${fmt(car.price)}`);
+          a.disabled = save.data.coins < car.price;
+          a.onclick = () => { if (buyCar(car.id)) { selectCar(car.id); render(); } };
+          panel.append(a);
+          if (save.data.coins < car.price) panel.append(h('div', 'g-note', `Need ${fmt(car.price - save.data.coins)} more coins`));
+        }
       }
       const dots = h('div', 'dots'); CARS.forEach((c, i) => dots.append(h('i', (i === idx ? 'on ' : '') + (isOwned(c.id) ? 'own' : ''))));
       panel.append(dots);
@@ -160,7 +225,14 @@ export class Screens {
     card.append(h('div', 'stat-row', `<span>Top speed</span><b>${Math.round(res.kmh)} km/h</b>`));
     card.append(h('div', 'stat-row', `<span>Close calls</span><b>${res.closeCalls}</b>`));
     card.append(h('div', 'stat-row', `<span>Best combo</span><b>${res.bestCombo}</b>`));
-    card.append(h('div', 'stat-row coin-row', `<span>Coins earned</span><b><i class="coin"></i>+${fmt(res.coins)}</b>`));
+    card.append(h('div', 'stat-row coin-row', `<span>Coins earned${res.bonus > 1 ? ` (×${res.bonus.toFixed(2).replace(/\.?0+$/, '')} bonus)` : ''}</span><b><i class="coin"></i>+${fmt(res.coins)}</b>`));
+    if (res.event && res.eventRes) {
+      const er = res.eventRes, goal = res.event.ev.goal;
+      if (er.completed) {
+        const car = res.event.ev.reward?.car ? carById(res.event.ev.reward.car) : null;
+        card.append(h('div', 'event-done', `🏆 EVENT COMPLETE: ${res.event.ev.name}<br><small>+${fmt(res.event.ev.reward?.coins || 0)} coins${car ? ` · unlocked ${car.name}` : ''}</small>`));
+      } else card.append(h('div', 'stat-row', `<span>${res.event.ev.name}</span><b>${goal.stat === 'distanceKm' ? er.progress.toFixed(1) : fmt(er.progress)} / ${fmt(er.target)}</b>`));
+    }
     for (const m of res.missionsDone || []) card.append(h('div', 'stat-row mdone', `<span>✓ ${missionText(m)}</span><b><i class="coin"></i>+${fmt(m.reward)}</b>`));
     card.append(h('div', 'stat-row', `<span>Total coins</span><b>${fmt(save.data.coins)}</b>`));
     const b = h('button', 'btn pink', 'Retry'); b.onclick = handlers.retry; card.append(b);

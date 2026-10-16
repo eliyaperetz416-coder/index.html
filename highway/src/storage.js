@@ -12,7 +12,8 @@ const defaults = () => ({
   settings: { control: 'buttons', sound: true, quality: 'high', haptics: true, world: 'neoncity' },
   missions: { day: '', list: [] },
   stats: { runs: 0, closeCalls: 0, distance: 0, topSpeed: 0 },
-  claimedEvents: {},      // eventId -> true
+  claimedEvents: {},      // `${eventId}@${startDate}` -> true (per occurrence)
+  eventProgress: {},      // same key -> progress number
 });
 
 function merge(base, over) {

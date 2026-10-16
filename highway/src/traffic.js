@@ -21,6 +21,7 @@ export class Traffic {
       const n = POOL_PER_TYPE[t.id] ?? 6;
       for (let i = 0; i < n; i++) {
         const obj = models.createVehicle(t.model, TRAFFIC_COLORS[i % TRAFFIC_COLORS.length]);
+        models.setWet(obj, worldDef.wet);
         obj.visible = false; this.root.add(obj);
         list.push({ obj, type: t, len: t.model.length, wid: t.model.width, lane: 0, x: 0, z: 0, relSpeed: 0, minDx: 99, scored: false, hit: false });
       }

@@ -37,3 +37,16 @@ export const carById = (id) => CARS.find((c) => c.id === id);
 export const STAT_RANGE = {
   topSpeed: [200, 420], accel: [15, 52], handling: [0.3, 1.0], comboMult: [1.0, 2.2], nitro: [0.8, 2.0],
 };
+
+// Event-only cars: no price, unlocked by completing the event named in `event` (see data/events.js).
+CARS.push(
+  { id: 'storm', name: 'Storm Chaser', tier: 'sport', price: 0, event: 'rain_rush',
+    topSpeed: 335, accel: 33, handling: 0.78, comboMult: 1.35, nitro: 1.4,
+    model: { type: 'car', body: 'sport', color: 0x1fd1ff, length: 4.5, width: 1.9, height: 1.12 } },
+  { id: 'wraith', name: 'Tunnel Wraith', tier: 'luxury', price: 0, event: 'tunnel_run',
+    topSpeed: 345, accel: 27, handling: 0.6, comboMult: 2.0, nitro: 1.2, weight: 1.5,
+    model: { type: 'car', body: 'limo', color: 0x7a2cff, length: 5.1, width: 1.95, height: 1.32 } },
+  { id: 'founder', name: 'Founder GT', tier: 'sport', price: 0, event: 'launch_season',
+    topSpeed: 310, accel: 31, handling: 0.72, comboMult: 1.3, nitro: 1.3,
+    model: { type: 'car', body: 'sport', color: 0xffc83d, length: 4.5, width: 1.9, height: 1.14 } },
+);

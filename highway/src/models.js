@@ -137,6 +137,19 @@ function finalize(parts, lights, glows) {
   return out;
 }
 
+const wetCache = new Map();
+function wetGeometry(spec) {
+  const key = `${spec.length}|${spec.width}`;
+  if (!wetCache.has(key)) {
+    const L = spec.length, W = spec.width, a = [];
+    for (const sx of [-1, 1]) {
+      const r = new THREE.PlaneGeometry(0.9, 7).rotateX(-Math.PI / 2); r.translate(sx * W * 0.34, 0.045, L / 2 + 3.6); a.push(paint(r, TAIL));
+      const f = new THREE.PlaneGeometry(1.1, 11).rotateX(-Math.PI / 2); f.translate(sx * W * 0.32, 0.045, -L / 2 - 5.6); a.push(paint(f, HEAD));
+    }
+    wetCache.set(key, mergeGeometries(a)); a.forEach((g) => g.dispose());
+  }
+  return wetCache.get(key);
+}
 const bodyMat = (color) => {
   const k = 'b' + color;
   if (!matCache.has(k)) matCache.set(k, new THREE.MeshPhongMaterial({ color, vertexColors: true, shininess: 70, specular: 0x6a6a88 }));
@@ -168,9 +181,13 @@ export const models = {
     g.add(body);
     if (geo.lights) g.add(new THREE.Mesh(geo.lights, lightMat()));
     if (geo.glow) { const gl = new THREE.Mesh(geo.glow, glowMat()); gl.renderOrder = 5; g.add(gl); g.userData.glow = gl; }
+    const wet = new THREE.Mesh(wetGeometry(spec), glowMat()); wet.visible = false; wet.renderOrder = 4; g.add(wet); g.userData.wet = wet;
     g.userData.length = spec.length; g.userData.width = spec.width; g.userData.height = spec.height;
     return g;
   },
+
+  /** wet-road light reflections under a vehicle (rain worlds) */
+  setWet(group, on) { if (group.userData.wet) group.userData.wet.visible = !!on; },
 
   setVehicleColor(group, color) { const b = group.children[0]; if (b && b.isMesh) b.material = bodyMat(color); },
 

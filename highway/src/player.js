@@ -15,12 +15,13 @@ export class Player {
     if (this.model) this.root.remove(this.model);
     this.car = carDef; this.stats = stats;
     this.model = models.createVehicle(carDef.model);
+    models.setWet(this.model, this.world.wet);
     this.root.add(this.model);
     this.len = carDef.model.length; this.wid = carDef.model.width;
     this.reset();
   }
 
-  setWorld(worldDef) { this.world = worldDef; this.reset(); }
+  setWorld(worldDef) { this.world = worldDef; models.setWet(this.model, worldDef.wet); this.reset(); }
 
   reset() {
     this.lane = this.world.playerStartLane;

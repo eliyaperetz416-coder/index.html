@@ -1,6 +1,7 @@
 // Builds and animates a world from a world config (src/data/worlds.js).
 // The player stays at z=0; the world scrolls towards +Z at the player's speed.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CFG } from './config.js';
 import { models, glowTexture } from './models.js';
 
@@ -20,12 +21,14 @@ export class World {
     this.disposables = [];
     const n = def.lanes.length;
     this.roadWidth = n * CFG.laneWidth;
+    this.tunnelTex = [];
     this._buildAtmosphere();
     this._buildRoad();
     this._buildBarriers();
-    this._buildBuildings();
-    this._buildStreetlights();
-    this._buildGantries();
+    if (def.structure === 'tunnel') this._buildTunnel();
+    else { this._buildBuildings(); this._buildStreetlights(); this._buildGantries(); }
+    if (def.rain) this._buildRain();
+    this.lightningT = 4 + Math.random() * 5; this.flash = 0;
   }
 
   // ---------- atmosphere ----------
@@ -45,8 +48,10 @@ export class World {
 
     const hemi = new THREE.HemisphereLight(d.ambient.sky, d.ambient.ground, d.ambient.intensity);
     const dir = new THREE.DirectionalLight(0x9a8cff, 0.5); dir.position.set(-20, 40, 30);
+    this.hemi = hemi; this.baseHemi = d.ambient.intensity; this.baseFog = new THREE.Color(d.fog.color);
     this.root.add(hemi, dir);
 
+    if (d.structure !== 'city') return;
     // distant skyline silhouette (not fogged, so it reads as a far-away city glow)
     const sc = document.createElement('canvas'); sc.width = 1024; sc.height = 128;
     const s = sc.getContext('2d'); const rnd = rngFactory(99);
@@ -74,6 +79,14 @@ export class World {
     g.fillStyle = d.road.color; g.fillRect(0, 0, W, H);
     const rnd = rngFactory(7);
     for (let i = 0; i < 5000; i++) { const v = 20 + rnd() * 26; g.fillStyle = `rgba(${v},${v},${v + 6},0.35)`; g.fillRect(rnd() * W, rnd() * H, 2, 2); }
+    if (d.wet) {
+      for (let i = 0; i < 26; i++) {
+        const x = rnd() * W, y = rnd() * H, rw = 40 + rnd() * 120, rh = 20 + rnd() * 70;
+        const grd = g.createRadialGradient(x, y, 0, x, y, rw);
+        grd.addColorStop(0, 'rgba(120,160,210,0.28)'); grd.addColorStop(1, 'rgba(120,160,210,0)');
+        g.save(); g.translate(x, y); g.scale(1, rh / rw); g.translate(-x, -y); g.fillStyle = grd; g.beginPath(); g.arc(x, y, rw, 0, 7); g.fill(); g.restore();
+      }
+    }
     const xAt = (i) => (CFG.roadShoulder + i * CFG.laneWidth) * pxm;
     const dashLen = 3 * (H / TILE);
     // lane dividers
@@ -98,7 +111,9 @@ export class World {
     this.roadTex = this._roadTexture();
     const totalW = this.roadWidth + CFG.roadShoulder * 2;
     const geo = new THREE.PlaneGeometry(totalW, 600); geo.rotateX(-Math.PI / 2);
-    const mat = new THREE.MeshLambertMaterial({ map: this.roadTex, color: 0xffffff, emissive: 0x1a1030, emissiveIntensity: 0.6 });
+    const mat = this.def.wet
+      ? new THREE.MeshPhongMaterial({ map: this.roadTex, color: 0xffffff, emissive: 0x0c1a2c, emissiveIntensity: 0.7, shininess: 90, specular: 0x6688aa })
+      : new THREE.MeshLambertMaterial({ map: this.roadTex, color: 0xffffff, emissive: 0x1a1030, emissiveIntensity: 0.6 });
     const road = new THREE.Mesh(geo, mat); road.position.set(0, 0, -260); this.root.add(road);
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 700).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x07050e }));
     ground.position.set(0, -0.05, -280); this.root.add(ground);
@@ -173,7 +188,7 @@ export class World {
     const slots = [...mk(1), ...mk(-1)];
     const pole = new THREE.MeshLambertMaterial({ color: 0x2a2a38, vertexColors: true });
     const lamp = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
-    const pool = new THREE.MeshBasicMaterial({ vertexColors: true, map: glowTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.35, fog: true });
+    const pool = new THREE.MeshBasicMaterial({ vertexColors: true, map: glowTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: this.def.wet ? 0.7 : 0.35, fog: true });
     this._instanced(kit.pole, pole, slots);
     this._instanced(kit.lamp, lamp, slots);
     const poolMesh = this._instanced(kit.pool, pool, slots); poolMesh.renderOrder = 2;
@@ -190,12 +205,96 @@ export class World {
     this.dyn.push({ tick: (dt, speed) => this._ringUpdate(slots, dt, speed) });
   }
 
+  // ---------- tunnel ----------
+  _panelTexture(base, seam) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+    const rnd = rngFactory(5);
+    for (let i = 0; i < 900; i++) { const v = rnd() * 14; g.fillStyle = `rgba(${v + 18},${v + 14},${v + 24},0.5)`; g.fillRect(rnd() * 256, rnd() * 256, 3, 3); }
+    g.fillStyle = seam; g.fillRect(0, 0, 256, 5); g.fillRect(0, 126, 256, 3);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 2;
+    this.tunnelTex.push(t); this.disposables.push(t); return t;
+  }
+
+  _buildTunnel() {
+    const T = this.def.tunnel, half = this.roadWidth / 2 + CFG.roadShoulder + 0.5, H = 7.4, LEN = 620;
+    // walls + ceiling (textures scroll with the road so they move past the camera)
+    const tex = this._panelTexture('#1a1822', '#2e2a3a'); tex.repeat.set(LEN / 24, 1);
+    const wallMat = new THREE.MeshLambertMaterial({ map: tex, emissive: 0x110b1c, emissiveIntensity: 0.6, side: THREE.DoubleSide });
+    const mkWall = (x, ry) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(LEN, H), wallMat); m.rotation.y = ry; m.position.set(x, H / 2, -260); this.root.add(m);
+    };
+    mkWall(-half, Math.PI / 2); mkWall(half, Math.PI / 2);
+    const ctex = tex.clone(); ctex.needsUpdate = true; ctex.repeat.set(3, LEN / 24); this.ceilTex = ctex; this.disposables.push(ctex);
+    const ceilMat = new THREE.MeshLambertMaterial({ map: ctex, emissive: 0x110b1c, emissiveIntensity: 0.6 }); this.disposables.push(ceilMat);
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(half * 2, LEN), ceilMat); ceil.rotation.x = Math.PI / 2; ceil.position.set(0, H, -260); this.root.add(ceil);
+    this.wallTex = tex;
+    // continuous neon strips
+    const strip = (x, y, hex) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, LEN), new THREE.MeshBasicMaterial({ color: hex, toneMapped: false })); m.position.set(x, y, -260); this.root.add(m); };
+    for (const [y, a, b] of [[1.5, T.strip1, T.strip2], [5.9, T.strip2, T.strip1]]) { strip(-half + 0.1, y, a); strip(half - 0.1, y, b); }
+    // ribs (instanced arches) + ceiling lamps + light pools
+    const rib = [];
+    const bx = (w, hh, d, x, y, z) => { const g = new THREE.BoxGeometry(w, hh, d); g.translate(x, y, z); return g; };
+    const ribGeo = mergeGeometries([bx(0.7, H, 0.7, -half + 0.35, H / 2, 0), bx(0.7, H, 0.7, half - 0.35, H / 2, 0), bx(half * 2, 0.7, 0.7, 0, H - 0.35, 0)]);
+    const ribSlots = Array.from({ length: Math.floor(RING / T.ribSpacing) }, (_, i) => ({ x: 0, z: 30 - i * T.ribSpacing }));
+    this._instanced(ribGeo, new THREE.MeshLambertMaterial({ color: 0x24202e, emissive: 0x08060e }), ribSlots);
+    const lampGeo = bx(3.2, 0.12, 1.1, 0, H - 0.5, 0);
+    const poolGeo = new THREE.PlaneGeometry(10, 12).rotateX(-Math.PI / 2); poolGeo.translate(0, 0.06, 0);
+    const lampSlots = Array.from({ length: Math.floor(RING / T.lightSpacing) }, (_, i) => ({ x: 0, z: 10 - i * T.lightSpacing }));
+    this._instanced(lampGeo, new THREE.MeshBasicMaterial({ color: T.light, toneMapped: false }), lampSlots);
+    const poolMesh = this._instanced(poolGeo, new THREE.MeshBasicMaterial({ color: T.light, map: glowTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.4 }), lampSlots);
+    poolMesh.renderOrder = 2;
+    this.dyn.push({ tick: (dt, speed) => { this._ringUpdate(ribSlots, dt, speed); this._ringUpdate(lampSlots, dt, speed); } });
+    this.disposables.push(wallMat);
+  }
+
+  // ---------- rain ----------
+  _buildRain() {
+    const R = this.def.rain, k = this.quality === 'low' ? 0.4 : this.quality === 'medium' ? 0.7 : 1;
+    const N = Math.floor(R.count * k);
+    this.rainN = N; this.rain = { x: new Float32Array(N), y: new Float32Array(N), z: new Float32Array(N) };
+    for (let i = 0; i < N; i++) this._dropReset(i, true);
+    const pos = new Float32Array(N * 6);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.rainMesh = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: R.color, transparent: true, opacity: 0.4, depthWrite: false }));
+    this.rainMesh.frustumCulled = false; this.rainMesh.renderOrder = 4; this.root.add(this.rainMesh);
+  }
+  _dropReset(i, anywhere) {
+    this.rain.x[i] = (Math.random() - 0.5) * 40; this.rain.y[i] = anywhere ? Math.random() * 16 : 14 + Math.random() * 3; this.rain.z[i] = -80 + Math.random() * 90;
+  }
+  _updateRain(dt, speed) {
+    const R = this.def.rain, pos = this.rainMesh.geometry.attributes.position, r = this.rain;
+    const vy = -R.speed, vz = speed * 0.8 + 6, len = 0.03;
+    for (let i = 0; i < this.rainN; i++) {
+      r.y[i] += vy * dt; r.z[i] += vz * dt;
+      if (r.y[i] < 0 || r.z[i] > 12) this._dropReset(i, false);
+      const j = i * 6;
+      pos.array[j] = r.x[i]; pos.array[j + 1] = r.y[i]; pos.array[j + 2] = r.z[i];
+      pos.array[j + 3] = r.x[i]; pos.array[j + 4] = r.y[i] - vy * len; pos.array[j + 5] = r.z[i] - vz * len;
+    }
+    pos.needsUpdate = true;
+  }
+
   // ---------- per-frame ----------
   update(dt, speed) {
     this.roadOffset = (this.roadOffset + (speed * dt) / TILE) % 1;
     this.roadTex.offset.y = this.roadOffset;
+    if (this.wallTex) { this.wallOffset = ((this.wallOffset || 0) + (speed * dt) / 24) % 1; this.wallTex.offset.x = this.wallOffset; this.ceilTex.offset.y = -this.wallOffset; }
+    if (this.rain) this._updateRain(dt, speed);
+    if (this.def.lightning) this._lightning(dt);
     for (const d of this.dyn) if (d.tick) d.tick(dt, speed);   // move slot z values
     for (const d of this.dyn) if (d.write) d.write();           // then upload instance matrices
+  }
+
+  _lightning(dt) {
+    this.lightningT -= dt;
+    if (this.lightningT <= 0) { this.flash = 1; this.lightningT = 6 + Math.random() * 9; this.second = Math.random() < 0.6 ? 0.22 : -1; }
+    if (this.flash > 0) {
+      this.flash = Math.max(0, this.flash - dt * 3.2);
+      if (this.second > 0) { this.second -= dt; if (this.second <= 0) this.flash = 0.9; }
+    }
+    this.hemi.intensity = this.baseHemi + this.flash * 2.6;
+    this.scene.fog.color.copy(this.baseFog).lerp(this._white || (this._white = new THREE.Color(0x8fb4e8)), this.flash * 0.6);
   }
 
   dispose() {

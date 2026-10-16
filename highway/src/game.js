@@ -15,6 +15,7 @@ import { haptic } from './haptics.js';
 import { Screens } from './screens.js';
 import { Controls } from './controls.js';
 import { statsFor, coinsForScore, applyRunToMissions, ensureMissions } from './progression.js';
+import { applyRunToEvent, globalCoinMult } from './events.js';
 
 export class Game {
   constructor(canvas) {
@@ -46,7 +47,7 @@ export class Game {
 
     this.input.onLane = (d) => { if (this.state === 'playing') this.player.changeLane(d); };
     this.input.onNitro = (v) => { this.nitroWanted = v; };
-    this.input.onAnyStart = () => { if (this.state === 'title' || this.state === 'gameover') this.startRun(); };
+    this.input.onAnyStart = () => { if (this.state === 'title') this.startRun(); else if (this.state === 'gameover') this.startRun(this.lastRunOpts); };
     this.controls = new Controls(document.getElementById('controls'), {
       onLane: (d) => { if (this.state === 'playing') this.player.changeLane(d); },
       onNitro: (v) => { this.nitroWanted = v; },
@@ -71,6 +72,7 @@ export class Game {
     this.state = s;
     if (s === 'title') {
       this.controls.show(false); this.ui.showHud(false);
+      if (this.worldDef.id !== save.data.settings.world) this.loadWorld(save.data.settings.world);
       this.traffic.reset();
       this.screens.menu();
     }
@@ -117,7 +119,11 @@ export class Game {
     this.setState('title');
   }
 
-  startRun() {
+  /** opts.event = an event status object from events.js (plays the event's world + counts towards its goal) */
+  startRun(opts = {}) {
+    this.runEvent = opts.event || null; this.lastRunOpts = opts;
+    const wid = this.runEvent?.ev.world || save.data.settings.world;
+    if (this.worldDef.id !== wid) this.loadWorld(wid);
     this.traffic.reset();
     this.player.reset();
     this.player.stats = this.statsFor(this.player.car);
@@ -140,15 +146,18 @@ export class Game {
     save.data.bestScore = Math.max(save.data.bestScore, score);
     const st = save.data.stats;
     st.runs++; st.closeCalls += sc.closeCalls; st.distance += r.distance; st.topSpeed = Math.max(st.topSpeed, r.topKmh);
-    const coins = coinsForScore(score);
+    const runStats = { closeCalls: sc.closeCalls, tightCalls: sc.tightCalls, maxKmh: r.topKmh, score, bestCombo: sc.bestCombo, distanceKm: r.distance / 1000 };
+    const bonus = (this.worldDef.coinBonus || 1) * globalCoinMult() * (this.runEvent && !this.runEvent.ev.modifiers?.global ? this.runEvent.ev.modifiers?.coinMult || 1 : 1);
+    const coins = Math.floor(coinsForScore(score) * bonus);
     save.data.coins += coins;
-    const missions = applyRunToMissions({ closeCalls: sc.closeCalls, tightCalls: sc.tightCalls, maxKmh: r.topKmh, score, bestCombo: sc.bestCombo, distanceKm: r.distance / 1000 });
+    const missions = applyRunToMissions(runStats);
+    const eventRes = this.runEvent ? applyRunToEvent(this.runEvent, runStats) : null;
     save.save();
     this.controls.show(false); this.ui.setCombo(0, 1, 0);
     this.screens.gameOver({
       score, best: save.data.bestByCar[id] || 0, newBest, kmh: r.topKmh, closeCalls: sc.closeCalls, bestCombo: sc.bestCombo,
-      coins, missionsDone: missions.completed, carName: this.player.car.name,
-    }, { retry: () => this.startRun(), garage: () => this.enterGarage(), menu: () => this.setState('title') });
+      coins, bonus, missionsDone: missions.completed, carName: this.player.car.name, event: this.runEvent, eventRes,
+    }, { retry: () => this.startRun(this.lastRunOpts), garage: () => this.enterGarage(), menu: () => this.setState('title') });
   }
 
   // ---- loop ----
