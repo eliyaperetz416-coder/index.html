@@ -40,9 +40,15 @@ export function nextTrack(save, id) {
  * Store a finished race. Returns what changed, for the result screen.
  * Mutates save.tracks.
  */
-export function recordResult(save, track, time) {
+export function recordResult(save, track, time, { won = true } = {}) {
   const before = CAREER.filter((t) => isUnlocked(save, t)).map((t) => t.id);
   const rec = { ...trackRecord(save, track.id) };
+  if (track.boss && !won) {
+    // Losing to a boss records nothing but the attempt.
+    rec.losses = (rec.losses ?? 0) + 1;
+    save.tracks[track.id] = rec;
+    return { firstClear: false, newBest: false, best: rec.best, medal: null, betterMedal: false, unlocked: [], lost: true };
+  }
   const firstClear = rec.done === 0;
   const newBest = rec.best == null || time < rec.best;
   if (newBest) rec.best = time;

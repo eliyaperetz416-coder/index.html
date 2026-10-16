@@ -17,6 +17,8 @@ import { CARS, carById } from '../config/cars.js';
 import { effectiveStats, carState, carLook, idlePending, idleRate, collectIdle } from './economy.js';
 import { trackMissions, raceStats, claimable } from './missions.js';
 import { GarageScreen } from './garageScreen.js';
+import { bossRivals } from './boss.js';
+import { WORLD_BY_ID } from '../config/worlds.js';
 import { RACE } from '../config/game.js';
 import { IDLE_MIN_MINUTES, IDLE_CAP_HOURS } from '../config/upgrades.js';
 import { fmtCoins, COIN } from '../ui/dom.js';
@@ -36,7 +38,8 @@ export class Game {
       retry: () => this.start(this.race.track.id),
       menu: () => this.menu(),
       tracks: () => this.showTracks(),
-      pick: (d) => this.start(d.id),
+      pick: (d) => this.pick(d.id),
+      raceBoss: (d) => this.start(d.id),
       closeModal: () => this.screens.closeModal(),
       collectIdle: () => this.collectIdle(),
       ...this.garage.handlers(),
@@ -116,7 +119,8 @@ export class Game {
     const track = TRACK_BY_ID[trackId] ?? TRACKS[0];
     const car = this.carDef;
     this.view?.dispose();
-    this.race = new Race({ track, stats: effectiveStats(car, carState(this.save, car.id).up) });
+    const stats = effectiveStats(car, carState(this.save, car.id).up);
+    this.race = new Race({ track, stats, rivals: bossRivals(track, stats) });
     this.view = new RaceView(this.renderer, this.race, { carDef: car, look: this.look });
     this.garage.modelKey = '';
   }
@@ -130,6 +134,28 @@ export class Game {
     this.screens.show('menu', { coins: this.save.coins, trackName: this.race.track.name, missionsReady: claimable(this.save) });
   }
 
+  /** Track list tap: boss tracks show the rival first. */
+  pick(id) {
+    const track = TRACK_BY_ID[id];
+    if (!track?.boss) {
+      this.start(id);
+      return;
+    }
+    this.save.lastTrack = id;
+    this.prepare(id);
+    const b = track.boss;
+    this.screens.show('bossIntro', {
+      id,
+      name: b.name,
+      taunt: b.taunt,
+      car: b.car.name,
+      track: track.name,
+      reward: track.reward,
+      glow: b.glow,
+      losses: trackRecord(this.save, id).losses ?? 0,
+    });
+  }
+
   /** Pick the track the start button plays (used by tests and the track list). */
   selectTrack(id) {
     this.save.lastTrack = id;
@@ -141,12 +167,17 @@ export class Game {
     const current = currentTrack(this.save).id;
     const groups = WORLDS.map((w) => ({
       title: w.name.toUpperCase(),
+      blurb: w.blurb,
+      locked: !!w.requires && !trackRecord(this.save, w.requires).done,
+      lockNote: w.requires ? `Beat ${TRACK_BY_ID[w.requires]?.boss?.name ?? TRACK_BY_ID[w.requires]?.name} to open this world` : '',
       tracks: CAREER.filter((t) => t.world === w.id).map((t) => {
         const rec = trackRecord(this.save, t.id);
+        const req = TRACK_BY_ID[t.requires];
         return {
           ...t,
+          bossName: t.boss?.name,
           locked: !isUnlocked(this.save, t),
-          requiresName: TRACK_BY_ID[t.requires]?.name,
+          requiresName: req?.boss ? `beat ${req.boss.name}` : `finish ${req?.name}`,
           best: rec.best,
           medal: rec.medal,
           current: t.id === current,
@@ -219,6 +250,11 @@ export class Game {
         if (e.airTime > 1.2) hud.popup(`BIG AIR ${e.airTime.toFixed(1)}s`, 'good');
         break;
       case 'flip': hud.popup(e.flips ? 'BACKFLIP!' : 'BARREL ROLL!', 'good'); break;
+      case 'rammed': hud.popup('RAMMED!', 'bad'); hud.edge('hit'); break;
+      case 'ramRival': hud.popup('SHOVED HIM!', 'gold'); break;
+      case 'rivalFinish': if (e.first) hud.popup(`${e.name} FINISHED`, 'bad'); break;
+      case 'sand': hud.popup('SAND TRAP!', 'bad'); break;
+      case 'boulder': hud.popup('BOULDER!', 'bad'); break;
       default:
     }
   }
@@ -233,13 +269,20 @@ export class Game {
     const race = this.race;
     const track = race.track;
     const tally = race.tally();
-    const res = recordResult(this.save, track, race.finishTime);
-    if (res.firstClear) tally.lines.push({ label: 'First finish bonus', coins: track.reward ?? RACE.baseReward });
+    const boss = !!track.boss;
+    const won = boss ? race.won : true;
+    const res = recordResult(this.save, track, race.finishTime, { won });
+    if (boss) {
+      // Win: full reward plus a bounty the first time. Lose: a small consolation.
+      tally.lines[0] = won ? { label: `Beat ${track.boss.name}`, coins: track.reward } : { label: 'Rival race', coins: Math.round(track.reward * 0.2) };
+    }
+    if (res.firstClear) tally.lines.push({ label: boss ? 'Bounty' : 'First finish bonus', coins: track.reward ?? RACE.baseReward });
     if (res.betterMedal && res.medal) tally.lines.push({ label: `${res.medal[0].toUpperCase()}${res.medal.slice(1)} medal`, coins: { gold: 150, silver: 80, bronze: 40 }[res.medal] });
     tally.total = tally.lines.reduce((a, l) => a + l.coins, 0);
     this.save.coins += tally.total;
     this.save.stats.races++;
-    const missionsDone = trackMissions(this.save, raceStats(race, { medal: res.medal }));
+    const missionsDone = trackMissions(this.save, raceStats(race, { medal: res.medal, bossWin: boss && won }));
+    const worlds = [...new Set(res.unlocked.map((t) => t.world))].filter((w) => w !== track.world).map((w) => WORLD_BY_ID[w]?.name);
     storage.save();
     this.hud.show(false);
     this.screens.show('finish', {
@@ -248,7 +291,11 @@ export class Game {
       newBest: res.newBest,
       medal: res.medal,
       unlocked: res.unlocked,
+      worlds,
       missionsDone,
+      title: boss ? (won ? 'YOU WIN!' : 'RIVAL WINS') : 'FINISH!',
+      lost: boss && !won,
+      rival: boss ? { name: track.boss.name, time: race.rivals[0]?.finished ? race.rivals[0].finishTime : null } : null,
       tally,
       hasNext: !!nextTrack(this.save, track.id),
     });

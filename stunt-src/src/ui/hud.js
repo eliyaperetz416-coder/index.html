@@ -10,8 +10,9 @@ export class Hud {
     root.innerHTML = `
       <div class="vignette"></div>
       <div class="hud-top">
-        <div class="progress"><div class="progress-fill"></div><div class="progress-car"></div><div class="progress-flag"></div></div>
+        <div class="progress"><div class="progress-fill"></div><div class="progress-rival" hidden></div><div class="progress-car"></div><div class="progress-flag"></div></div>
         <div class="timer">0:00.00</div>
+        <div class="place" hidden></div>
       </div>
       <div class="hud-center"><div class="count"></div><div class="popups"></div></div>
       <div class="combo"></div>
@@ -34,6 +35,8 @@ export class Hud {
     this.nitroBtn = $('.nitro', root);
     this.comboEl = $('.combo', root);
     this.vignette = $('.vignette', root);
+    this.rivalMarker = $('.progress-rival', root);
+    this.placeEl = $('.place', root);
     this.lastP = -1;
     this.lastN = -1;
     this.nitroBtn.addEventListener('pointerdown', (e) => {
@@ -61,6 +64,15 @@ export class Hud {
       this.marker.style.left = `${p * 100}%`;
     }
     setText(this.timer, fmtTime(race.state === 'finished' ? race.finishTime : race.time));
+    const rival = race.rivals?.[0];
+    this.rivalMarker.hidden = !rival;
+    this.placeEl.hidden = !rival;
+    if (rival) {
+      this.rivalMarker.style.left = `${race.progressOf(rival.car) * 100}%`;
+      const p = race.place;
+      setText(this.placeEl, p === 1 ? '1ST' : '2ND');
+      this.placeEl.classList.toggle('behind', p > 1);
+    }
     setText(this.speed, String(Math.round(race.car.speed * 3.6)));
     const n = Math.round(race.nitro * 100) / 100;
     if (n !== this.lastN) {

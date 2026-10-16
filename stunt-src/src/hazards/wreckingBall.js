@@ -62,12 +62,12 @@ registerItem('wreckingBall', {
     };
   },
 
-  view(items, { path, quality }) {
+  view(items, { path, quality, world }) {
     const group = new Group();
     const std = quality.standardMaterials;
     const metal = std ? new MeshStandardMaterial({ color: '#2a2833', metalness: 0.9, roughness: 0.35 }) : new MeshLambertMaterial({ color: '#2a2833' });
     const frame = new MeshLambertMaterial({ color: '#1b1430' });
-    const glow = new MeshBasicMaterial({ color: '#ff2b4a' });
+    const glow = new MeshBasicMaterial({ color: world?.hazardStyle?.accent ?? '#ff2b4a' });
     const chainMat = new MeshLambertMaterial({ color: '#8d8a99' });
     const geos = [];
     const g = (geo) => (geos.push(geo), geo);

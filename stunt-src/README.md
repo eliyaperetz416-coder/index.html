@@ -15,6 +15,7 @@ npm run e2e        # browser smoke test: menu -> race -> finish (headless Chromi
 node tests/e2e/tracks.mjs    # track list, unlock flow (autopilot drives)
 node tests/e2e/hazards.mjs   # screenshots of every hazard (hidden 'lab' track)
 node tests/e2e/garage.mjs    # buy, upgrade, paint, underglow, missions, idle pop-up
+node tests/e2e/boss.mjs      # boss intro, rival race, world unlock, desert screenshots
 npm run e2e:pwa    # production build + offline test
 npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ```
@@ -45,7 +46,7 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/physics/` | `car.js`: arcade car on the track (ground and air modes, jump assist, crashes, respawn) |
 | `src/game/` | `race.js` (pure race simulation), `raceView.js` (draws it), `game.js` (menus <-> races) |
 | `src/hazards/` | Track items: boost pads, coins, sawblades, wrecking balls, pillars, lasers, oil. One file per type |
-| `src/game/ai.js` | AI driver (reads every item's danger prediction); used by tests and rival bosses |
+| `src/game/ai.js`, `boss.js` | AI driver (reads every item's danger prediction) and boss rivals built on it |
 | `src/game/progress.js` | Unlocks, medals, best times |
 | `src/game/economy.js`, `missions.js` | Buying, upgrades, cosmetics, idle earnings, daily missions |
 | `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
@@ -142,5 +143,27 @@ the model layer loads it with GLTFLoader and swaps it in for the placeholder. Na
 
 ## Add a world
 
-Add an object to `WORLDS` in `src/config/worlds.js` (sky, fog, lights, road and wall colours,
-scenery type) and set `world: '<id>'` on tracks.
+Add an object to `WORLDS` in `src/config/worlds.js`: sky (and sun), fog, lights, reflection colours,
+road and wall colours, ground (`grid` or `sand`), `scenery` generator (`city`, `desert`, or register
+your own with `registerScenery` in `src/render/scenery.js`), `hazardStyle` colours, `items` (hazard
+default overrides for the whole world) and `requires` (the track, usually a boss, that opens it).
+Then point tracks at it with `world: '<id>'`. Desert-only hazards: `boulder` and `sand`.
+
+## Add a boss
+
+A boss is a track with a `boss` block (see `neon-boss` in `src/config/tracks.js`):
+
+```js
+boss: {
+  name: 'BARON VOLT', taunt: 'Nobody passes the Baron.',
+  power: 1.0,        // rival speed relative to YOUR car (so any car can win with nitro, pads, clean lines)
+  skill: 0.9,        // AI line quality
+  aggression: 1.1,   // how hard it steers into you when close (rams shove you, then it backs off)
+  rubber: { ahead: 0.94, behind: 1.12 },   // only when the race is lopsided; off in the last fifth
+  glow: '#ff2b4a',
+  car: { id: 'boss-volt', name: 'Volt Hammer', tier: 'luxury', stats: {...}, physics: {...}, body: {...} },
+}
+```
+
+A boss track only counts as done when you win. `npm test` checks a sharp AI driver beats each boss
+and a sloppy one can lose.

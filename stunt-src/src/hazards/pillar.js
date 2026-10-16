@@ -76,10 +76,10 @@ registerItem('pillar', {
     };
   },
 
-  view(items, { path }) {
+  view(items, { path, world }) {
     const group = new Group();
-    const stone = new MeshLambertMaterial({ color: '#2a2440' });
-    const neon = new MeshBasicMaterial({ color: '#ff2bd6' });
+    const stone = new MeshLambertMaterial({ color: world?.hazardStyle?.stone ?? '#2a2440' });
+    const neon = new MeshBasicMaterial({ color: world?.hazardStyle?.bands ?? '#ff2bd6' });
     const warn = new MeshBasicMaterial({ color: '#ff2b4a' });
     const geos = [];
     const g = (geo) => (geos.push(geo), geo);

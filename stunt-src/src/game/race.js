@@ -7,6 +7,7 @@ import { createItems } from '../hazards/index.js';
 import { PHYSICS, RACE, NITRO, SCORE } from '../config/game.js';
 import { WORLD_BY_ID } from '../config/worlds.js';
 import { clamp } from '../core/math.js';
+import { Driver } from './ai.js';
 
 const pathCache = new Map();
 
@@ -24,17 +25,25 @@ export class Race {
   /**
    * @param {{track: object, stats: object}} opts track config and effective car stats
    */
-  constructor({ track, stats }) {
+  constructor({ track, stats, rivals = [] }) {
     this.track = track;
     this.world = WORLD_BY_ID[track.world] ?? null;
     this.path = getPath(track);
     this.events = [];
     this.emit = (type, data = {}) => this.events.push({ type, ...data });
     this.car = new Car(this.path, stats, (type, data) => this.onCarEvent(type, data));
+    // Rivals (boss races): an AI car each. They dodge hazards but are not hurt by them.
+    this.rivals = rivals.map((r, i) => {
+      const car = new Car(this.path, { ...r.stats }, () => {});
+      car.reset(this.path.startS, 3.2, 0);
+      return { ...r, index: i, car, base: { ...r.stats }, driver: new Driver({ skill: r.skill ?? 0.9, random: r.random }), finished: false, finishTime: 0 };
+    });
+    if (this.rivals.length) this.car.reset(this.path.startS, -3.2, 0);
     this.items = createItems(track, this.path, this.world);
     this.state = 'countdown';
     this.countdown = RACE.countdown;
-    this.time = 0;
+    this.time = 0; // race clock, stops at the player's finish
+    this.clock = 0; // keeps running after the finish (rivals still racing)
     this.finishTime = 0;
     this.after = 0; // seconds since the finish line
     this.nitro = NITRO.start; // tank 0..1
@@ -44,8 +53,23 @@ export class Race {
   }
 
   get progress() {
+    return this.progressOf(this.car);
+  }
+
+  progressOf(car) {
     const p = this.path;
-    return clamp((this.car.trackS - p.startS) / (p.finishS - p.startS), 0, 1);
+    return clamp((car.trackS - p.startS) / (p.finishS - p.startS), 0, 1);
+  }
+
+  /** 1 = leading. */
+  get place() {
+    const s = this.state === 'finished' ? Infinity : this.car.trackS;
+    return 1 + this.rivals.filter((r) => (r.finished && (this.state !== 'finished' || r.finishTime < this.finishTime)) || (!r.finished && r.car.trackS > s)).length;
+  }
+
+  /** Boss race: did the player beat every rival? */
+  get won() {
+    return this.state === 'finished' && this.rivals.every((r) => !r.finished || r.finishTime > this.finishTime);
   }
 
   addNitro(amount) {
@@ -85,7 +109,7 @@ export class Race {
   /** A hazard hit the car. Costs speed, never ends the race. Returns false while invulnerable. */
   hitCar(source, hit) {
     const car = this.car;
-    if (car.invuln > 0 || this.state !== 'racing') return false;
+    if (car.invuln > 0 || this.state === 'countdown') return false;
     car.hit(hit);
     car.invuln = RACE.hitImmunity;
     this.score.hits++;
@@ -138,25 +162,129 @@ export class Race {
         this.state = 'racing';
         const perfect = input.throttle > 0;
         if (perfect) this.car.boost(RACE.startBoost, 1.5, false);
+        for (const r of this.rivals) r.car.boost(RACE.startBoost, 1.5, false);
         this.emit('go', { perfect });
       }
       this.car.throttle = input.throttle;
       return;
     }
+    if (this.state !== 'countdown') this.clock += dt;
     if (this.state === 'racing') {
       this.time += dt;
       this.car.step(dt, input);
       this.collide(dt);
+      this.stepRivals(dt);
       if (this.car.drifting) this.addNitro(NITRO.perDriftSecond * dt);
       this.addNitro(NITRO.passive * dt);
       if (this.comboTimer > 0) this.comboTimer -= dt;
       if (this.car.trackS >= this.path.finishS && this.car.mode === 'ground') this.finish();
       return;
     }
-    // Finished: coast to a stop down the run-off.
+    // Finished: coast to a stop down the run-off. Rivals keep racing to the line.
     this.after += dt;
     const auto = { throttle: 0, steer: -this.car.x * 0.08, brake: this.car.v > 12 ? 0.35 : 0 };
     this.car.step(dt, auto);
+    this.stepRivals(dt);
+  }
+
+  stepRivals(dt) {
+    const me = this.car;
+    for (const r of this.rivals) {
+      const car = r.car;
+      if (r.finished) {
+        car.step(dt, { throttle: 0, steer: -car.x * 0.08, brake: car.v > 12 ? 0.35 : 0 });
+        continue;
+      }
+      // Rubber band, only when the race is lopsided: ease off far ahead, catch up from far behind
+      // (not in the last fifth, so a lead you earn holds). Close behind: a small burst to come
+      // alongside and ram.
+      const gap = car.trackS - me.trackS;
+      const rb = r.rubber ?? { ahead: 0.93, behind: 1.12 };
+      const prog = this.progressOf(car);
+      let k = 1;
+      if (r.cooldown > 0) {
+        r.cooldown -= dt;
+        k = 0.96; // backs off for a moment after a ram
+      } else if (gap > 35) k = rb.ahead;
+      else if (gap < -25 && prog < 0.8) k = rb.behind;
+      else if (gap < 0 && gap > -15 && prog < 0.9) k = 1.03;
+      r.k = (r.k ?? 1) + (k - (r.k ?? 1)) * Math.min(1, dt * 1.5);
+      car.stats.topSpeed = r.base.topSpeed * r.k;
+      car.stats.accel = r.base.accel * Math.max(1, r.k);
+      // Ram: when the player is close, steer into them (hazards still come first).
+      const close = this.state === 'racing' && !(r.cooldown > 0) && gap > -15 && gap < 22 && me.mode === 'ground';
+      r.driver.preferX = close ? me.x : null;
+      r.driver.preferWeight = (r.aggression ?? 1) * 1.6;
+      const input = r.driver.update(dt, this, car);
+      car.step(dt, input);
+      this.contact(r, dt);
+      if (car.trackS >= this.path.finishS && car.mode === 'ground') {
+        r.finished = true;
+        r.finishTime = this.clock;
+        this.emit('rivalFinish', { name: r.name, time: this.clock, first: this.state !== 'finished' });
+      }
+    }
+  }
+
+  /**
+   * Car-to-car contact in track coordinates. Boxes are separated along the axis that overlaps
+   * least: side by side = a shove (the one who steered in did the ramming), nose to tail = the
+   * car behind bounces off and the one in front gets nudged.
+   */
+  contact(r, dt) {
+    if (r.bumped > 0) r.bumped -= dt;
+    const a = this.car;
+    const b = r.car;
+    if (a.mode !== 'ground' || b.mode !== 'ground') return;
+    const ds = b.s - a.s;
+    const dx = b.x - a.x;
+    const W = 1.9;
+    const L = 4.0;
+    const ps = L - Math.abs(ds);
+    const px = W - Math.abs(dx);
+    if (ps <= 0 || px <= 0) return;
+    const ma = a.stats.mass ?? 1;
+    const mb = b.stats.mass ?? 1;
+    const wa = mb / (ma + mb);
+    const wb = ma / (ma + mb);
+    if (px < ps) {
+      const side = Math.sign(dx) || 1;
+      a.x -= side * px * wa;
+      b.x += side * px * wb;
+      const rel = (b.vx - a.vx) * side; // < 0: closing sideways
+      if (rel < -0.5) {
+        const rivalRammed = -b.vx * side > a.vx * side;
+        const j = -rel * 1.8;
+        a.vx -= side * j * wa;
+        b.vx += side * j * wb;
+        if (rivalRammed) {
+          // Mostly a shove towards the wall or a hazard; the speed loss is small.
+          if (this.hitCar({ type: 'rival' }, { slow: 0.93, push: -side * 6 * (mb / ma) })) {
+            r.cooldown = 2.5;
+            this.emit('rammed', { name: r.name });
+          }
+        } else if (!(r.bumped > 0)) {
+          b.v *= 0.88;
+          r.bumped = 1;
+          this.emit('ramRival', { name: r.name });
+        }
+      }
+    } else {
+      const sign = Math.sign(ds) || 1; // +1: rival in front
+      a.s -= sign * ps * wa;
+      b.s += sign * ps * wb;
+      const back = sign > 0 ? a : b;
+      const front = sign > 0 ? b : a;
+      const dv = back.v - front.v;
+      if (dv > 0) {
+        back.v -= dv * 0.7;
+        front.v += dv * 0.25;
+        if (!(r.bumped > 0)) {
+          r.bumped = 0.5;
+          this.emit(back === a ? 'bumped' : 'ramRival', { name: r.name });
+        }
+      }
+    }
   }
 
   collide(dt) {

@@ -20,6 +20,7 @@ export class Driver {
     this.replan = 0;
     this.out = { throttle: 1, steer: 0, brake: 0, nitro: false };
     this.preferX = null; // set by bosses to chase the player
+    this.preferWeight = 0.25;
   }
 
   /** Cost of being at lateral position x through the items ahead (at `speedScale` x speed). */
@@ -30,13 +31,26 @@ export class Driver {
     for (const it of race.items) {
       if (!it.danger) continue;
       const d = it.s - s0;
-      if (d < -2) continue;
-      if (d > this.lookAhead) break;
+      if (d < -2 || d > this.lookAhead) continue; // not sorted strictly: some hazards move
       const t = race.time + Math.max(0, d) / v;
       const w = 1 / (1 + Math.max(0, d) / 25); // nearer matters more
       c += it.danger(x, t) * w * 10;
     }
+    // Other cars just ahead are obstacles too (unless we are the one trying to ram).
+    if (this.preferX == null) {
+      for (const other of this.others(race, car)) {
+        const d = other.trackS - s0;
+        if (d < -1 || d > 28) continue;
+        if (Math.abs(x - other.proj.x) < 2.6) c += 4 / (1 + d / 10);
+      }
+    }
     return c;
+  }
+
+  others(race, car) {
+    const list = race.rivals?.map((r) => r.car) ?? [];
+    if (race.car !== car) list.push(race.car);
+    return list.filter((c) => c !== car);
   }
 
   /** Best lateral target at a given speed scale: [x, cost]. */
@@ -47,7 +61,7 @@ export class Driver {
     for (let x = -hw; x <= hw + 1e-6; x += 0.75) {
       let c = this.cost(race, car, x, speedScale);
       c += Math.abs(x - car.proj.x) * 0.08 + Math.abs(x) * 0.02;
-      if (this.preferX != null) c += Math.abs(x - this.preferX) * 0.25;
+      if (this.preferX != null) c += Math.abs(x - this.preferX) * this.preferWeight;
       if (c < bestCost) {
         bestCost = c;
         best = x;
@@ -60,7 +74,7 @@ export class Driver {
     const o = this.out;
     this.replan -= dt;
     if (this.replan <= 0) {
-      this.replan = 0.12 + (1 - this.skill) * 0.25;
+      this.replan = (this.preferX != null ? 0.06 : 0.12) + (1 - this.skill) * 0.25;
       let [x, c] = this.plan(race, car, 1);
       this.braking = false;
       // Every line is blocked at the time we'd get there (lasers, swinging balls): try arriving later.

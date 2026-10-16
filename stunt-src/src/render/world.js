@@ -2,9 +2,9 @@
 
 import {
   Group, Mesh, SphereGeometry, ShaderMaterial, BackSide, Color, Fog, HemisphereLight, DirectionalLight,
-  PlaneGeometry, MeshBasicMaterial, Points, BufferGeometry, Float32BufferAttribute, PointsMaterial,
+  PlaneGeometry, MeshBasicMaterial, MeshLambertMaterial, Points, BufferGeometry, Float32BufferAttribute, PointsMaterial, Vector3,
 } from 'three';
-import { gridTexture } from './textures.js';
+import { gridTexture, sandTexture } from './textures.js';
 import { buildScenery } from './scenery.js';
 import { rng } from '../core/math.js';
 
@@ -16,10 +16,13 @@ void main() {
 }`;
 const SKY_FS = `
 uniform vec3 top; uniform vec3 horizon; uniform vec3 bottom;
+uniform vec3 sunDir; uniform vec3 sunColor; uniform float sunOn;
 varying vec3 vDir;
 void main() {
   float y = vDir.y;
   vec3 c = y > 0.0 ? mix(horizon, top, pow(y, 0.6)) : mix(horizon, bottom, pow(-y, 0.4));
+  float d = max(dot(normalize(vDir), sunDir), 0.0);
+  c += sunOn * sunColor * (smoothstep(0.9975, 0.999, d) * 1.5 + pow(d, 12.0) * 0.45);
   gl_FragColor = vec4(c, 1.0);
   #include <colorspace_fragment>
 }`;
@@ -43,6 +46,9 @@ export function buildWorld(scene, world, path, quality) {
       top: { value: new Color(world.sky.top) },
       horizon: { value: new Color(world.sky.horizon) },
       bottom: { value: new Color(world.sky.bottom) },
+      sunDir: { value: new Vector3(...world.light.sunDir).setY(Math.max(0.04, world.light.sunDir[1] * 0.25)).normalize() },
+      sunColor: { value: new Color(world.sky.sun ?? '#ffffff') },
+      sunOn: { value: world.sky.sun ? 1 : 0 },
     },
     side: BackSide,
     depthWrite: false,
@@ -79,10 +85,19 @@ export function buildWorld(scene, world, path, quality) {
 
   const groundY = path.minY - 45;
   const groundGeo = new PlaneGeometry(8000, 8000);
-  const tex = gridTexture(world.ground).clone();
-  tex.repeat.set(8000 / world.ground.gridSize, 8000 / world.ground.gridSize);
-  tex.needsUpdate = true;
-  const groundMat = new MeshBasicMaterial({ map: tex });
+  let tex;
+  let groundMat;
+  if (world.ground.sand) {
+    tex = sandTexture(world.ground.color).clone();
+    tex.repeat.set(160, 160);
+    tex.needsUpdate = true;
+    groundMat = new MeshLambertMaterial({ map: tex });
+  } else {
+    tex = gridTexture(world.ground).clone();
+    tex.repeat.set(8000 / world.ground.gridSize, 8000 / world.ground.gridSize);
+    tex.needsUpdate = true;
+    groundMat = new MeshBasicMaterial({ map: tex });
+  }
   const ground = new Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
   // Centre the ground under the track.

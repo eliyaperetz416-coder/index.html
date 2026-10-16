@@ -6,7 +6,7 @@ import { CAREER } from '../../src/config/tracks.js';
 describe('progress', () => {
   it('only the first track is open at the start', () => {
     const save = defaultSave();
-    expect(CAREER.map((t) => isUnlocked(save, t))).toEqual([true, false, false, false, false]);
+    expect(CAREER.map((t) => isUnlocked(save, t))).toEqual(CAREER.map((_, i) => i === 0));
     expect(currentTrack(save).id).toBe(CAREER[0].id);
   });
 
@@ -28,6 +28,19 @@ describe('progress', () => {
     expect(r3.betterMedal).toBe(false);
     expect(save.tracks[t.id].medal).toBe('gold');
     expect(save.tracks[t.id].done).toBe(3);
+  });
+
+  it('a boss track only counts as done when you win', () => {
+    const save = defaultSave();
+    const boss = CAREER.find((t) => t.boss);
+    const lost = recordResult(save, boss, 50, { won: false });
+    expect(lost.firstClear).toBe(false);
+    expect(save.tracks[boss.id].done).toBe(0);
+    expect(save.tracks[boss.id].losses).toBe(1);
+    const won = recordResult(save, boss, 52, { won: true });
+    expect(won.firstClear).toBe(true);
+    expect(save.tracks[boss.id].done).toBe(1);
+    expect(won.unlocked.length).toBeGreaterThan(0);
   });
 
   it('medals follow the par times', () => {

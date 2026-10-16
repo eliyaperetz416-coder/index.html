@@ -1,7 +1,8 @@
 // Draws a Race: track, world, items, car model, camera and effects. Track and world meshes are
 // kept between races on the same track and disposed when the track changes.
 
-import { Vector3, Matrix4, Color } from 'three';
+import { Vector3, Matrix4, Color, Sprite, SpriteMaterial } from 'three';
+import { labelTexture } from '../render/textures.js';
 import { buildTrackMeshes } from '../render/trackMesh.js';
 import { buildWorld } from '../render/world.js';
 import { createModel, createShadow, disposeObject } from '../render/models.js';
@@ -74,6 +75,16 @@ export class RaceView {
     this.carDef = carDef;
     this.shadow = createShadow(carDef.body.width, carDef.body.length);
     r.scene.add(this.car, this.shadow);
+    // Rivals: their own car, a glow and a floating name tag.
+    this.rivals = race.rivals.map((rv) => {
+      const model = createModel('car', rv.def, { paint: { color: rv.def.body.paint, metal: 0.7, rough: 0.3 }, rim: { style: 'star', color: rv.glow ?? '#ff2b4a' }, glow: rv.glow ?? '#ff2b4a', quality: r.quality });
+      const tag = new Sprite(new SpriteMaterial({ map: labelTexture(rv.name, rv.glow), depthTest: false, transparent: true }));
+      tag.scale.set(5, 1.25, 1);
+      tag.renderOrder = 30;
+      const shadow = createShadow(rv.def.body.width, rv.def.body.length);
+      r.scene.add(model, tag, shadow);
+      return { rv, model, tag, shadow, spin: 0 };
+    });
     this.cam = new ChaseCamera(r.camera);
     this.cam.setAspect(r.camera.aspect);
     r.onResize.push((this.resize = (w, h) => this.cam.setAspect(w / h)));
@@ -143,6 +154,20 @@ export class RaceView {
         break;
       case 'nearMiss':
         this.burst(glow, this.local(0, 0.8, 0, _v), 12, { speed: 6, life: 0.5, size: 0.7, color: COLORS.nitro, gravity: 0, base: car.vel });
+        break;
+      case 'rammed':
+      case 'ramRival': {
+        this.cam.shake(e.type === 'rammed' ? 0.5 : 0.3);
+        const rv = this.race.rivals[0]?.car;
+        if (rv) {
+          _v.copy(car.pos).add(rv.pos).multiplyScalar(0.5);
+          _v.y += 0.6;
+          this.burst(sparks, _v, 30, { speed: 12, up: 6, life: 0.5, size: 0.4, color: COLORS.sparkHot });
+        }
+        break;
+      }
+      case 'bumped':
+        this.cam.shake(0.2);
         break;
       case 'respawn':
         this.cam.reset(car);
@@ -217,23 +242,9 @@ export class RaceView {
       if (w.userData.front) w.rotation.y = -(input?.steer ?? 0) * 0.35;
     }
 
-    // Blob shadow on the road under the car.
-    const pr = car.proj;
-    const f = car.path.sampleAt(car.trackS);
-    const h = car.mode === 'ground' ? 0 : Math.max(0, pr.h);
-    if (Math.abs(pr.x) < f.width / 2 + 1 && h < 30 && car.path.flagsAt(car.trackS) & 1) {
-      this.shadow.visible = true;
-      _v.copy(f.pos).addScaledVector(f.R, pr.x).addScaledVector(f.U, 0.04);
-      _m.makeBasis(f.R, f.T, f.U).setPosition(_v);
-      this.shadow.quaternion.setFromRotationMatrix(_m);
-      this.shadow.position.copy(_v);
-      const k = 1 / (1 + h * 0.12);
-      this.shadow.scale.setScalar(k);
-      this.shadow.material.opacity = k;
-    } else {
-      this.shadow.visible = false;
-    }
+    this.placeShadow(this.shadow, car);
 
+    this.updateRivals(dt);
     this.emitTrails(dt);
     this.kick *= Math.exp(-1.5 * dt);
     const speed = car.speed;
@@ -242,6 +253,39 @@ export class RaceView {
     this.cam.update(dt, car, { speedFov: fov });
     this.items.update(dt, this.race.time, this.r.camera);
     this.updateFx(dt, Math.min(1, Math.max(0, (speed - 38) / 20) + (boosting ? 0.6 : 0)), speed);
+  }
+
+  updateRivals(dt) {
+    for (const e of this.rivals) {
+      const c = e.rv.car;
+      e.model.position.copy(c.pos);
+      e.model.quaternion.copy(c.quat);
+      e.spin += c.v * dt / 0.5;
+      for (const w of e.model.userData.parts.wheels ?? []) if (w.userData.spin) w.userData.spin.rotation.x = e.spin;
+      const f = c.path.sampleAt(c.trackS);
+      e.tag.position.copy(c.pos).addScaledVector(f.U, 3.4);
+      e.tag.visible = this.r.camera.position.distanceTo(c.pos) < 160;
+      this.placeShadow(e.shadow, c);
+    }
+  }
+
+  /** Blob shadow on the road under a car. */
+  placeShadow(shadow, car) {
+    const pr = car.proj;
+    const f = car.path.sampleAt(car.trackS);
+    const h = car.mode === 'ground' ? 0 : Math.max(0, pr.h);
+    if (Math.abs(pr.x) < f.width / 2 + 1 && h < 30 && car.path.flagsAt(car.trackS) & 1) {
+      shadow.visible = true;
+      _v.copy(f.pos).addScaledVector(f.R, pr.x).addScaledVector(f.U, 0.04);
+      _m.makeBasis(f.R, f.T, f.U).setPosition(_v);
+      shadow.quaternion.setFromRotationMatrix(_m);
+      shadow.position.copy(_v);
+      const k = 1 / (1 + h * 0.12);
+      shadow.scale.setScalar(k);
+      shadow.material.opacity = k;
+    } else {
+      shadow.visible = false;
+    }
   }
 
   updateFx(dt, lineK, speed) {
@@ -283,6 +327,7 @@ export class RaceView {
     this.car.quaternion.copy(car.quat);
     this.car.visible = true;
     this.shadow.visible = false;
+    this.updateRivals(0);
     this.items.update(dt, this.orbitT * 4, cam);
     this.updateFx(dt, 0, 0);
   }
@@ -291,6 +336,13 @@ export class RaceView {
     this.r.scene.remove(this.car, this.shadow);
     disposeObject(this.car);
     disposeObject(this.shadow);
+    for (const e of this.rivals) {
+      this.r.scene.remove(e.model, e.tag, e.shadow);
+      disposeObject(e.model);
+      disposeObject(e.shadow);
+      e.tag.material.map.dispose();
+      e.tag.material.dispose();
+    }
     this.items.dispose();
     const i = this.r.onResize.indexOf(this.resize);
     if (i >= 0) this.r.onResize.splice(i, 1);

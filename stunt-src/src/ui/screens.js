@@ -19,13 +19,14 @@ export const TEMPLATES = {
       <div class="scroll">
         ${groups.map((g) => `
           <h3 class="group-title">${esc(g.title)}</h3>
+          <p class="group-blurb">${esc(g.locked ? g.lockNote : g.blurb ?? '')}</p>
           ${g.tracks.map((t, i) => `
-            <button class="track-card ${t.locked ? 'locked' : ''} ${t.current ? 'current' : ''}" data-action="pick" data-id="${t.id}" ${t.locked ? 'disabled' : ''}>
-              <span class="track-num">${i + 1}</span>
+            <button class="track-card ${t.locked ? 'locked' : ''} ${t.current ? 'current' : ''} ${t.boss ? 'boss' : ''}" data-action="pick" data-id="${t.id}" ${t.locked ? 'disabled' : ''}>
+              <span class="track-num">${t.boss ? '&#9760;' : i + 1}</span>
               <span class="track-info">
-                <b>${esc(t.name)}</b>
+                <b>${esc(t.name)}</b>${t.boss ? `<em class="boss-name">VS ${esc(t.bossName)}</em>` : ''}
                 ${stars(t.difficulty)}
-                <small>${t.locked ? `Finish ${esc(t.requiresName)} to unlock` : t.best != null ? `Best ${fmtTime(t.best)}` : 'Not raced yet'}</small>
+                <small>${t.locked ? `${esc(t.requiresName[0].toUpperCase() + t.requiresName.slice(1))} to unlock` : t.best != null ? `Best ${fmtTime(t.best)}` : 'Not raced yet'}</small>
               </span>
               <span class="track-side">${t.locked ? '<span class="lock"></span>' : medal(t.medal)}<small>${COIN}${fmtCoins(t.reward)}</small></span>
             </button>`).join('')}`).join('')}
@@ -57,12 +58,13 @@ export const TEMPLATES = {
 };
 
 function finishTemplate(d) {
-  const { time, best, newBest, tally, hasNext, medal: m, unlocked = [] } = d;
+  const { time, best, newBest, tally, hasNext, medal: m, unlocked = [], worlds = [], title = 'FINISH!', lost, rival } = d;
   return `
     <div class="screen finish">
-      <h2 class="finish-title">FINISH!</h2>
+      <h2 class="finish-title ${lost ? 'lost' : ''}">${esc(title)}</h2>
       <div class="finish-time">${medal(m)}${fmtTime(time)}${newBest ? '<span class="badge">NEW BEST</span>' : ''}</div>
-      <div class="finish-best">Best ${fmtTime(best)}</div>
+      <div class="finish-best">${rival ? `${esc(rival.name)} ${rival.time != null ? fmtTime(rival.time) : 'still racing'}` : `Best ${fmtTime(best)}`}</div>
+      ${worlds.map((w) => `<div class="unlock-note world">NEW WORLD UNLOCKED: ${esc(w)}</div>`).join('')}
       ${unlocked.map((u) => `<div class="unlock-note">NEW TRACK UNLOCKED: ${esc(u.name)}</div>`).join('')}
       ${(d.missionsDone ?? []).map((m) => `<div class="unlock-note gold">MISSION COMPLETE: ${esc(m.text)}</div>`).join('')}
       <div class="tally">
@@ -72,11 +74,25 @@ function finishTemplate(d) {
       <div class="grow"></div>
       <button class="primary big" data-action="next">${hasNext ? 'NEXT TRACK' : 'RACE AGAIN'} <span class="arrow">&#9654;</span></button>
       <div class="row">
-        <button class="ghost" data-action="retry">Retry</button>
+        <button class="ghost" data-action="retry">${lost ? 'Rematch' : 'Retry'}</button>
         <button class="ghost" data-action="menu">Menu</button>
       </div>
     </div>`;
 }
+
+TEMPLATES.bossIntro = (b) => `
+  <div class="screen boss-intro" style="--boss:${b.glow ?? '#ff2b4a'}">
+    <div class="topbar"><button class="back" data-action="tracks" aria-label="Back">&#8249;</button></div>
+    <div class="grow"></div>
+    <div class="boss-card">
+      <small>RIVAL RACE · ${esc(b.track)}</small>
+      <h2>${esc(b.name)}</h2>
+      <p class="taunt">"${esc(b.taunt)}"</p>
+      <p class="boss-car">Drives the <b>${esc(b.car)}</b>. Matches your speed and rams you when you are close. Beat him to the line.</p>
+      <p class="boss-reward">${COIN}${fmtCoins(b.reward)} + bounty${b.losses ? ` · ${b.losses} lost so far` : ''}</p>
+      <button class="primary big" data-action="raceBoss" data-id="${b.id}">RACE HIM</button>
+    </div>
+  </div>`;
 
 Object.assign(TEMPLATES, GARAGE_TEMPLATES);
 

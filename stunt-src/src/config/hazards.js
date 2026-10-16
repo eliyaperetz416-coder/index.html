@@ -27,6 +27,12 @@ export const HAZARDS = {
 
   // Oil slick: almost no grip while on it (and a moment after).
   oil: { length: 16, width: 6, traction: 0.12, linger: 0.6 },
+
+  // Desert: boulder that rolls down the track towards you once you are `trigger` seconds away.
+  boulder: { radius: 2.3, speed: 16, trigger: 2.6, slow: 0.5, push: 8, pop: 5, spin: 4, near: 1.5 },
+
+  // Desert: sand trap that drags speed away (drag = fraction of speed lost per second).
+  sand: { length: 18, width: 7, drag: 0.55, traction: 0.55 },
 };
 
 /**
@@ -61,4 +67,12 @@ export const PRESETS = {
     { type: 'pillar', at: 80, side: -1 },
   ],
   'coin-line': [{ type: 'coins', at: 0, count: 8, spacing: 4 }],
+  'boulder-pair': [
+    { type: 'boulder', at: 0, x: -3.5 },
+    { type: 'boulder', at: 25, x: 3.5 },
+  ],
+  'sand-chicane': [
+    { type: 'sand', at: 0, x: -3.5 },
+    { type: 'sand', at: 35, x: 3.5 },
+  ],
 };

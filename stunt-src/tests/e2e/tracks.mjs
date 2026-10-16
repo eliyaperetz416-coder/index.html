@@ -12,7 +12,7 @@ try {
   await page.waitForSelector('.track-card');
   await shot('10-tracks');
   const cards = await page.$$eval('.track-card', (els) => els.map((e) => ({ id: e.dataset.id, locked: e.classList.contains('locked') })));
-  if (cards.length !== 5) errors.push(`expected 5 tracks, got ${cards.length}`);
+  if (cards.length < 5) errors.push(`expected the career tracks, got ${cards.length}`);
   if (cards[0].locked || !cards.slice(1).every((c) => c.locked)) errors.push(`only the first track should be open: ${JSON.stringify(cards)}`);
 
   await page.click(`.track-card[data-id="${cards[0].id}"]`);

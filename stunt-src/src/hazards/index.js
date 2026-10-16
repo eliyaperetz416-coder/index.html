@@ -7,5 +7,7 @@ import './wreckingBall.js';
 import './pillar.js';
 import './laser.js';
 import './oil.js';
+import './boulder.js';
+import './sand.js';
 
 export { createItems, itemType, itemTypes } from './registry.js';

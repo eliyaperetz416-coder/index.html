@@ -151,3 +151,48 @@ export function oilTexture() {
     }
   }, { repeat: false });
 }
+
+/** Sand: warm base colour with soft ripples and grain. */
+export function sandTexture(color) {
+  return make(`sand:${color}`, 256, 256, (g, w, h) => {
+    g.fillStyle = color;
+    g.fillRect(0, 0, w, h);
+    const r = rng(21);
+    g.globalAlpha = 0.12;
+    for (let y = 0; y < h; y += 6) {
+      g.strokeStyle = r() < 0.5 ? '#ffffff' : '#7a4a20';
+      g.lineWidth = 2;
+      g.beginPath();
+      for (let x = 0; x <= w; x += 16) g.lineTo(x, y + Math.sin(x * 0.05 + y * 0.3) * 3);
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+    for (let i = 0; i < 3000; i++) {
+      g.fillStyle = `rgba(${r() < 0.5 ? '255,240,210' : '90,50,20'},${r() * 0.18})`;
+      g.fillRect(r() * w, r() * h, 1.5, 1.5);
+    }
+  });
+}
+
+/** Floating name tag (not cached: one per rival). */
+export function labelTexture(text, color = '#ff2b4a') {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,4,30,0.75)';
+  g.beginPath();
+  g.roundRect(4, 8, 248, 48, 14);
+  g.fill();
+  g.strokeStyle = color;
+  g.lineWidth = 4;
+  g.stroke();
+  g.fillStyle = '#ffffff';
+  g.font = 'italic 900 28px Arial Black, Arial, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(text, 128, 33);
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  return t;
+}

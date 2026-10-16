@@ -53,7 +53,7 @@ registerItem('sawblade', {
     };
   },
 
-  view(items, { path, quality }) {
+  view(items, { path, quality, world }) {
     // Blade: chrome disc, glowing red teeth, hub ring. Axis along the track so it faces the driver.
     const r = items[0].def.radius;
     const blade = new CylinderGeometry(r * 0.92, r * 0.92, 0.12, 28);
@@ -76,10 +76,10 @@ registerItem('sawblade', {
       ? new MeshStandardMaterial({ color: '#eef1f8', metalness: 0.75, roughness: 0.18, emissive: '#2a0010' })
       : new MeshLambertMaterial({ color: '#d9dce6', emissive: '#2a0010' });
     const ring = teeth;
-    const ringMat = new MeshBasicMaterial({ color: '#ff2b4a' });
+    const ringMat = new MeshBasicMaterial({ color: world?.hazardStyle?.accent ?? '#ff2b4a' });
     const slot = new PlaneGeometry(1, 1);
     slot.rotateX(-Math.PI / 2);
-    const slotMat = new MeshBasicMaterial({ color: '#ff2b4a', transparent: true, opacity: 0.35, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
+    const slotMat = new MeshBasicMaterial({ color: world?.hazardStyle?.accent ?? '#ff2b4a', transparent: true, opacity: 0.35, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
     const n = items.length;
     const blades = new InstancedMesh(blade, bladeMat, n);
     const rings = new InstancedMesh(ring, ringMat, n);

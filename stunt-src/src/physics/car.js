@@ -60,6 +60,7 @@ export class Car {
     this.boostPower = 0; // fraction of top speed added while boosting
     this.traction = 1; // < 1 on oil
     this.slick = 0; // seconds of low traction left
+    this.inSand = 0; // > 0 while ploughing through sand (for dust effects)
     this.tumble = 0; // seconds left of free spinning after a hit
     this.flip = null; // assisted flip during a jump
     this.angVel.set(0, 0, 0);
@@ -99,6 +100,7 @@ export class Car {
     if (this.boostTime > 0) this.boostTime -= dt;
     if (this.invuln > 0) this.invuln -= dt;
     if (this.slick > 0) this.slick -= dt;
+    if (this.inSand > 0) this.inSand -= dt;
     else if (this.traction < 1) this.traction = Math.min(1, this.traction + dt * 2.5);
     this.throttle = input.throttle;
     if (this.mode === 'ground') this.stepGround(dt, input);
@@ -302,7 +304,8 @@ export class Car {
       return;
     }
     // Walls still bounce the car while it skims along the road.
-    if (flags & F_WALLS && pr.h < 1.4 && pr.h > -1 && Math.abs(pr.x) > hw - P.carHalfWidth && Math.abs(pr.x) < hw + 0.6) {
+    // (Taller than they look, so a hit cannot throw the car clean over the barrier.)
+    if (flags & F_WALLS && pr.h < 4 && pr.h > -1 && Math.abs(pr.x) > hw - P.carHalfWidth && Math.abs(pr.x) < hw + 0.6) {
       const side = Math.sign(pr.x);
       const vr = this.vel.dot(fr.R) * side;
       if (vr > 0) {

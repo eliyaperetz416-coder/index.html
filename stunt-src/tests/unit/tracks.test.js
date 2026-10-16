@@ -60,8 +60,10 @@ describe('Career tracks', () => {
     expect(race.finishTime).toBeLessThan(90);
   });
 
-  it('difficulty rises along the career', () => {
-    const d = CAREER.map((t) => t.difficulty);
-    expect(d).toEqual([...d].sort((a, b) => a - b));
+  it('difficulty rises through each world', () => {
+    for (const w of new Set(CAREER.map((t) => t.world))) {
+      const d = CAREER.filter((t) => t.world === w && !t.boss).map((t) => t.difficulty);
+      expect(d).toEqual([...d].sort((a, b) => a - b));
+    }
   });
 });
