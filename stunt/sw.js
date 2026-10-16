@@ -3,8 +3,8 @@
 // Only caches whose name starts with the prefix are touched: other apps on the same origin keep theirs.
 
 const PREFIX = 'stunt-';
-const CACHE = `${PREFIX}mvau0q8d`;
-const PRECACHE = ["./","./assets/GLTFLoader-Dv7oBqbk.js","./assets/index-CHORfUfT.js","./assets/index-DItAvWpr.css","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./manifest.webmanifest"];
+const CACHE = `${PREFIX}mvavad6d`;
+const PRECACHE = ["./","./assets/GLTFLoader-BBAGi6xG.js","./assets/index-BIFctnoS.js","./assets/index-DKy8cD0X.css","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

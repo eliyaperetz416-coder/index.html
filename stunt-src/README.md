@@ -17,6 +17,8 @@ node tests/e2e/hazards.mjs   # screenshots of every hazard (hidden 'lab' track)
 node tests/e2e/garage.mjs    # buy, upgrade, paint, underglow, missions, idle pop-up
 node tests/e2e/boss.mjs      # boss intro, rival race, world unlock, desert screenshots
 node tests/e2e/events.mjs    # events calendar, play a live event, event result
+node tests/e2e/settings.mjs  # control styles, pause, quality, reset
+node tests/e2e/memory.mjs    # GPU memory stays flat across many track/menu switches
 npm run e2e:pwa    # production build + offline test
 npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ```
@@ -29,6 +31,13 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
   The mouse works like a finger.
 - Nitro fills by drifting, near misses, air time, flips and boost pads. Hits and crashes only slow you down.
 - Add `?quality=low|medium|high` to the URL to force a graphics preset (high = bloom).
+- **Settings** (gear on the main menu, or Settings in the pause menu): control style (hold & drag,
+  left/right buttons, steering wheel), sound and volume, vibration, graphics quality (Auto / Low /
+  Medium / High), reset all progress. Settings are saved. The resolution also adapts on its own if
+  the frame rate drops.
+- **Pause** with the button top-left (the game also pauses when you switch apps).
+- Sound is synthesised in the browser (no audio files). Vibration works on Android; on iPhone it uses
+  the system tick where Safari allows it.
 
 ## Install on iPhone
 
@@ -51,6 +60,8 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/game/progress.js` | Unlocks, medals, best times |
 | `src/game/economy.js`, `missions.js` | Buying, upgrades, cosmetics, idle earnings, daily missions |
 | `src/game/events.js` | Timed events: schedules, calendar, goals, rewards (content in `config/events.js`) |
+| `src/audio/sound.js`, `core/haptics.js` | WebAudio sound effects and engine, vibration |
+| `src/ui/controls.js`, `settings.js` | On-screen control styles, settings and pause screens |
 | `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
 | `src/ui/` | HUD and screens (plain DOM) |
 | `src/sw.js` | Service worker template (file list filled in at build time) |
@@ -189,3 +200,13 @@ boss: {
 
 A boss track only counts as done when you win. `npm test` checks a sharp AI driver beats each boss
 and a sloppy one can lose.
+
+## Performance notes
+
+- Track road, walls and neon are merged into a handful of meshes per 180 m; hazards, coins, pads and
+  scenery are instanced (one draw call per type). Particles and speed lines use fixed pools.
+- Per-frame code reuses vectors and frames (no garbage while racing). Track paths are cached.
+- Everything built for a race (track, world, items, cars, name tags) is disposed when the race
+  ends; `node tests/e2e/memory.mjs` checks the GPU geometry/texture counts stay flat.
+- Adaptive resolution drops the pixel ratio when the frame rate falls and restores it when it recovers.
+- Offline: the service worker precaches every built file on first visit.

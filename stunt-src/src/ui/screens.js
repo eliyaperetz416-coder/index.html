@@ -4,6 +4,7 @@
 import { GAME_NAME, GAME_TAGLINE } from '../config/game.js';
 import { esc, fmtTime, fmtCoins, COIN } from './dom.js';
 import { GARAGE_TEMPLATES, modal } from './garage.js';
+import { SETTINGS_TEMPLATES } from './settings.js';
 
 const stars = (n, max = 5) => `<span class="stars">${'&#9733;'.repeat(n)}<i>${'&#9733;'.repeat(max - n)}</i></span>`;
 const medal = (m) => (m ? `<span class="medal ${m}"></span>` : '');
@@ -35,7 +36,7 @@ export const TEMPLATES = {
 
   menu: ({ coins, trackName, missionsReady = 0, eventsLive = 0 }) => `
     <div class="screen menu">
-      <div class="topbar"><div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div></div>
+      <div class="topbar"><div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div><button class="gear" data-action="settings" aria-label="Settings"></button></div>
       <div class="logo-wrap">
         <h1 class="logo">${esc(GAME_NAME)}</h1>
         <p class="tagline">${esc(GAME_TAGLINE)}</p>
@@ -101,7 +102,7 @@ TEMPLATES.bossIntro = (b) => `
     </div>
   </div>`;
 
-Object.assign(TEMPLATES, GARAGE_TEMPLATES);
+Object.assign(TEMPLATES, GARAGE_TEMPLATES, SETTINGS_TEMPLATES);
 
 export class Screens {
   constructor(root, handlers, modalRoot = null) {
@@ -112,7 +113,14 @@ export class Screens {
     for (const r of [root, modalRoot].filter(Boolean)) {
       r.addEventListener('click', (e) => {
         const b = e.target.closest('[data-action]');
-        if (b && r.contains(b) && !b.disabled) this.handlers[b.dataset.action]?.(b.dataset, e);
+        if (b && r.contains(b) && !b.disabled) {
+          this.onAction?.(b.dataset.action);
+          this.handlers[b.dataset.action]?.(b.dataset, e);
+        }
+      });
+      r.addEventListener('input', (e) => {
+        const name = e.target.dataset?.input;
+        if (name) this.handlers.input?.(name, e.target.value);
       });
     }
     root.addEventListener('pointerdown', (e) => {

@@ -2,6 +2,7 @@
 //
 // Hold-and-drag (default): touching anywhere accelerates, sliding left/right steers (the further,
 // the harder), lifting the finger brakes. A quick upward flick (or a second finger) fires nitro.
+// Buttons / wheel styles: see ui/controls.js; they write into `virtual`.
 // Keyboard: W / Up / Space accelerate, A D / Left Right steer, S / Down brake, Shift / N nitro.
 
 import { clamp } from './math.js';
@@ -22,6 +23,9 @@ export class Input {
     this.nitroQueued = false;
     this.state = { throttle: 0, steer: 0, brake: 0, nitro: false };
     this.range = 100;
+    this.style = 'drag'; // 'drag' | 'buttons' | 'wheel'
+    this.virtual = { left: false, right: false, wheelHeld: false, wheel: 0 }; // on-screen controls
+    this.onFirstGesture = null;
 
     target.addEventListener('pointerdown', (e) => this.down(e));
     target.addEventListener('pointermove', (e) => this.move(e));
@@ -29,6 +33,7 @@ export class Input {
     target.addEventListener('pointercancel', (e) => this.up(e));
     target.addEventListener('lostpointercapture', (e) => this.up(e));
     window.addEventListener('keydown', (e) => {
+      this.onFirstGesture?.();
       if (e.repeat) return;
       if ([...ACCEL_KEYS, ...LEFT_KEYS, ...RIGHT_KEYS, ...BRAKE_KEYS].includes(e.code) && e.target === document.body) e.preventDefault();
       this.keys.add(e.code);
@@ -50,6 +55,12 @@ export class Input {
   }
 
   down(e) {
+    this.onFirstGesture?.();
+    // With on-screen controls, the rest of the screen only fires nitro (tap).
+    if (this.style !== 'drag') {
+      this.nitroQueued = true;
+      return;
+    }
     if (this.pointer) {
       // A second finger tapping while the first one drives: nitro.
       if (e.pointerId !== this.pointer.id) this.nitroQueued = true;
@@ -92,7 +103,10 @@ export class Input {
   }
 
   get holding() {
-    return !!this.pointer || this.has(ACCEL_KEYS);
+    const v = this.virtual;
+    const pads = this.style === 'buttons' && (v.left || v.right);
+    const wheel = this.style === 'wheel' && v.wheelHeld;
+    return !!this.pointer || this.has(ACCEL_KEYS) || pads || wheel;
   }
 
   /** Recompute the state; call once per frame. */
@@ -102,9 +116,16 @@ export class Input {
     const kr = this.has(RIGHT_KEYS);
     const keyTarget = (kr ? 1 : 0) - (kl ? 1 : 0);
     this.keySteer += clamp(keyTarget - this.keySteer, -dt * 6, dt * 6);
+    const v = this.virtual;
     if (this.pointer) {
       s.steer = clamp((this.pointer.x - this.pointer.anchor) / this.range, -1, 1);
+    } else if (this.style === 'buttons' && (v.left || v.right)) {
+      this.padSteer = (this.padSteer ?? 0) + clamp((v.right ? 1 : 0) - (v.left ? 1 : 0) - (this.padSteer ?? 0), -dt * 7, dt * 7);
+      s.steer = this.padSteer;
+    } else if (this.style === 'wheel' && v.wheelHeld) {
+      s.steer = v.wheel;
     } else {
+      this.padSteer = 0;
       s.steer = this.keySteer;
     }
     s.throttle = this.holding ? 1 : 0;

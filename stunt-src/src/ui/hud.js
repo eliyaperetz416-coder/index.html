@@ -5,10 +5,11 @@ import { $, el, setText, fmtTime } from './dom.js';
 import { NITRO } from '../config/game.js';
 
 export class Hud {
-  constructor(root, { onNitro } = {}) {
+  constructor(root, { onNitro, onPause } = {}) {
     this.root = root;
     root.innerHTML = `
       <div class="vignette"></div>
+      <button class="pause-btn" type="button" aria-label="Pause"><i></i><i></i></button>
       <div class="hud-top">
         <div class="progress"><div class="progress-fill"></div><div class="progress-rival" hidden></div><div class="progress-car"></div><div class="progress-flag"></div></div>
         <div class="timer">0:00.00</div>
@@ -39,6 +40,11 @@ export class Hud {
     this.placeEl = $('.place', root);
     this.lastP = -1;
     this.lastN = -1;
+    $('.pause-btn', root).addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onPause?.();
+    });
     this.nitroBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();

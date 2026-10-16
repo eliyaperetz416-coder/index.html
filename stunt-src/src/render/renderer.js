@@ -57,7 +57,7 @@ export class Renderer {
     const key = JSON.stringify(env);
     if (key === this.envKey) return;
     this.envKey = key;
-    this.envMap?.dispose();
+    this.envTarget?.dispose(); // frees the old reflection map (render target + texture)
     const scene = new Scene();
     scene.background = new Color(env.base);
     const panel = (color, w, h, d, x, y, z) => {
@@ -72,7 +72,8 @@ export class Renderer {
     panel(env.right, 0.2, 6, 14, 9, 2, 0);
     panel(env.floor, 20, 0.2, 20, 0, -9.5, 0);
     const pm = new PMREMGenerator(this.renderer);
-    this.envMap = pm.fromScene(scene, 0.04).texture;
+    this.envTarget = pm.fromScene(scene, 0.04);
+    this.envMap = this.envTarget.texture;
     pm.dispose();
     scene.traverse((o) => {
       o.geometry?.dispose();
@@ -92,6 +93,28 @@ export class Renderer {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     for (const fn of this.onResize ?? []) fn(w, h);
+  }
+
+  /**
+   * Adaptive resolution: if frames are slow for a while, lower the pixel ratio a step (down to 1);
+   * if they are comfortably fast again, raise it back up to the preset's maximum.
+   */
+  adapt(dt) {
+    this.frames = (this.frames ?? 0) + 1;
+    this.frameTime = (this.frameTime ?? 0) + dt;
+    if (this.frameTime < 2) return;
+    const avg = this.frameTime / this.frames;
+    this.frames = 0;
+    this.frameTime = 0;
+    const max = Math.min(window.devicePixelRatio || 1, this.quality.pixelRatio);
+    const cur = this.renderer.getPixelRatio();
+    let next = cur;
+    if (avg > 1 / 45 && cur > 1) next = Math.max(1, cur - 0.25);
+    else if (avg < 1 / 58 && cur < max) next = Math.min(max, cur + 0.25);
+    if (next !== cur) {
+      this.renderer.setPixelRatio(next);
+      this.resize();
+    }
   }
 
   render() {

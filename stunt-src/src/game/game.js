@@ -23,6 +23,11 @@ import { WORLD_BY_ID } from '../config/worlds.js';
 import { RACE } from '../config/game.js';
 import { IDLE_MIN_MINUTES, IDLE_CAP_HOURS } from '../config/upgrades.js';
 import { fmtCoins, COIN } from '../ui/dom.js';
+import { sound } from '../audio/sound.js';
+import { haptic, HAPTIC, setHaptics } from '../core/haptics.js';
+import { Controls } from '../ui/controls.js';
+
+const BUILD = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : 'dev';
 
 export class Game {
   constructor() {
@@ -31,7 +36,11 @@ export class Game {
     const forced = new URLSearchParams(location.search).get('quality');
     this.renderer = new Renderer($('#stage'), resolveQuality(forced ?? this.save.settings.quality));
     this.input = new Input($('#touch'));
-    this.hud = new Hud($('#hud'), { onNitro: () => (this.input.nitroQueued = true) });
+    this.input.onFirstGesture = () => sound.unlock();
+    // Any tap anywhere (menus, HOLD TO RIDE) may start audio; browsers require a gesture.
+    document.addEventListener('pointerdown', () => sound.unlock(), { capture: true });
+    this.controls = new Controls($('#controls'), this.input);
+    this.hud = new Hud($('#hud'), { onNitro: () => (this.input.nitroQueued = true), onPause: () => this.pause() });
     this.garage = new GarageScreen(this);
     this.screens = new Screens($('#screens'), {
       ride: (e) => this.ride(e),
@@ -46,7 +55,15 @@ export class Game {
       closeModal: () => this.screens.closeModal(),
       collectIdle: () => this.collectIdle(),
       ...this.garage.handlers(),
+      ...this.settingsHandlers(),
     }, $('#modal'));
+    this.screens.onAction = () => {
+      sound.unlock();
+      sound.play('click');
+      haptic(HAPTIC.tap);
+    };
+    this.sound = (name) => sound.play(name);
+    this.applySettings();
     this.mode = 'boot';
     this.race = null;
     this.view = null;
@@ -62,6 +79,103 @@ export class Game {
 
   get look() {
     return carLook(this.save, this.carDef);
+  }
+
+  get settings() {
+    const st = this.save.settings;
+    return { control: 'drag', sound: true, volume: 0.8, haptics: true, quality: 'auto', ...st };
+  }
+
+  applySettings() {
+    const st = this.settings;
+    this.controls.setStyle(st.control);
+    sound.setEnabled(st.sound);
+    sound.setVolume(st.volume);
+    setHaptics(st.haptics);
+  }
+
+  setSetting(key, value) {
+    this.save.settings = { ...this.settings, [key]: value };
+    storage.save();
+    this.applySettings();
+  }
+
+  showSettings(back = 'menu') {
+    this.settingsBack = back;
+    const st = this.settings;
+    const data = { ...st, back: back === 'pause' ? 'pauseBack' : 'menu', activeQuality: this.renderer.quality.name, build: BUILD };
+    if (this.screens.current === 'settings') this.screens.refresh(data);
+    else this.screens.show('settings', data);
+  }
+
+  settingsHandlers() {
+    return {
+      settings: () => this.showSettings('menu'),
+      pauseSettings: () => this.showSettings('pause'),
+      pauseBack: () => this.showPause(),
+      setControl: (d) => {
+        this.setSetting('control', d.id);
+        this.showSettings(this.settingsBack);
+      },
+      toggleSound: () => {
+        this.setSetting('sound', !this.settings.sound);
+        this.showSettings(this.settingsBack);
+      },
+      toggleHaptics: () => {
+        this.setSetting('haptics', !this.settings.haptics);
+        if (this.settings.haptics) haptic(HAPTIC.nitro);
+        this.showSettings(this.settingsBack);
+      },
+      input: (name, value) => {
+        if (name === 'volume') this.setSetting('volume', Number(value) / 100);
+      },
+      setQuality: (d) => {
+        this.setSetting('quality', d.id);
+        this.renderer.setQuality(resolveQuality(d.id));
+        // Scenery and materials are rebuilt for the new preset on the next race.
+        if (this.mode !== 'paused') this.prepare(this.race.track.id);
+        this.showSettings(this.settingsBack);
+      },
+      askReset: () => this.screens.modal({
+        title: 'RESET EVERYTHING?',
+        body: 'Coins, cars, upgrades, best times and settings will be erased. This cannot be undone.',
+        button: 'YES, ERASE MY PROGRESS',
+        action: 'confirmReset',
+      }),
+      confirmReset: () => {
+        storage.reset();
+        location.reload();
+      },
+      resume: () => this.resume(),
+      restart: () => this.start(this.race.track.id),
+      quit: () => {
+        sound.engineStop();
+        this.menu();
+      },
+    };
+  }
+
+  pause() {
+    if (this.mode !== 'race' || this.race.state === 'finished') return;
+    this.mode = 'paused';
+    sound.engineStop();
+    this.controls.show(false);
+    this.hud.show(false);
+    this.showPause();
+  }
+
+  showPause() {
+    this.screens.show('pause', { track: this.race.track.name });
+  }
+
+  resume() {
+    if (this.mode !== 'paused') return;
+    this.mode = 'race';
+    this.screens.hide();
+    this.hud.root.hidden = false;
+    this.controls.show(true);
+    sound.engineStart();
+    this.loop.last = performance.now();
   }
 
   /** Event cars for the garage. */
@@ -93,7 +207,10 @@ export class Game {
     setTimeout(() => loading.remove(), 600);
     this.checkIdle();
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && this.mode !== 'race') this.checkIdle();
+      if (document.hidden) {
+        this.pause();
+        sound.engineStop();
+      } else if (this.mode !== 'race' && this.mode !== 'paused') this.checkIdle();
     });
   }
 
@@ -143,6 +260,8 @@ export class Game {
 
   menu() {
     this.mode = 'menu';
+    this.controls.show(false);
+    sound.engineStop();
     const track = currentTrack(this.save);
     const carChanged = this.view?.carDef !== this.carDef || this.garage.modelKey;
     if (this.race?.track.id !== track.id || this.race.state !== 'countdown' || carChanged) this.prepare(track.id);
@@ -206,7 +325,7 @@ export class Game {
   /** HOLD TO RIDE: start the race and keep the finger that pressed the button as the throttle. */
   ride(e) {
     this.start(this.race.track.id);
-    if (e?.pointerId !== undefined) this.input.adopt(e);
+    if (e?.pointerId !== undefined && this.input.style === 'drag') this.input.adopt(e);
   }
 
   start(trackId) {
@@ -215,6 +334,9 @@ export class Game {
     this.resultShown = false;
     this.screens.hide();
     this.hud.show(true);
+    this.controls.show(true);
+    sound.engineStop();
+    sound.engineStart();
     if (!TRACK_BY_ID[trackId]?.event) this.save.lastTrack = trackId; // events are played from the calendar
     storage.save();
   }
@@ -235,7 +357,12 @@ export class Game {
       race.events.length = 0;
       this.view.update(sdt, input);
       this.hud.update(race);
+      this.controls.update();
+      sound.engineUpdate(race.car.speed, race.state === 'racing' ? input.throttle : 0.3, race.car.boostTime > 0);
+      this.renderer.adapt(dt);
       if (race.state === 'finished' && !this.resultShown && race.after > RACE.finishCoast / Math.max(1, this.timeScale)) this.showResult();
+    } else if (this.mode === 'paused') {
+      // Frozen frame behind the pause menu.
     } else if (this.view) {
       this.view.orbit(dt, this.mode === 'garage' ? 'garage' : 'menu');
     }
@@ -244,6 +371,7 @@ export class Game {
 
   onRaceEvent(e) {
     this.view.onEvent(e);
+    this.feedback(e);
     const hud = this.hud;
     switch (e.type) {
       case 'count': hud.flash(String(e.n)); break;
@@ -275,6 +403,16 @@ export class Game {
     }
   }
 
+  /** Sound and vibration for race events. */
+  feedback(e) {
+    const SOUND = { count: 'count', go: 'go', coin: 'coin', boost: 'boost', nitro: 'nitro', nearMiss: 'nearMiss', hit: 'hit', crash: 'crash', wall: 'wall', flip: 'flip', rammed: 'ram', ramRival: 'ram', bumped: 'wall', oil: 'oil', sand: 'oil', launch: 'launch', finish: 'finish' };
+    if (e.type === 'land' && e.impact > 6) sound.play('land');
+    else if (SOUND[e.type]) sound.play(SOUND[e.type]);
+    const HAP = { hit: HAPTIC.hit, crash: HAPTIC.crash, boost: HAPTIC.boost, nitro: HAPTIC.nitro, nearMiss: HAPTIC.nearMiss, rammed: HAPTIC.ram };
+    if (e.type === 'land' && e.impact > 8) haptic(HAPTIC.land);
+    else if (HAP[e.type]) haptic(HAP[e.type]);
+  }
+
   /** Let the AI drive (true/false). */
   setAutopilot(on) {
     this.autopilot = on ? new Driver({ skill: 1 }) : null;
@@ -282,6 +420,9 @@ export class Game {
 
   showResult() {
     this.resultShown = true;
+    sound.engineStop();
+    this.controls.show(false);
+    if (this.race.track.boss && !this.race.won) sound.play('lose');
     const race = this.race;
     const track = race.track;
     if (track.event) {

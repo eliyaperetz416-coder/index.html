@@ -72,4 +72,5 @@ export default defineConfig({
   preview: { host: true },
   build: { chunkSizeWarningLimit: 900, assetsInlineLimit: 0 },
   plugins: [pwa()],
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
 });

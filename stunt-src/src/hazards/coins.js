@@ -64,6 +64,7 @@ registerItem('coins', {
     const one = new Vector3(1, 1, 1);
     const pop = new Map(); // coin -> seconds since taken
     const tmp = new Vector3();
+    const shrink = new Vector3();
     mesh.frustumCulled = false;
     const update = (dt, t) => {
       all.forEach((c, i) => {
@@ -76,7 +77,7 @@ registerItem('coins', {
           } else {
             // Quick fly-up and shrink when collected.
             tmp.copy(b.pos).addScaledVector(b.up, a * 8);
-            m.compose(tmp, b.q, one.clone().multiplyScalar(1 - a / 0.3 + 0.01));
+            m.compose(tmp, b.q, shrink.setScalar(1 - a / 0.3 + 0.01));
           }
         } else {
           spin.setFromAxisAngle(b.up, t * 3 + i * 0.4);

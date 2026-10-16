@@ -4,6 +4,7 @@
 import { InstancedMesh, IcosahedronGeometry, MeshLambertMaterial, Matrix4, Quaternion, Vector3 } from 'three';
 import { registerItem, NearMiss, carBox } from './registry.js';
 import { rng } from '../core/math.js';
+import { Frame } from '../track/path.js';
 
 registerItem('boulder', {
   create(def, { s }) {
@@ -81,18 +82,20 @@ registerItem('boulder', {
     const scale = new Vector3();
     const left = new Vector3();
     const basis = new Matrix4();
+    const f = new Frame();
+    const xAxis = new Vector3(1, 0, 0);
     const update = () => {
       items.forEach((it, i) => {
         if (it.state === 'gone' && it.t0 > 0) {
           mesh.setMatrixAt(i, m.makeScale(0, 0, 0));
           return;
         }
-        const f = path.sampleAt(Math.max(0, it.bs));
+        path.sampleAt(Math.max(0, it.bs), f);
         pos.copy(f.pos).addScaledVector(f.R, it.x).addScaledVector(f.U, it.def.radius);
         left.copy(f.R).negate();
         q.setFromRotationMatrix(basis.makeBasis(left, f.U, f.T));
         // Rolling towards -T: spin about the local left axis.
-        spin.setFromAxisAngle(new Vector3(1, 0, 0), -it.roll);
+        spin.setFromAxisAngle(xAxis, -it.roll);
         q.multiply(spin);
         mesh.setMatrixAt(i, m.compose(pos, q, scale.setScalar(it.def.radius)));
       });

@@ -10,6 +10,7 @@ import { ChaseCamera } from '../render/camera.js';
 import { Particles, SpeedLines, COLORS } from '../render/effects.js';
 import { ItemsView } from './itemsView.js';
 import { WORLD_BY_ID, WORLDS } from '../config/worlds.js';
+import { Frame } from '../track/path.js';
 import { damp } from '../core/math.js';
 
 let scenery = null; // { trackId, track, world }
@@ -19,6 +20,7 @@ const _v = new Vector3();
 const _v2 = new Vector3();
 const _look = new Vector3();
 const _c = new Color();
+const _f = new Frame(); // reused every frame: no garbage in the render loop
 
 export function worldOf(track) {
   return WORLD_BY_ID[track.world] ?? WORLDS[0];
@@ -262,7 +264,7 @@ export class RaceView {
       e.model.quaternion.copy(c.quat);
       e.spin += c.v * dt / 0.5;
       for (const w of e.model.userData.parts.wheels ?? []) if (w.userData.spin) w.userData.spin.rotation.x = e.spin;
-      const f = c.path.sampleAt(c.trackS);
+      const f = c.path.sampleAt(c.trackS, _f);
       e.tag.position.copy(c.pos).addScaledVector(f.U, 3.4);
       e.tag.visible = this.r.camera.position.distanceTo(c.pos) < 160;
       this.placeShadow(e.shadow, c);
@@ -272,7 +274,7 @@ export class RaceView {
   /** Blob shadow on the road under a car. */
   placeShadow(shadow, car) {
     const pr = car.proj;
-    const f = car.path.sampleAt(car.trackS);
+    const f = car.path.sampleAt(car.trackS, _f);
     const h = car.mode === 'ground' ? 0 : Math.max(0, pr.h);
     if (Math.abs(pr.x) < f.width / 2 + 1 && h < 30 && car.path.flagsAt(car.trackS) & 1) {
       shadow.visible = true;
@@ -316,7 +318,7 @@ export class RaceView {
     const car = this.race.car;
     this.orbitT += dt * (framing === 'garage' ? 0.35 : 0.25);
     const cam = this.r.camera;
-    const f = car.path.sampleAt(car.trackS);
+    const f = car.path.sampleAt(car.trackS, _f);
     const garage = framing === 'garage';
     _v.copy(f.T).applyAxisAngle(f.U, this.orbitT + (garage ? 2.4 : 0)).multiplyScalar(garage ? 9.5 : 10);
     cam.position.copy(car.pos).add(_v).addScaledVector(f.U, garage ? 3.2 : 2.6);
