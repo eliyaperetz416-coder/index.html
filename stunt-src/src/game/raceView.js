@@ -255,17 +255,30 @@ export class RaceView {
     this.scenery.world.userData.follow(cam.position);
   }
 
-  /** Menu background: slow orbit around the parked car. */
-  orbit(dt) {
+  /** Swap the car model (garage preview, different car or cosmetics). */
+  setCar(carDef, look) {
+    this.r.scene.remove(this.car);
+    disposeObject(this.car);
+    this.car = createModel('car', carDef, { ...look, quality: this.r.quality });
+    this.carDef = carDef;
+    this.r.scene.add(this.car);
+  }
+
+  /**
+   * Menu background: slow orbit around the parked car.
+   * framing: 'menu' (car above the big button) or 'garage' (closer, car in the top third).
+   */
+  orbit(dt, framing = 'menu') {
     const car = this.race.car;
-    this.orbitT += dt * 0.25;
+    this.orbitT += dt * (framing === 'garage' ? 0.35 : 0.25);
     const cam = this.r.camera;
     const f = car.path.sampleAt(car.trackS);
-    _v.copy(f.T).applyAxisAngle(f.U, this.orbitT).multiplyScalar(10);
-    cam.position.copy(car.pos).add(_v).addScaledVector(f.U, 2.6);
+    const garage = framing === 'garage';
+    _v.copy(f.T).applyAxisAngle(f.U, this.orbitT + (garage ? 2.4 : 0)).multiplyScalar(garage ? 9.5 : 10);
+    cam.position.copy(car.pos).add(_v).addScaledVector(f.U, garage ? 3.2 : 2.6);
     cam.up.copy(f.U);
-    // Aim below the car so it sits in the upper half, above the big start button.
-    cam.lookAt(_look.copy(car.pos).addScaledVector(f.U, -2.2));
+    // Aim below the car so it sits in the upper part of the screen, above the menus.
+    cam.lookAt(_look.copy(car.pos).addScaledVector(f.U, garage ? -3.4 : -2.2));
     this.car.position.copy(car.pos);
     this.car.quaternion.copy(car.quat);
     this.car.visible = true;

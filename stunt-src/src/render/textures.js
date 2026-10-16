@@ -105,6 +105,7 @@ export function blobTexture(color = '#000000') {
   return make(`blob:${color}`, 64, 64, (g, w, h) => {
     const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
     grad.addColorStop(0, color);
+    grad.addColorStop(0.45, color);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = grad;
     g.fillRect(0, 0, w, h);

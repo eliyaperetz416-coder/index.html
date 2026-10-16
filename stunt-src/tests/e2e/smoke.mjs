@@ -38,11 +38,16 @@ try {
   await at(() => { const r = window.__game.race; return r.car.trackS > r.path.pieceRange(6)[0] + 20; }, '05-drop');
   await at(() => { const r = window.__game.race; const [a, b] = r.path.pieceRange(8); return r.car.trackS > a + (b - a) * 0.45; }, '06-loop');
 
-  // Release: the car brakes.
+  // Release on a straight: the car brakes.
+  await waitFor(page, () => {
+    const r = window.__game.race;
+    const [a, b] = r.path.pieceRange(9);
+    return r.car.mode === 'ground' && r.car.trackS > a + 5 && r.car.trackS < b - 40;
+  });
   await page.mouse.up();
-  const v0 = await page.evaluate(() => window.__game.race.car.v);
-  await page.waitForTimeout(500);
-  const v1 = await page.evaluate(() => window.__game.race.car.v);
+  const v0 = await page.evaluate(() => window.__game.race.car.speed);
+  await page.waitForTimeout(400);
+  const v1 = await page.evaluate(() => window.__game.race.car.speed);
   if (!(v1 < v0)) errors.push(`lifting the finger should brake (${v0} -> ${v1})`);
   await page.mouse.down();
 

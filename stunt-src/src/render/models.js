@@ -221,8 +221,8 @@ function buildCar(def, { paint, rim = {}, glow = null, quality } = {}) {
   let underglow = null;
   if (glow) {
     const g = new Mesh(
-      new PlaneGeometry(W * 2.2, L * 1.5),
-      new MeshBasicMaterial({ map: blobTexture(glow), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }),
+      new PlaneGeometry(W * 3.4, L * 1.9),
+      new MeshBasicMaterial({ map: blobTexture(glow), color: '#ffffff', transparent: true, opacity: 1, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }),
     );
     g.rotation.x = -Math.PI / 2;
     g.position.y = 0.06;

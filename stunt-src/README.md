@@ -14,6 +14,7 @@ npm test           # unit tests (track builder, physics, race)
 npm run e2e        # browser smoke test: menu -> race -> finish (headless Chromium)
 node tests/e2e/tracks.mjs    # track list, unlock flow (autopilot drives)
 node tests/e2e/hazards.mjs   # screenshots of every hazard (hidden 'lab' track)
+node tests/e2e/garage.mjs    # buy, upgrade, paint, underglow, missions, idle pop-up
 npm run e2e:pwa    # production build + offline test
 npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ```
@@ -38,7 +39,7 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 
 | Folder | What |
 | --- | --- |
-| `src/config/` | Everything that varies, as data: `game.js` (name, physics, camera, quality), `cars.js`, `tracks.js`, `worlds.js` |
+| `src/config/` | Everything that varies, as data: `game.js` (name, physics, camera, quality), `cars.js`, `tracks.js`, `worlds.js`, `hazards.js`, `upgrades.js`, `cosmetics.js`, `missions.js` |
 | `src/core/` | Game loop, input, storage (localStorage), math |
 | `src/track/` | `pieces.js` (track piece types) and `path.js` (centreline + frames, queries) |
 | `src/physics/` | `car.js`: arcade car on the track (ground and air modes, jump assist, crashes, respawn) |
@@ -46,6 +47,7 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/hazards/` | Track items: boost pads, coins, sawblades, wrecking balls, pillars, lasers, oil. One file per type |
 | `src/game/ai.js` | AI driver (reads every item's danger prediction); used by tests and rival bosses |
 | `src/game/progress.js` | Unlocks, medals, best times |
+| `src/game/economy.js`, `missions.js` | Buying, upgrades, cosmetics, idle earnings, daily missions |
 | `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
 | `src/ui/` | HUD and screens (plain DOM) |
 | `src/sw.js` | Service worker template (file list filled in at build time) |
@@ -110,10 +112,33 @@ Pieces carry **items**: `at` is metres from the piece start (or `t`, a 0..1 frac
 
 ## Add a car
 
-Add an object to `CARS` in `src/config/cars.js` (stats, physics, body shape and paint).
-The body is built from simple geometry by `src/render/models.js`. To use a real 3D model later,
-add `model: 'models/my-car.glb'` (put the file in `public/models/`): the model layer loads it and
-swaps it in for the placeholder.
+Add an object to `CARS` in `src/config/cars.js`:
+
+```js
+{
+  id: 'viper2', name: 'My Car', tier: 'sport', price: 6000, blurb: 'One line for the garage.',
+  stats: { topSpeed: 54, accel: 19, handling: 0.75, nitro: 0.6 },   // base values
+  physics: { mass: 1, grip: 7.5, twitch: 1.1, airControl: 1 },    // feel: heavy/stable vs light/twitchy
+  body: { shape: 'sport', length: 4.2, width: 1.95, height: 1.2, paint: '#ff0055', spoiler: true },
+}
+```
+
+Tiers (`regular`, `sport`, `luxury`, `formula`) set upgrade prices and idle earnings (`TIERS`).
+Body shapes: `hatch`, `truck`, `sport`, `luxury`, `formula`, `buggy`. The body is built from simple
+geometry by `src/render/models.js` (the **model layer**). To use a real 3D model later, add
+`model: 'models/my-car.glb'` (file in `public/models/`, optional `modelScale`, `modelRotation`):
+the model layer loads it with GLTFLoader and swaps it in for the placeholder. Name the wheel nodes
+`wheel*` so they spin.
+
+## Garage, upgrades, cosmetics, missions
+
+- Upgrade paths (Top Speed, Acceleration, Handling, Idle Earnings), max level and costs:
+  `src/config/upgrades.js`. Idle earnings pay coins per hour for every owned car while you are away,
+  up to `IDLE_CAP_HOURS`; you collect them in a pop-up when you come back.
+- Paints (metallic and neon), rims and underglow: `src/config/cosmetics.js`. Bought once, usable on every car.
+- Daily missions: `src/config/missions.js` (three per day, same for everyone on a date).
+- All logic is pure and unit tested: `src/game/economy.js`, `src/game/missions.js`.
+- Everything is saved in localStorage (`src/core/storage.js`, key `stunt-racer-save`).
 
 ## Add a world
 

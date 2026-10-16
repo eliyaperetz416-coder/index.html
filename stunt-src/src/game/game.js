@@ -13,8 +13,13 @@ import { CAREER, TRACKS, TRACK_BY_ID } from '../config/tracks.js';
 import { WORLDS } from '../config/worlds.js';
 import { isUnlocked, currentTrack, nextTrack, recordResult, trackRecord } from './progress.js';
 import { Driver } from './ai.js';
-import { CAR_BY_ID, CARS, effectiveStats } from '../config/cars.js';
+import { CARS, carById } from '../config/cars.js';
+import { effectiveStats, carState, carLook, idlePending, idleRate, collectIdle } from './economy.js';
+import { trackMissions, raceStats, claimable } from './missions.js';
+import { GarageScreen } from './garageScreen.js';
 import { RACE } from '../config/game.js';
+import { IDLE_MIN_MINUTES, IDLE_CAP_HOURS } from '../config/upgrades.js';
+import { fmtCoins, COIN } from '../ui/dom.js';
 
 export class Game {
   constructor() {
@@ -24,6 +29,7 @@ export class Game {
     this.renderer = new Renderer($('#stage'), resolveQuality(forced ?? this.save.settings.quality));
     this.input = new Input($('#touch'));
     this.hud = new Hud($('#hud'), { onNitro: () => (this.input.nitroQueued = true) });
+    this.garage = new GarageScreen(this);
     this.screens = new Screens($('#screens'), {
       ride: (e) => this.ride(e),
       next: () => this.next(),
@@ -31,7 +37,10 @@ export class Game {
       menu: () => this.menu(),
       tracks: () => this.showTracks(),
       pick: (d) => this.start(d.id),
-    });
+      closeModal: () => this.screens.closeModal(),
+      collectIdle: () => this.collectIdle(),
+      ...this.garage.handlers(),
+    }, $('#modal'));
     this.mode = 'boot';
     this.race = null;
     this.view = null;
@@ -41,11 +50,21 @@ export class Game {
   }
 
   get carDef() {
-    return CAR_BY_ID[this.save.selectedCar] ?? CARS[0];
+    const car = carById(this.save.selectedCar);
+    return car && carState(this.save, car.id).owned ? car : CARS[0];
   }
 
   get look() {
-    return { paint: { color: this.carDef.body.paint, metal: 0.4, rough: 0.3 }, rim: { style: 'classic' }, glow: null };
+    return carLook(this.save, this.carDef);
+  }
+
+  /** Extra cars for the garage (event cars, added in a later stage). */
+  extraCars() {
+    return [];
+  }
+
+  eventCarVisible() {
+    return false;
   }
 
   boot() {
@@ -54,22 +73,61 @@ export class Game {
     const loading = $('#loading');
     loading.classList.add('done');
     setTimeout(() => loading.remove(), 600);
+    this.checkIdle();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.mode !== 'race') this.checkIdle();
+    });
+  }
+
+  /** Welcome-back pop-up with the coins the garage earned while you were away. */
+  checkIdle() {
+    const p = idlePending(this.save);
+    if (idleRate(this.save) <= 0) {
+      collectIdle(this.save, Date.now(), { force: true });
+      return;
+    }
+    if (p.minutes < IDLE_MIN_MINUTES || p.coins < 1) return;
+    this.screens.modal({
+      title: 'WELCOME BACK!',
+      body: `Your garage earned ${COIN}<b>${fmtCoins(p.coins)}</b> while you were away${p.capped ? ` (the most it holds is ${IDLE_CAP_HOURS} hours)` : ''}.`,
+      button: 'COLLECT',
+      action: 'collectIdle',
+    });
+  }
+
+  collectIdle() {
+    const coins = collectIdle(this.save, Date.now(), { force: true });
+    storage.save();
+    this.screens.closeModal();
+    if (coins && this.screens.current === 'menu') this.menu();
+    this.sound?.('coin');
+  }
+
+  toast(text) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 1600);
   }
 
   /** Builds a race (and its view) without starting it. */
   prepare(trackId) {
     const track = TRACK_BY_ID[trackId] ?? TRACKS[0];
+    const car = this.carDef;
     this.view?.dispose();
-    this.race = new Race({ track, stats: effectiveStats(this.carDef) });
-    this.view = new RaceView(this.renderer, this.race, { carDef: this.carDef, look: this.look });
+    this.race = new Race({ track, stats: effectiveStats(car, carState(this.save, car.id).up) });
+    this.view = new RaceView(this.renderer, this.race, { carDef: car, look: this.look });
+    this.garage.modelKey = '';
   }
 
   menu() {
     this.mode = 'menu';
     const track = currentTrack(this.save);
-    if (this.race?.track.id !== track.id || this.race.state !== 'countdown') this.prepare(track.id);
+    const carChanged = this.view?.carDef !== this.carDef || this.garage.modelKey;
+    if (this.race?.track.id !== track.id || this.race.state !== 'countdown' || carChanged) this.prepare(track.id);
     this.hud.show(false);
-    this.screens.show('menu', { coins: this.save.coins, trackName: this.race.track.name });
+    this.screens.show('menu', { coins: this.save.coins, trackName: this.race.track.name, missionsReady: claimable(this.save) });
   }
 
   /** Pick the track the start button plays (used by tests and the track list). */
@@ -132,7 +190,7 @@ export class Game {
       this.hud.update(race);
       if (race.state === 'finished' && !this.resultShown && race.after > RACE.finishCoast / Math.max(1, this.timeScale)) this.showResult();
     } else if (this.view) {
-      this.view.orbit(dt);
+      this.view.orbit(dt, this.mode === 'garage' ? 'garage' : 'menu');
     }
     this.renderer.render();
   }
@@ -181,6 +239,7 @@ export class Game {
     tally.total = tally.lines.reduce((a, l) => a + l.coins, 0);
     this.save.coins += tally.total;
     this.save.stats.races++;
+    const missionsDone = trackMissions(this.save, raceStats(race, { medal: res.medal }));
     storage.save();
     this.hud.show(false);
     this.screens.show('finish', {
@@ -189,6 +248,7 @@ export class Game {
       newBest: res.newBest,
       medal: res.medal,
       unlocked: res.unlocked,
+      missionsDone,
       tally,
       hasNext: !!nextTrack(this.save, track.id),
     });

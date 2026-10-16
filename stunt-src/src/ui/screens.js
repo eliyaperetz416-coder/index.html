@@ -3,6 +3,7 @@
 
 import { GAME_NAME, GAME_TAGLINE } from '../config/game.js';
 import { esc, fmtTime, fmtCoins, COIN } from './dom.js';
+import { GARAGE_TEMPLATES, modal } from './garage.js';
 
 const stars = (n, max = 5) => `<span class="stars">${'&#9733;'.repeat(n)}<i>${'&#9733;'.repeat(max - n)}</i></span>`;
 const medal = (m) => (m ? `<span class="medal ${m}"></span>` : '');
@@ -31,7 +32,7 @@ export const TEMPLATES = {
       </div>
     </div>`,
 
-  menu: ({ coins, trackName }) => `
+  menu: ({ coins, trackName, missionsReady = 0 }) => `
     <div class="screen menu">
       <div class="topbar"><div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div></div>
       <div class="logo-wrap">
@@ -47,15 +48,23 @@ export const TEMPLATES = {
       <p class="menu-hint">Keep holding to drive. Slide to steer. Lift to brake.</p>
       <nav class="menu-nav">
         <button class="nav-btn" data-action="tracks"><span class="nav-icon flag"></span>Tracks</button>
+        <button class="nav-btn" data-action="garage"><span class="nav-icon car"></span>Garage</button>
+        <button class="nav-btn" data-action="missions"><span class="nav-icon target"></span>Missions${missionsReady ? `<span class="badge-dot">${missionsReady}</span>` : ''}</button>
       </nav>
     </div>`,
 
-  finish: ({ time, best, newBest, tally, hasNext, medal: m, unlocked = [] }) => `
+  finish: (d) => finishTemplate(d),
+};
+
+function finishTemplate(d) {
+  const { time, best, newBest, tally, hasNext, medal: m, unlocked = [] } = d;
+  return `
     <div class="screen finish">
       <h2 class="finish-title">FINISH!</h2>
       <div class="finish-time">${medal(m)}${fmtTime(time)}${newBest ? '<span class="badge">NEW BEST</span>' : ''}</div>
       <div class="finish-best">Best ${fmtTime(best)}</div>
       ${unlocked.map((u) => `<div class="unlock-note">NEW TRACK UNLOCKED: ${esc(u.name)}</div>`).join('')}
+      ${(d.missionsDone ?? []).map((m) => `<div class="unlock-note gold">MISSION COMPLETE: ${esc(m.text)}</div>`).join('')}
       <div class="tally">
         ${tally.lines.map((l, i) => `<div class="tally-line" style="animation-delay:${0.25 + i * 0.25}s"><span>${esc(l.label)}</span><b>+${fmtCoins(l.coins)}</b></div>`).join('')}
       </div>
@@ -66,18 +75,23 @@ export const TEMPLATES = {
         <button class="ghost" data-action="retry">Retry</button>
         <button class="ghost" data-action="menu">Menu</button>
       </div>
-    </div>`,
-};
+    </div>`;
+}
+
+Object.assign(TEMPLATES, GARAGE_TEMPLATES);
 
 export class Screens {
-  constructor(root, handlers) {
+  constructor(root, handlers, modalRoot = null) {
     this.root = root;
     this.handlers = handlers;
     this.current = null;
-    root.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-action]');
-      if (b && root.contains(b)) this.handlers[b.dataset.action]?.(b.dataset, e);
-    });
+    this.modalRoot = modalRoot;
+    for (const r of [root, modalRoot].filter(Boolean)) {
+      r.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-action]');
+        if (b && r.contains(b) && !b.disabled) this.handlers[b.dataset.action]?.(b.dataset, e);
+      });
+    }
     root.addEventListener('pointerdown', (e) => {
       const b = e.target.closest('[data-press]');
       if (b && root.contains(b)) {
@@ -100,6 +114,25 @@ export class Screens {
     this.current = null;
     this.root.hidden = true;
     this.root.innerHTML = '';
+  }
+
+  /** Re-render the current screen with new data, keeping the scroll position. */
+  refresh(data) {
+    const sc = this.root.querySelector('.scroll, .tab-body');
+    const top = sc?.scrollTop ?? 0;
+    this.show(this.current, data);
+    const sc2 = this.root.querySelector('.scroll, .tab-body');
+    if (sc2) sc2.scrollTop = top;
+  }
+
+  modal(opts) {
+    this.modalRoot.innerHTML = modal(opts);
+    this.modalRoot.hidden = false;
+  }
+
+  closeModal() {
+    this.modalRoot.hidden = true;
+    this.modalRoot.innerHTML = '';
   }
 }
 

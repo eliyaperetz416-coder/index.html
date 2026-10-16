@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Race } from '../../src/game/race.js';
 import { TRACK_BY_ID } from '../../src/config/tracks.js';
-import { CARS, effectiveStats } from '../../src/config/cars.js';
+import { CARS } from '../../src/config/cars.js';
+import { effectiveStats } from '../../src/game/economy.js';
 
 /** Drives a race headless with a simple driver: full throttle, steer back to the centre line. */
 export function simulate(track, carDef = CARS[0], { maxTime = 200, steer = (car) => -car.x * 0.15 } = {}) {

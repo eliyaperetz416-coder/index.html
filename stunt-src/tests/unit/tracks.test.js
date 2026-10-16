@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { Race } from '../../src/game/race.js';
 import { Driver } from '../../src/game/ai.js';
 import { CAREER } from '../../src/config/tracks.js';
-import { CARS, effectiveStats } from '../../src/config/cars.js';
+import { CARS } from '../../src/config/cars.js';
+import { effectiveStats } from '../../src/game/economy.js';
 import { rng } from '../../src/core/math.js';
 import { STEP, F_SOLID } from '../../src/track/path.js';
 

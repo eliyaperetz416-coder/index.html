@@ -9,10 +9,12 @@ export function defaultSave() {
     coins: 0,
     selectedCar: 'pebble',
     cars: { pebble: { owned: true } },
+    cosmetics: { paint: [], rim: [], glow: [] },
     tracks: {},
+    idle: { last: Date.now() },
+    missions: null,
     settings: { quality: 'auto' },
     stats: { races: 0 },
-    lastSeen: Date.now(),
   };
 }
 
