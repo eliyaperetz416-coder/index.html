@@ -59,6 +59,7 @@ export class Car {
     this.boostTime = 0;
     this.boostPower = 0; // fraction of top speed added while boosting
     this.traction = 1; // < 1 on oil
+    this.slick = 0; // seconds of low traction left
     this.tumble = 0; // seconds left of free spinning after a hit
     this.flip = null; // assisted flip during a jump
     this.angVel.set(0, 0, 0);
@@ -97,6 +98,8 @@ export class Car {
   step(dt, input) {
     if (this.boostTime > 0) this.boostTime -= dt;
     if (this.invuln > 0) this.invuln -= dt;
+    if (this.slick > 0) this.slick -= dt;
+    else if (this.traction < 1) this.traction = Math.min(1, this.traction + dt * 2.5);
     this.throttle = input.throttle;
     if (this.mode === 'ground') this.stepGround(dt, input);
     else this.stepAir(dt, input);
@@ -386,6 +389,13 @@ export class Car {
     this.emit('respawn', {});
   }
 
+  /** Oil: grip drops to `traction` and stays low for `linger` seconds after leaving the slick. */
+  oil(traction, linger) {
+    this.traction = Math.min(this.traction, traction);
+    this.slick = linger;
+    this.endDrift();
+  }
+
   /**
    * Knock the car (hazards, rivals). Never ends the race: it just costs speed.
    * @param {{slow?:number, push?:number, pop?:number, spin?:number}} hit
@@ -413,6 +423,5 @@ export class Car {
       this.angVel.set((Math.random() - 0.5) * 2, 1, (Math.random() - 0.5) * 2).normalize().multiplyScalar(spin * k);
     }
     this.boostTime = 0;
-    this.emit('hit', { slow, push, pop, spin });
   }
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Race } from '../../src/game/race.js';
-import { TRACKS } from '../../src/config/tracks.js';
+import { TRACK_BY_ID } from '../../src/config/tracks.js';
 import { CARS, effectiveStats } from '../../src/config/cars.js';
 
 /** Drives a race headless with a simple driver: full throttle, steer back to the centre line. */
@@ -23,7 +23,7 @@ export function simulate(track, carDef = CARS[0], { maxTime = 200, steer = (car)
 
 describe('Race (headless)', () => {
   it('drives the test track from start to finish', () => {
-    const { race, log } = simulate(TRACKS[0]);
+    const { race, log } = simulate(TRACK_BY_ID.test);
     expect(race.state).toBe('finished');
     expect(log.events.launch).toBeGreaterThanOrEqual(1); // the jump
     expect(log.events.land).toBeGreaterThanOrEqual(1);
@@ -35,7 +35,7 @@ describe('Race (headless)', () => {
 
   it('a slow car still clears the jump (assist) and the loop (min speed)', () => {
     const slow = { ...CARS[0], stats: { ...CARS[0].stats, topSpeed: 22, accel: 6 } };
-    const { race, log } = simulate(TRACKS[0], slow, { maxTime: 400 });
+    const { race, log } = simulate(TRACK_BY_ID.test, slow, { maxTime: 400 });
     expect(race.state).toBe('finished');
     expect(log.events.respawn ?? 0).toBe(0);
   });

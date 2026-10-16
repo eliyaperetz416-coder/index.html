@@ -5,8 +5,6 @@ import { InstancedMesh, CylinderGeometry, MeshStandardMaterial, MeshLambertMater
 import { registerItem } from './registry.js';
 
 registerItem('coins', {
-  defaults: { count: 6, spacing: 4, pattern: 'line', height: 6, value: 1, amp: 3 },
-
   create(def, { s }) {
     const coins = [];
     const n = def.count;
@@ -26,6 +24,10 @@ registerItem('coins', {
       s: s + len / 2,
       x: def.x ?? 0,
       reach: len / 2 + 3,
+      danger(x) {
+        const left = this.coins.filter((c) => !c.taken && c.h < 3);
+        return left.some((c) => Math.abs(x - c.x) < 1.5) ? -0.25 : 0;
+      },
       collide(car, race) {
         const cs = car.trackS;
         const cx = car.proj.x;

@@ -6,8 +6,6 @@ import { trackMatrix } from '../render/trackMesh.js';
 import { chevronTexture } from '../render/textures.js';
 
 registerItem('boost', {
-  defaults: { length: 9, width: 5, power: 0.35, duration: 1.4 },
-
   create(def, { s }) {
     return {
       type: 'boost',
@@ -16,6 +14,9 @@ registerItem('boost', {
       x: def.x ?? 0,
       reach: def.length / 2 + 2,
       armed: true,
+      danger(x) {
+        return Math.abs(x - this.x) < this.def.width / 2 ? -0.6 : 0; // AI likes pads
+      },
       collide(car, race) {
         if (car.mode !== 'ground') return;
         const inside = Math.abs(car.s - this.s) < this.def.length / 2 && Math.abs(car.x - this.x) < this.def.width / 2 + 0.6;

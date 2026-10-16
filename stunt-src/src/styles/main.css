@@ -305,3 +305,55 @@ button {
 .vignette.hit { background: radial-gradient(ellipse at center, transparent 45%, rgba(255, 30, 70, 0.75)); animation: edge 0.6s ease-out both; }
 .vignette.boost { background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 200, 255, 0.55)); animation: edge 0.8s ease-out both; }
 @keyframes edge { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- Stage 3: track list, medals, nav ---------- */
+.menu-nav { display: flex; gap: 10px; margin-top: 16px; width: 100%; justify-content: center; }
+.nav-btn {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+}
+.nav-icon { width: 22px; height: 22px; display: block; }
+.nav-icon.flag { background: repeating-conic-gradient(#111 0 25%, #fff 0 50%) 0 0 / 11px 11px; border-radius: 3px; }
+.back { font-size: 34px; line-height: 1; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); }
+.title { margin: 0; font-size: 22px; font-style: italic; letter-spacing: 1px; }
+.screen.tracks { background: linear-gradient(180deg, rgba(11, 4, 32, 0.75), rgba(11, 4, 32, 0.95)); }
+.scroll { flex: 1; width: 100%; overflow-y: auto; margin-top: 12px; padding-bottom: 20px; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.group-title { margin: 8px 0 10px; font-size: 14px; letter-spacing: 3px; color: var(--cyan); text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+.track-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: left;
+}
+.track-card.current { border-color: var(--pink); box-shadow: 0 0 16px rgba(255, 43, 214, 0.35); }
+.track-card.locked { opacity: 0.55; }
+.track-num { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; background: linear-gradient(135deg, var(--pink), #6a00ff); flex: none; }
+.track-info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.track-info b { font-size: 17px; font-style: italic; }
+.track-info small, .track-side small { font-family: system-ui, sans-serif; font-weight: 700; font-size: 12px; color: var(--muted); }
+.track-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.stars { color: var(--yellow); font-size: 12px; letter-spacing: 1px; }
+.stars i { color: rgba(255, 255, 255, 0.2); font-style: normal; }
+.medal { display: inline-block; width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.6); }
+.medal.gold { background: radial-gradient(circle at 35% 30%, #fff6b0, #ffc400 55%, #b37400); }
+.medal.silver { background: radial-gradient(circle at 35% 30%, #ffffff, #c9cfdc 55%, #7d8496); }
+.medal.bronze { background: radial-gradient(circle at 35% 30%, #ffd9b0, #d07b35 55%, #7a3d10); }
+.finish-time .medal { width: 30px; height: 30px; }
+.lock { width: 18px; height: 22px; display: block; border-radius: 4px; background: #ffffff55; position: relative; }
+.lock::before { content: ''; position: absolute; left: 3px; right: 3px; top: -8px; height: 12px; border: 3px solid #ffffff55; border-bottom: 0; border-radius: 8px 8px 0 0; }
+.unlock-note { margin-top: 10px; padding: 8px 14px; border-radius: 10px; background: rgba(61, 255, 154, 0.15); color: var(--good); font-size: 14px; }

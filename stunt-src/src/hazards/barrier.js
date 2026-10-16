@@ -7,8 +7,6 @@ import { trackMatrix } from '../render/trackMesh.js';
 import { stripeTexture } from '../render/textures.js';
 
 registerItem('barrier', {
-  defaults: { width: 3.2, length: 1.2, height: 1.3, near: 1.2, slow: 0.55 },
-
   create(def, { s }) {
     return {
       type: 'barrier',
@@ -22,6 +20,9 @@ registerItem('barrier', {
       miss: new NearMiss(def.near),
       update(dt) {
         if (this.knocked) this.knockT += dt;
+      },
+      danger(x) {
+        return !this.knocked && Math.abs(x - this.x) < this.def.width / 2 + 1.4 ? 1 : 0;
       },
       collide(car, race) {
         if (this.knocked) return;

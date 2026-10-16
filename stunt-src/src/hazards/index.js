@@ -2,5 +2,10 @@
 import './boost.js';
 import './coins.js';
 import './barrier.js';
+import './sawblade.js';
+import './wreckingBall.js';
+import './pillar.js';
+import './laser.js';
+import './oil.js';
 
 export { createItems, itemType, itemTypes } from './registry.js';

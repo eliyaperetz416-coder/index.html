@@ -10,12 +10,13 @@ const { browser, page, errors } = await launch({ size: process.argv[4] ?? '390x8
 
 try {
   await openGame(page, process.env.QUALITY ? `${url}?quality=${process.env.QUALITY}` : url);
-  await page.evaluate((id) => {
+  await page.evaluate(([id, ai]) => {
     const g = window.__game;
     g.loop.stop();
     g.start(id);
     g.input.keys.add('ArrowUp');
-  }, trackId);
+    if (ai) g.setAutopilot(true);
+  }, [trackId, !!process.env.AI]);
   let i = 0;
   for (;;) {
     const st = await page.evaluate(([every, steer]) => {

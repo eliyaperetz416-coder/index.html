@@ -11,6 +11,8 @@
 //   update(dt, time)           animate (called every physics step for every item)
 //   collide(car, race, dt)     called while the car is within `reach` metres along the track
 
+import { HAZARDS, PRESETS } from '../config/hazards.js';
+
 const TYPES = new Map();
 
 export function registerItem(type, impl) {
@@ -27,22 +29,33 @@ export function itemTypes() {
   return [...TYPES.keys()];
 }
 
-/** Create every item of a track, sorted by s. */
+/** Expand presets ({ preset: 'name', at }) into [def, offset along the track] pairs. */
+function expand(raw) {
+  if (!raw.preset) return [[raw, 0]];
+  const list = PRESETS[raw.preset];
+  if (!list) throw new Error(`Unknown item preset "${raw.preset}"`);
+  const { preset, at, t, s, x = 0, ...rest } = raw;
+  return list.map(({ at: offset = 0, ...d }) => [{ ...d, ...rest, x: (d.x ?? 0) + x }, offset]);
+}
+
+/** Create every item of a track, sorted by s. Defaults: config/hazards.js, then world.items. */
 export function createItems(track, path, world = null) {
   const out = [];
-  const add = (def, s) => {
-    const impl = itemType(def.type);
-    const defaults = { ...(impl.defaults ?? {}), ...(world?.items?.[def.type] ?? {}) };
-    const item = impl.create({ ...defaults, ...def }, { path, s });
-    if (Array.isArray(item)) out.push(...item);
-    else out.push(item);
+  const add = (raw, anchor) => {
+    for (const [def, offset] of expand(raw)) {
+      const impl = itemType(def.type);
+      const defaults = { ...(HAZARDS[def.type] ?? {}), ...(world?.items?.[def.type] ?? {}) };
+      const item = impl.create({ ...defaults, ...def }, { path, s: anchor + offset });
+      if (Array.isArray(item)) out.push(...item);
+      else out.push(item);
+    }
   };
   track.pieces.forEach((piece, index) => {
     if (!piece.items) return;
     const [s0, s1] = path.pieceRange(index);
-    for (const def of piece.items) add(def, s0 + (def.t != null ? def.t * (s1 - s0) : (def.at ?? 0)));
+    for (const raw of piece.items) add(raw, s0 + (raw.t != null ? raw.t * (s1 - s0) : (raw.at ?? 0)));
   });
-  for (const def of track.items ?? []) add(def, def.s);
+  for (const raw of track.items ?? []) add(raw, raw.s ?? 0);
   out.sort((a, b) => a.s - b.s);
   out.forEach((it, i) => (it.id = i));
   return out;

@@ -12,6 +12,8 @@ npm install
 npm run dev        # http://localhost:5173 (also on your LAN: open the printed Network URL on a phone)
 npm test           # unit tests (track builder, physics, race)
 npm run e2e        # browser smoke test: menu -> race -> finish (headless Chromium)
+node tests/e2e/tracks.mjs    # track list, unlock flow (autopilot drives)
+node tests/e2e/hazards.mjs   # screenshots of every hazard (hidden 'lab' track)
 npm run e2e:pwa    # production build + offline test
 npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ```
@@ -41,7 +43,9 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/track/` | `pieces.js` (track piece types) and `path.js` (centreline + frames, queries) |
 | `src/physics/` | `car.js`: arcade car on the track (ground and air modes, jump assist, crashes, respawn) |
 | `src/game/` | `race.js` (pure race simulation), `raceView.js` (draws it), `game.js` (menus <-> races) |
-| `src/hazards/` | Track items: boost pads, coins, hazards. One file per type, config driven |
+| `src/hazards/` | Track items: boost pads, coins, sawblades, wrecking balls, pillars, lasers, oil. One file per type |
+| `src/game/ai.js` | AI driver (reads every item's danger prediction); used by tests and rival bosses |
+| `src/game/progress.js` | Unlocks, medals, best times |
 | `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
 | `src/ui/` | HUD and screens (plain DOM) |
 | `src/sw.js` | Service worker template (file list filled in at build time) |
@@ -55,14 +59,19 @@ Add an object to `TRACKS` in `src/config/tracks.js`. A track is a list of pieces
 
 ```js
 {
-  id: 'my-track', name: 'My Track', world: 'neon', reward: 120, origin: [0, 60, 0],
+  id: 'neon-6', name: 'My Track', world: 'neon',
+  difficulty: 3,              // stars on the track card
+  reward: 180,                // coins for finishing (doubled the first time)
+  par: [60, 68, 78],          // gold / silver / bronze times in seconds
+  requires: 'neon-5',         // must finish this track first (omit = open from the start)
+  origin: [0, 80, 0],         // start position (keep it high: drops need room)
   pieces: [
     { type: 'start' },
     { type: 'straight', length: 120 },
-    { type: 'jump', rampLength: 34, angle: 17, gap: 40, drop: 5, landLength: 60 },
-    { type: 'turn', angle: 70, radius: 120 },          // + right, - left; optional bank
+    { type: 'jump', rampLength: 34, angle: 17, gap: 40, drop: 5, landLength: 60, flips: 1 }, // flips / rolls: stunt
+    { type: 'turn', angle: 70, radius: 120 },          // + right, - left; optional bank (degrees)
     { type: 'drop', height: 38, angle: 50, radius: 34 },
-    { type: 'loop', radius: 17 },
+    { type: 'loop', radius: 17 },                      // side: -1 shifts the exit left
     { type: 'hill', length: 60, angle: 12 },           // launches the car at speed
     { type: 'climb', height: 20 },
     { type: 'finish' },
@@ -70,22 +79,34 @@ Add an object to `TRACKS` in `src/config/tracks.js`. A track is a list of pieces
 }
 ```
 
-Any piece takes `width` (default 14) and `walls: false`. All piece types are in `src/track/pieces.js`.
-`npm test` checks that every track builds.
+Any piece takes `width` (default 14, applies to that piece only) and `walls: false`.
+All piece types are in `src/track/pieces.js`.
 
-Pieces carry **items** (boost pads, coins, hazards): `at` is metres from the piece start (or `t`,
-a 0..1 fraction of the piece), `x` is metres from the centre line (+ right):
+`npm test` builds every track, checks the road never runs into itself, and has the AI driver race
+each career track (it must finish in 40-90 s without falling off and with at most 2 hits).
+Use the AI times to set `par`.
+
+## Hazards, pads and coins
+
+Pieces carry **items**: `at` is metres from the piece start (or `t`, a 0..1 fraction of the piece),
+`x` is metres from the centre line (+ right). Any default can be overridden on the item:
 
 ```js
 { type: 'straight', length: 140, items: [
   { type: 'boost', at: 120 },
   { type: 'coins', at: 20, count: 6, pattern: 'zigzag' },   // 'line' | 'zigzag' | 'arc'
-  { type: 'barrier', at: 70, x: -3.5 },
+  { type: 'sawblade', at: 40, sweep: 4.5, period: 2.4 },
+  { type: 'wreckingBall', at: 80, swing: 60 },
+  { type: 'pillar', at: 100, side: -1 },                    // falls across the road as you approach
+  { type: 'laser', at: 120, lanes: 3, pattern: 'alternate' },
+  { type: 'oil', at: 130, x: -3 },
+  { preset: 'saw-slalom', at: 20 },                         // a named group of items
 ] }
 ```
 
-Each item type lives in `src/hazards/<type>.js` (logic + view, registered by name) and is
-listed in `src/hazards/index.js`. Defaults can be overridden per item.
+- Defaults and presets: `src/config/hazards.js`.
+- Each type lives in `src/hazards/<type>.js`: pure logic (`create`, `collide`, `danger` for the AI)
+  plus a batched view, registered by name and imported in `src/hazards/index.js`.
 
 ## Add a car
 

@@ -110,7 +110,7 @@ export class TrackPath {
 
     this.segments.forEach((sg, index) => {
       sg.index = index;
-      const w = sg.width ?? width;
+      const w = sg.width ?? DEFAULT_WIDTH; // width applies to its own piece only
       if (w !== width) {
         prevWidth = this.W[Math.max(0, i - 1)] || width;
         width = w;

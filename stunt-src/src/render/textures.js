@@ -130,3 +130,23 @@ export function chevronTexture(color = '#ffd400', bg = 'rgba(0,0,0,0)') {
     }
   });
 }
+
+/** Oil: near-black with a rainbow sheen. */
+export function oilTexture() {
+  return make('oil', 128, 128, (g, w, h) => {
+    const grad = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2);
+    grad.addColorStop(0, 'rgba(8,6,14,0.95)');
+    grad.addColorStop(0.8, 'rgba(10,8,18,0.9)');
+    grad.addColorStop(1, 'rgba(10,8,18,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 6; i++) {
+      g.strokeStyle = `hsla(${i * 55}, 100%, 60%, 0.16)`;
+      g.lineWidth = 5;
+      g.beginPath();
+      g.ellipse(w / 2 + i * 2, h / 2 - i * 2, 18 + i * 6, 12 + i * 5, 0.5, 0, Math.PI * 2);
+      g.stroke();
+    }
+  }, { repeat: false });
+}

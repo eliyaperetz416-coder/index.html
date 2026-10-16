@@ -8,6 +8,7 @@ const shot = (name) => page.screenshot({ path: `${SHOTS}${name}.png` });
 
 try {
   await openGame(page, url);
+  await page.evaluate(() => window.__game.selectTrack('test'));
   await page.waitForTimeout(500);
   await shot('01-menu');
 

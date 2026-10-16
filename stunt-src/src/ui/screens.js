@@ -4,7 +4,33 @@
 import { GAME_NAME, GAME_TAGLINE } from '../config/game.js';
 import { esc, fmtTime, fmtCoins, COIN } from './dom.js';
 
+const stars = (n, max = 5) => `<span class="stars">${'&#9733;'.repeat(n)}<i>${'&#9733;'.repeat(max - n)}</i></span>`;
+const medal = (m) => (m ? `<span class="medal ${m}"></span>` : '');
+
 export const TEMPLATES = {
+  tracks: ({ coins, groups }) => `
+    <div class="screen tracks">
+      <div class="topbar">
+        <button class="back" data-action="menu" aria-label="Back">&#8249;</button>
+        <h2 class="title">TRACKS</h2>
+        <div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div>
+      </div>
+      <div class="scroll">
+        ${groups.map((g) => `
+          <h3 class="group-title">${esc(g.title)}</h3>
+          ${g.tracks.map((t, i) => `
+            <button class="track-card ${t.locked ? 'locked' : ''} ${t.current ? 'current' : ''}" data-action="pick" data-id="${t.id}" ${t.locked ? 'disabled' : ''}>
+              <span class="track-num">${i + 1}</span>
+              <span class="track-info">
+                <b>${esc(t.name)}</b>
+                ${stars(t.difficulty)}
+                <small>${t.locked ? `Finish ${esc(t.requiresName)} to unlock` : t.best != null ? `Best ${fmtTime(t.best)}` : 'Not raced yet'}</small>
+              </span>
+              <span class="track-side">${t.locked ? '<span class="lock"></span>' : medal(t.medal)}<small>${COIN}${fmtCoins(t.reward)}</small></span>
+            </button>`).join('')}`).join('')}
+      </div>
+    </div>`,
+
   menu: ({ coins, trackName }) => `
     <div class="screen menu">
       <div class="topbar"><div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div></div>
@@ -19,13 +45,17 @@ export const TEMPLATES = {
         <small>${esc(trackName)}</small>
       </button>
       <p class="menu-hint">Keep holding to drive. Slide to steer. Lift to brake.</p>
+      <nav class="menu-nav">
+        <button class="nav-btn" data-action="tracks"><span class="nav-icon flag"></span>Tracks</button>
+      </nav>
     </div>`,
 
-  finish: ({ time, best, newBest, tally, hasNext }) => `
+  finish: ({ time, best, newBest, tally, hasNext, medal: m, unlocked = [] }) => `
     <div class="screen finish">
       <h2 class="finish-title">FINISH!</h2>
-      <div class="finish-time">${fmtTime(time)}${newBest ? '<span class="badge">NEW BEST</span>' : ''}</div>
+      <div class="finish-time">${medal(m)}${fmtTime(time)}${newBest ? '<span class="badge">NEW BEST</span>' : ''}</div>
       <div class="finish-best">Best ${fmtTime(best)}</div>
+      ${unlocked.map((u) => `<div class="unlock-note">NEW TRACK UNLOCKED: ${esc(u.name)}</div>`).join('')}
       <div class="tally">
         ${tally.lines.map((l, i) => `<div class="tally-line" style="animation-delay:${0.25 + i * 0.25}s"><span>${esc(l.label)}</span><b>+${fmtCoins(l.coins)}</b></div>`).join('')}
       </div>
