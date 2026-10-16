@@ -123,6 +123,49 @@ export const GARAGE_TEMPLATES = {
     </div>`,
 };
 
+const MOD_TEXT = {
+  gravity: (v) => `Gravity x${v}`,
+  nitroFill: (v) => `Nitro fills x${v}`,
+  coinValue: (v) => `Coins x${v}`,
+};
+
+function eventCard(x, d) {
+  const e = x.event;
+  const rec = d.records[e.id] ?? {};
+  const chips = Object.entries(e.modifiers ?? {}).map(([k, v]) => `<span class="chip">${esc(MOD_TEXT[k]?.(v) ?? k)}</span>`).join('');
+  const when = x.state === 'live' ? `Ends in ${esc(x.endsIn)}` : x.state === 'upcoming' ? `Starts in ${esc(x.startsIn)}` : 'Ended';
+  const car = e.rewards.car ? `<span class="ev-car">+ ${esc(d.carNames[e.rewards.car] ?? e.rewards.car)} (event car)</span>` : '';
+  return `
+    <div class="event-card ${x.state}" style="--ev:${e.color}">
+      <div class="ev-head"><b>${esc(e.name)}</b><span class="ev-when">${when}</span></div>
+      <p class="ev-blurb">${esc(e.blurb)}</p>
+      <div class="chips">${chips}<span class="chip goal">${esc(x.goal)}</span></div>
+      <div class="ev-foot">
+        <span class="ev-reward">${COIN}${fmtCoins(e.rewards.coins ?? 0)} ${car}</span>
+        ${x.state === 'live'
+          ? rec.completed
+            ? '<span class="ev-done">COMPLETED</span>'
+            : `<button class="primary ev-play" data-action="playEvent" data-id="${e.id}">PLAY</button>`
+          : rec.completed ? '<span class="ev-done">COMPLETED</span>' : ''}
+      </div>
+      ${rec.runs ? `<small class="ev-best">${rec.runs} run${rec.runs === 1 ? '' : 's'} so far</small>` : ''}
+    </div>`;
+}
+
+GARAGE_TEMPLATES.events = (d) => `
+  <div class="screen events">
+    <div class="topbar">
+      <button class="back" data-action="menu" aria-label="Back">&#8249;</button>
+      <h2 class="title">EVENTS</h2>
+      <div class="wallet">${COIN}<span>${fmtCoins(d.coins)}</span></div>
+    </div>
+    <div class="scroll">
+      ${d.live.length ? `<h3 class="group-title">LIVE NOW</h3>${d.live.map((x) => eventCard(x, d)).join('')}` : ''}
+      ${d.upcoming.length ? `<h3 class="group-title">COMING UP</h3>${d.upcoming.map((x) => eventCard(x, d)).join('')}` : ''}
+      ${d.ended.length ? `<h3 class="group-title">ENDED</h3>${d.ended.map((x) => eventCard(x, d)).join('')}` : ''}
+    </div>
+  </div>`;
+
 /** Modal box (welcome back, confirmations). */
 export function modal({ title, body, button = 'OK', action = 'closeModal' }) {
   return `

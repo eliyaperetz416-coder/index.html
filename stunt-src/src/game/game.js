@@ -18,6 +18,7 @@ import { effectiveStats, carState, carLook, idlePending, idleRate, collectIdle }
 import { trackMissions, raceStats, claimable } from './missions.js';
 import { GarageScreen } from './garageScreen.js';
 import { bossRivals } from './boss.js';
+import { EVENT_BY_ID, EVENTS, calendar, eventTrackId, recordEvent, eventRecord, goalText, openEvents, fmtSpan, isLive } from './events.js';
 import { WORLD_BY_ID } from '../config/worlds.js';
 import { RACE } from '../config/game.js';
 import { IDLE_MIN_MINUTES, IDLE_CAP_HOURS } from '../config/upgrades.js';
@@ -40,6 +41,8 @@ export class Game {
       tracks: () => this.showTracks(),
       pick: (d) => this.pick(d.id),
       raceBoss: (d) => this.start(d.id),
+      events: () => this.showEvents(),
+      playEvent: (d) => this.start(eventTrackId(EVENT_BY_ID[d.id])),
       closeModal: () => this.screens.closeModal(),
       collectIdle: () => this.collectIdle(),
       ...this.garage.handlers(),
@@ -61,13 +64,25 @@ export class Game {
     return carLook(this.save, this.carDef);
   }
 
-  /** Extra cars for the garage (event cars, added in a later stage). */
+  /** Event cars for the garage. */
   extraCars() {
-    return [];
+    return EVENTS.flatMap((e) => (e.cars ?? []).map((c) => carById(c.id)));
   }
 
-  eventCarVisible() {
-    return false;
+  /** Event cars show in the garage while their event is on (so you can see what you can win). */
+  eventCarVisible(id) {
+    const car = carById(id);
+    return !!car && isLive(EVENT_BY_ID[car.eventId]);
+  }
+
+  showEvents() {
+    this.mode = 'menu';
+    const now = new Date();
+    const cal = calendar(now);
+    const dress = (x) => ({ ...x, goal: goalText(x.event.goal), endsIn: fmtSpan(x.end - now), startsIn: fmtSpan(x.start - now) });
+    const carNames = Object.fromEntries(this.extraCars().map((c) => [c.id, c.name]));
+    const records = Object.fromEntries(EVENTS.map((e) => [e.id, eventRecord(this.save, e.id)]));
+    this.screens.show('events', { coins: this.save.coins, live: cal.live.map(dress), upcoming: cal.upcoming.map(dress), ended: cal.ended.map(dress), carNames, records });
   }
 
   boot() {
@@ -120,7 +135,8 @@ export class Game {
     const car = this.carDef;
     this.view?.dispose();
     const stats = effectiveStats(car, carState(this.save, car.id).up);
-    this.race = new Race({ track, stats, rivals: bossRivals(track, stats) });
+    const modifiers = EVENT_BY_ID[track.event]?.modifiers ?? {};
+    this.race = new Race({ track, stats, rivals: bossRivals(track, stats), modifiers });
     this.view = new RaceView(this.renderer, this.race, { carDef: car, look: this.look });
     this.garage.modelKey = '';
   }
@@ -131,7 +147,7 @@ export class Game {
     const carChanged = this.view?.carDef !== this.carDef || this.garage.modelKey;
     if (this.race?.track.id !== track.id || this.race.state !== 'countdown' || carChanged) this.prepare(track.id);
     this.hud.show(false);
-    this.screens.show('menu', { coins: this.save.coins, trackName: this.race.track.name, missionsReady: claimable(this.save) });
+    this.screens.show('menu', { coins: this.save.coins, trackName: this.race.track.name, missionsReady: claimable(this.save), eventsLive: openEvents(this.save).length });
   }
 
   /** Track list tap: boss tracks show the rival first. */
@@ -199,7 +215,7 @@ export class Game {
     this.resultShown = false;
     this.screens.hide();
     this.hud.show(true);
-    this.save.lastTrack = trackId;
+    if (!TRACK_BY_ID[trackId]?.event) this.save.lastTrack = trackId; // events are played from the calendar
     storage.save();
   }
 
@@ -268,6 +284,10 @@ export class Game {
     this.resultShown = true;
     const race = this.race;
     const track = race.track;
+    if (track.event) {
+      this.showEventResult();
+      return;
+    }
     const tally = race.tally();
     const boss = !!track.boss;
     const won = boss ? race.won : true;
@@ -298,6 +318,36 @@ export class Game {
       rival: boss ? { name: track.boss.name, time: race.rivals[0]?.finished ? race.rivals[0].finishTime : null } : null,
       tally,
       hasNext: !!nextTrack(this.save, track.id),
+    });
+  }
+
+  showEventResult() {
+    const race = this.race;
+    const event = EVENT_BY_ID[race.track.event];
+    const tally = race.tally();
+    tally.lines[0] = { label: 'Event run', coins: race.track.reward ?? 100 };
+    tally.total = tally.lines.reduce((a, l) => a + l.coins, 0);
+    this.save.coins += tally.total;
+    this.save.stats.races++;
+    const res = recordEvent(this.save, event, race);
+    const missionsDone = trackMissions(this.save, raceStats(race, { event: true }));
+    storage.save();
+    this.hud.show(false);
+    this.screens.show('finish', {
+      time: race.finishTime,
+      best: res.record.best,
+      newBest: res.record.best === race.finishTime && res.record.runs > 1,
+      tally,
+      missionsDone,
+      hasNext: false,
+      title: res.rewards ? 'EVENT WON!' : 'FINISH!',
+      event: {
+        goal: goalText(event.goal),
+        progress: res.progress,
+        met: res.met,
+        live: isLive(event),
+        rewards: res.rewards && { ...res.rewards, carName: res.rewards.car ? carById(res.rewards.car)?.name : null },
+      },
     });
   }
 }

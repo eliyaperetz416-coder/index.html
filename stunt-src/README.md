@@ -16,6 +16,7 @@ node tests/e2e/tracks.mjs    # track list, unlock flow (autopilot drives)
 node tests/e2e/hazards.mjs   # screenshots of every hazard (hidden 'lab' track)
 node tests/e2e/garage.mjs    # buy, upgrade, paint, underglow, missions, idle pop-up
 node tests/e2e/boss.mjs      # boss intro, rival race, world unlock, desert screenshots
+node tests/e2e/events.mjs    # events calendar, play a live event, event result
 npm run e2e:pwa    # production build + offline test
 npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 ```
@@ -49,6 +50,7 @@ npm run publish    # build into ../stunt (the folder GitHub Pages serves)
 | `src/game/ai.js`, `boss.js` | AI driver (reads every item's danger prediction) and boss rivals built on it |
 | `src/game/progress.js` | Unlocks, medals, best times |
 | `src/game/economy.js`, `missions.js` | Buying, upgrades, cosmetics, idle earnings, daily missions |
+| `src/game/events.js` | Timed events: schedules, calendar, goals, rewards (content in `config/events.js`) |
 | `src/render/` | Renderer (+ bloom), chase camera, track meshes, world/sky/scenery, textures, particles, **model layer** |
 | `src/ui/` | HUD and screens (plain DOM) |
 | `src/sw.js` | Service worker template (file list filled in at build time) |
@@ -148,6 +150,26 @@ road and wall colours, ground (`grid` or `sand`), `scenery` generator (`city`, `
 your own with `registerScenery` in `src/render/scenery.js`), `hazardStyle` colours, `items` (hazard
 default overrides for the whole world) and `requires` (the track, usually a boss, that opens it).
 Then point tracks at it with `world: '<id>'`. Desert-only hazards: `boulder` and `sand`.
+
+## Add an event
+
+Add an object to `EVENTS` in `src/config/events.js`. An event carries everything it needs:
+
+```js
+{
+  id: 'moon-jump', name: 'Moon Jump Weekend', blurb: '...', color: '#9db4ff',
+  schedule: { type: 'weekly', days: [5, 6, 0] },        // or { type: 'fixed', start: '2026-10-20', end: '2026-11-02' }
+  modifiers: { gravity: 0.6 },                          // gravity, nitroFill, coinValue
+  goal: { type: 'time', seconds: 70 },                  // finish | time | coins | drift
+  rewards: { coins: 1200, car: 'lunar' },               // paid once, while the event is live
+  track: { world: 'neon', origin: [0, 80, 0], pieces: [ ... ] },   // its own course
+  cars: [ { id: 'lunar', ... } ],                       // event-only cars (cannot be bought)
+}
+```
+
+The calendar (Events button) shows live, upcoming and recently ended events. Event logic is in
+`src/game/events.js` and unit tested; `npm test` also drives every event course and checks its goal
+can be reached.
 
 ## Add a boss
 

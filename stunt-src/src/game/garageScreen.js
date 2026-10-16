@@ -10,6 +10,7 @@ import {
 } from './economy.js';
 import { dailyMissions, claimMission, claimBonus, ALL_DONE_BONUS } from './missions.js';
 import { storage } from '../core/storage.js';
+import { EVENT_BY_ID } from './events.js';
 
 function swatch(kind, item, car) {
   if (kind === 'paint') {
@@ -68,6 +69,7 @@ export class GarageScreen {
         owned: st.owned,
         selected: save.selectedCar === car.id,
         bars: statBars(car, st.up),
+        eventNote: car.eventOnly ? `Win the ${EVENT_BY_ID[car.eventId]?.name ?? 'event'} event` : null,
       },
     };
     if (this.tab === 'upgrade') {

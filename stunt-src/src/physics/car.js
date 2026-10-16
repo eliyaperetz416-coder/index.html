@@ -68,6 +68,11 @@ export class Car {
     this.sync();
   }
 
+  /** Gravity for this car (events can scale it). */
+  get gravity() {
+    return P.gravity * (this.gravityScale ?? 1);
+  }
+
   get speed() {
     return this.mode === 'ground' ? Math.hypot(this.v, this.vx) : this.vel.length();
   }
@@ -123,7 +128,7 @@ export class Car {
     if (v > top) a -= (v - top) * P.overspeedDecay;
     if (input.brake > 0) a -= P.brakeDecel * input.brake;
     a -= v * P.coastDrag;
-    a += -P.gravity * f.T.y * (loop ? P.loopGravityScale : P.slopeGravityScale);
+    a += -this.gravity * f.T.y * (loop ? P.loopGravityScale : P.slopeGravityScale);
     v += a * dt;
     if (loop && v < P.loopMinSpeed) v = P.loopMinSpeed;
     if (v < 0) v = 0;
@@ -137,7 +142,7 @@ export class Car {
     const driftK = this.drifting ? 1.15 : 1;
     const target = input.steer * st.steerSpeed * speedFactor * driftK * (v > 1 ? 1 : v);
     this.vx += (target - this.vx) * damp(st.grip * this.traction * (this.drifting ? 0.55 : 1), dt);
-    const ax = -v * v * f.kR * P.centrifugal + -P.gravity * f.R.y * P.lateralGravity * (loop ? 0 : 1);
+    const ax = -v * v * f.kR * P.centrifugal + -this.gravity * f.R.y * P.lateralGravity * (loop ? 0 : 1);
     this.vx += ax * dt;
     this.x += this.vx * dt;
     this.s += v * dt;
@@ -172,7 +177,7 @@ export class Car {
     this.lastGroundS = this.s;
     // Crests flagged as launchers throw the car when gravity can no longer hold it.
     if (f.flags & F_LAUNCH) {
-      const grip = v * v * f.kU + P.gravity * f.U.y;
+      const grip = v * v * f.kU + this.gravity * f.U.y;
       if (grip < -P.launchThreshold) {
         this.sync();
         this.launch(false);
@@ -239,7 +244,7 @@ export class Car {
 
   /** Make a jump land on the landing ramp: never short, never far past it. */
   jumpAssist(gap) {
-    const g = P.gravity * P.airGravityScale;
+    const g = this.gravity * P.airGravityScale;
     const dir = _v.subVectors(gap.to, gap.from).setY(0).normalize();
     const vh = Math.max(1, this.vel.dot(dir));
     const vy = this.vel.y;
@@ -279,7 +284,7 @@ export class Car {
   }
 
   stepAir(dt, input) {
-    const g = P.gravity * P.airGravityScale;
+    const g = this.gravity * P.airGravityScale;
     this.airTime += dt;
     this.vel.y -= g * dt;
     this.vel.multiplyScalar(1 - P.airDrag * dt);

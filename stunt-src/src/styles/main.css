@@ -438,3 +438,36 @@ button:disabled { opacity: 0.6; }
 .taunt { font-size: 17px; font-style: italic; color: var(--boss); margin: 0 0 12px; }
 .boss-car, .boss-reward { font-family: system-ui, sans-serif; font-weight: 600; font-size: 14px; color: var(--muted); margin: 0 0 12px; }
 .boss-reward { color: var(--yellow); font-size: 16px; }
+
+/* ---------- Stage 6: events ---------- */
+.nav-icon.star { background: var(--cyan); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.badge-dot.live { background: var(--good); color: #003015; box-shadow: 0 0 10px var(--good); font-size: 10px; }
+.event-card { position: relative; padding: 14px 14px 12px 18px; margin-bottom: 12px; border-radius: 16px; background: var(--panel); border: 1px solid rgba(255,255,255,0.12); overflow: hidden; }
+.event-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--ev); box-shadow: 0 0 14px var(--ev); }
+.event-card.live { border-color: var(--ev); }
+.event-card.ended { opacity: 0.5; }
+.ev-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ev-head b { font-size: 18px; font-style: italic; color: var(--ev); }
+.ev-when { font-family: system-ui, sans-serif; font-weight: 800; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ev-blurb { margin: 6px 0 8px; font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { font-family: system-ui, sans-serif; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); }
+.chip.goal { background: rgba(255, 212, 0, 0.15); color: var(--yellow); }
+.ev-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ev-reward { font-size: 15px; color: var(--yellow); }
+.ev-car { font-family: system-ui, sans-serif; font-weight: 800; font-size: 12px; color: var(--ev); }
+.ev-play { padding: 10px 22px; font-size: 16px; }
+.ev-done { font-size: 13px; color: var(--good); }
+.ev-best { display: block; margin-top: 6px; font-family: system-ui, sans-serif; font-weight: 700; font-size: 11px; color: var(--muted); }
+.event-result { width: 100%; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--panel); display: flex; flex-direction: column; gap: 6px; }
+.event-result.met { border: 1px solid var(--good); }
+.event-result small { font-family: system-ui, sans-serif; font-weight: 800; font-size: 13px; color: var(--muted); }
+.event-result.met small { color: var(--good); }
+
+/* Result screens can be long (many tally lines, unlock notes): let them scroll. */
+.screen.finish { overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+.screen.finish .grow { min-height: 12px; }
+.finish-title { white-space: nowrap; font-size: clamp(40px, 12.5vw, 72px) !important; margin-top: 5vh !important; }
+.tally { gap: 6px; margin-top: 16px; }
+.tally-line { padding: 9px 14px; }
+.tally-total { margin-top: 10px; font-size: 40px; }

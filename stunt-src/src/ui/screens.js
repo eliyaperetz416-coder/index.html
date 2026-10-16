@@ -33,7 +33,7 @@ export const TEMPLATES = {
       </div>
     </div>`,
 
-  menu: ({ coins, trackName, missionsReady = 0 }) => `
+  menu: ({ coins, trackName, missionsReady = 0, eventsLive = 0 }) => `
     <div class="screen menu">
       <div class="topbar"><div class="wallet">${COIN}<span>${fmtCoins(coins)}</span></div></div>
       <div class="logo-wrap">
@@ -51,6 +51,7 @@ export const TEMPLATES = {
         <button class="nav-btn" data-action="tracks"><span class="nav-icon flag"></span>Tracks</button>
         <button class="nav-btn" data-action="garage"><span class="nav-icon car"></span>Garage</button>
         <button class="nav-btn" data-action="missions"><span class="nav-icon target"></span>Missions${missionsReady ? `<span class="badge-dot">${missionsReady}</span>` : ''}</button>
+        <button class="nav-btn" data-action="events"><span class="nav-icon star"></span>Events${eventsLive ? '<span class="badge-dot live">LIVE</span>' : ''}</button>
       </nav>
     </div>`,
 
@@ -58,13 +59,19 @@ export const TEMPLATES = {
 };
 
 function finishTemplate(d) {
-  const { time, best, newBest, tally, hasNext, medal: m, unlocked = [], worlds = [], title = 'FINISH!', lost, rival } = d;
+  const { time, best, newBest, tally, hasNext, medal: m, unlocked = [], worlds = [], title = 'FINISH!', lost, rival, event } = d;
   return `
     <div class="screen finish">
       <h2 class="finish-title ${lost ? 'lost' : ''}">${esc(title)}</h2>
       <div class="finish-time">${medal(m)}${fmtTime(time)}${newBest ? '<span class="badge">NEW BEST</span>' : ''}</div>
       <div class="finish-best">${rival ? `${esc(rival.name)} ${rival.time != null ? fmtTime(rival.time) : 'still racing'}` : `Best ${fmtTime(best)}`}</div>
       ${worlds.map((w) => `<div class="unlock-note world">NEW WORLD UNLOCKED: ${esc(w)}</div>`).join('')}
+      ${event ? `
+        <div class="event-result ${event.met ? 'met' : ''}">
+          <b>${esc(event.goal)}</b>
+          <div class="mbar"><i style="width:${event.progress * 100}%"></i></div>
+          <small>${event.rewards ? `EVENT COMPLETE! +${fmtCoins(event.rewards.coins)} coins${event.rewards.carName ? ` and the ${esc(event.rewards.carName)}` : ''}` : event.met ? (event.live ? 'Goal reached (reward already claimed)' : 'Goal reached, but the event has ended') : 'Not this time. Try again!'}</small>
+        </div>` : ''}
       ${unlocked.map((u) => `<div class="unlock-note">NEW TRACK UNLOCKED: ${esc(u.name)}</div>`).join('')}
       ${(d.missionsDone ?? []).map((m) => `<div class="unlock-note gold">MISSION COMPLETE: ${esc(m.text)}</div>`).join('')}
       <div class="tally">

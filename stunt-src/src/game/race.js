@@ -25,13 +25,15 @@ export class Race {
   /**
    * @param {{track: object, stats: object}} opts track config and effective car stats
    */
-  constructor({ track, stats, rivals = [] }) {
+  constructor({ track, stats, rivals = [], modifiers = {} }) {
+    this.modifiers = modifiers;
     this.track = track;
     this.world = WORLD_BY_ID[track.world] ?? null;
     this.path = getPath(track);
     this.events = [];
     this.emit = (type, data = {}) => this.events.push({ type, ...data });
     this.car = new Car(this.path, stats, (type, data) => this.onCarEvent(type, data));
+    this.car.gravityScale = modifiers.gravity ?? 1;
     // Rivals (boss races): an AI car each. They dodge hazards but are not hurt by them.
     this.rivals = rivals.map((r, i) => {
       const car = new Car(this.path, { ...r.stats }, () => {});
@@ -49,7 +51,7 @@ export class Race {
     this.nitro = NITRO.start; // tank 0..1
     this.combo = 0;
     this.comboTimer = 0;
-    this.score = { air: 0, flips: 0, crashes: 0, walls: 0, nearMiss: 0, nearMissPoints: 0, drift: 0, coins: 0, boosts: 0, hits: 0, nitros: 0, bestCombo: 0 };
+    this.score = { air: 0, flips: 0, crashes: 0, walls: 0, nearMiss: 0, nearMissPoints: 0, drift: 0, coins: 0, boosts: 0, hits: 0, nitros: 0, bestCombo: 0, coinsPicked: 0 };
   }
 
   get progress() {
@@ -73,7 +75,7 @@ export class Race {
   }
 
   addNitro(amount) {
-    this.nitro = Math.min(1, this.nitro + amount);
+    this.nitro = Math.min(1, this.nitro + amount * (this.modifiers.nitroFill ?? 1));
   }
 
   onCarEvent(type, data) {
@@ -102,7 +104,8 @@ export class Race {
   }
 
   collectCoin(coin, value = 1) {
-    this.score.coins += value;
+    this.score.coins += value * (this.modifiers.coinValue ?? 1);
+    this.score.coinsPicked++;
     this.emit('coin', { value });
   }
 
