@@ -12,6 +12,8 @@ import { save } from './storage.js';
 import { Scoring } from './scoring.js';
 import { Effects } from './effects.js';
 import { haptic } from './haptics.js';
+import { Screens } from './screens.js';
+import { statsFor, coinsForScore, applyRunToMissions, ensureMissions } from './progression.js';
 
 export class Game {
   constructor(canvas) {
@@ -22,6 +24,8 @@ export class Game {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 700);
     this.ui = new UI();
+    this.screens = new Screens(this);
+    ensureMissions();
     this.input = new Input();
     this.state = 'title';
     this.clock = { last: 0 };
@@ -37,11 +41,11 @@ export class Game {
     this.fx = new Effects(this.renderer, this.scene, this.camera, q);
     this.fx.attachPlayer(this.player);
     this.nitroWanted = false;
-    this._shake = new THREE.Vector3();
+    this._shake = new THREE.Vector3(); this._tmp = new THREE.Vector3();
 
     this.input.onLane = (d) => { if (this.state === 'playing') this.player.changeLane(d); };
     this.input.onNitro = (v) => { this.nitroWanted = v; };
-    this.input.onAnyStart = () => { if (this.state === 'title') this.startRun(); else if (this.state === 'gameover') this.startRun(); };
+    this.input.onAnyStart = () => { if (this.state === 'title' || this.state === 'gameover') this.startRun(); };
     this.ui.buildButtons((d) => { if (this.state === 'playing') this.player.changeLane(d); }, (v) => { this.nitroWanted = v; });
 
     window.addEventListener('resize', () => this.resize());
@@ -50,9 +54,7 @@ export class Game {
     this._tick = this._tick.bind(this);
   }
 
-  statsFor(car) {
-    return { topSpeed: car.topSpeed, accel: car.accel, handling: car.handling, comboMult: car.comboMult, nitro: car.nitro };
-  }
+  statsFor(car) { return statsFor(car); }
 
   // ---- lifecycle ----
   start() {
@@ -64,13 +66,33 @@ export class Game {
     this.state = s;
     if (s === 'title') {
       this.ui.showControls(false); this.ui.showHud(false);
-      this.ui.showStart(() => this.startRun());
+      this.traffic.reset();
+      this.screens.menu();
     }
+  }
+
+  // ---- garage ----
+  enterGarage() {
+    this.state = 'garage';
+    this.traffic.reset(); this.ui.showHud(false); this.ui.showControls(false);
+    this.garageAngle = 0.6;
+    this.screens.garage();
+  }
+  previewCar(car, stats) {
+    if (this.player.car.id !== car.id) { this.player.setCar(car, stats); this.fx.attachPlayer(this.player); }
+    else this.player.stats = stats;
+  }
+  exitGarage() {
+    const car = carById(save.data.selectedCar) || CARS[0];
+    this.player.setCar(car, this.statsFor(car)); this.fx.attachPlayer(this.player);
+    this.camera.clearViewOffset();
+    this.setState('title');
   }
 
   startRun() {
     this.traffic.reset();
     this.player.reset();
+    this.player.stats = this.statsFor(this.player.car);
     this.scoring = new Scoring(this.player.stats.comboMult);
     this.run = { time: 0, topKmh: 0, distance: 0, crashT: 0 };
     this.nitroWanted = this.input.nitroHeld;
@@ -90,10 +112,15 @@ export class Game {
     save.data.bestScore = Math.max(save.data.bestScore, score);
     const st = save.data.stats;
     st.runs++; st.closeCalls += sc.closeCalls; st.distance += r.distance; st.topSpeed = Math.max(st.topSpeed, r.topKmh);
+    const coins = coinsForScore(score);
+    save.data.coins += coins;
+    const missions = applyRunToMissions({ closeCalls: sc.closeCalls, tightCalls: sc.tightCalls, maxKmh: r.topKmh, score, bestCombo: sc.bestCombo, distanceKm: r.distance / 1000 });
     save.save();
-    this.ui.showControls(false);
-    this.ui.setCombo(0, 1, 0);
-    this.ui.showGameOver({ score, best: save.data.bestByCar[id] || 0, newBest, kmh: r.topKmh, closeCalls: sc.closeCalls, bestCombo: sc.bestCombo }, () => this.startRun());
+    this.ui.showControls(false); this.ui.setCombo(0, 1, 0);
+    this.screens.gameOver({
+      score, best: save.data.bestByCar[id] || 0, newBest, kmh: r.topKmh, closeCalls: sc.closeCalls, bestCombo: sc.bestCombo,
+      coins, missionsDone: missions.completed, carName: this.player.car.name,
+    }, { retry: () => this.startRun(), garage: () => this.enterGarage(), menu: () => this.setState('title') });
   }
 
   // ---- loop ----
@@ -134,6 +161,9 @@ export class Game {
     } else if (this.state === 'title') {
       this.traffic.update(dt, p.speed, 0.2, p.len, p.x);
       p.update(dt, false);
+    } else if (this.state === 'garage') {
+      worldSpeed = 0; this.garageAngle += dt * 0.5;
+      p.model.rotation.y = this.garageAngle; p.root.position.x = 0;
     } else { worldSpeed = 0; }
 
     this.world.update(dt, worldSpeed);
@@ -173,6 +203,17 @@ export class Game {
 
   updateCamera(dt, sf) {
     const p = this.player, cam = this.camera;
+    if (this.state === 'garage') {
+      const L = p.len, k = this.aspect < 1 ? 1.55 : 1;
+      cam.position.lerp(this._tmp.set(L * 0.75 * k, 1.7 * k, (L * 1.5 + 3.2) * k), Math.min(1, dt * 5));
+      cam.lookAt(0, 0.65, 0);
+      const land = this.aspect >= 1, w = window.innerWidth, hh = window.innerHeight;
+      if (land) cam.setViewOffset(w, hh, w * 0.24, 0, w, hh); else cam.setViewOffset(w, hh, 0, hh * 0.22, w, hh);
+      const fov = this.baseFov; if (Math.abs(fov - cam.fov) > 0.02) { cam.fov = fov; }
+      cam.updateProjectionMatrix();
+      return;
+    }
+    if (cam.view && cam.view.enabled) { cam.clearViewOffset(); cam.updateProjectionMatrix(); }
     const portrait = this.aspect < 1;
     const dist = portrait ? 13 : 8.6, height = portrait ? 5 : 3.3;
     const back = 1.2 * p.boostFrac;

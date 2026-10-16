@@ -130,7 +130,7 @@ export class Effects {
   /** attach lights pools + flames to the player's root. */
   attachPlayer(player) {
     this.player = player;
-    if (this._pools) player.root.remove(this._pools);
+    if (this._pools) { player.root.remove(this._pools); this._pools.children.forEach((m) => { m.geometry.dispose(); m.material.dispose(); }); }
     const g = new THREE.Group();
     const mk = (color, w, d, z, op) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2),

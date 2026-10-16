@@ -1,6 +1,4 @@
 // DOM UI: HUD, touch controls and screens. No game logic in here.
-import { GAME_NAME, GAME_TAGLINE } from './config.js';
-
 export function h(tag, cls, html) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -92,27 +90,4 @@ export class UI {
   // ---- screens ----
   clearScreens() { this.screensEl.innerHTML = ''; }
   showScreen(node) { this.clearScreens(); this.screensEl.append(node); return node; }
-
-  showStart(onStart) {
-    const card = h('div', 'card');
-    card.append(h('h1', '', GAME_NAME), h('div', 'sub', GAME_TAGLINE));
-    const b = h('button', 'btn', 'Start'); b.onclick = onStart; card.append(b);
-    card.append(h('div', 'hint', '← → / A D to change lanes · tap the side buttons on a phone'));
-    const wrap = h('div', 'screen'); wrap.append(card);
-    this.showScreen(wrap);
-  }
-
-  showGameOver({ score, best, newBest, kmh, closeCalls = 0, bestCombo = 0 }, onRestart) {
-    const card = h('div', 'card');
-    card.append(h('h2', '', 'CRASHED'));
-    if (newBest) card.append(h('div', 'newbest', 'NEW BEST'));
-    card.append(h('div', 'big', fmt(score)));
-    card.append(h('div', 'stat-row', `<span>Best</span><b>${fmt(best)}</b>`));
-    card.append(h('div', 'stat-row', `<span>Top speed</span><b>${Math.round(kmh)} km/h</b>`));
-    card.append(h('div', 'stat-row', `<span>Close calls</span><b>${closeCalls}</b>`));
-    card.append(h('div', 'stat-row', `<span>Best combo</span><b>${bestCombo}</b>`));
-    const b = h('button', 'btn pink', 'Restart'); b.onclick = onRestart; card.append(b);
-    const wrap = h('div', 'screen'); wrap.append(card);
-    this.showScreen(wrap);
-  }
 }
