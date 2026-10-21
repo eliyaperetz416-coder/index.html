@@ -1,0 +1,1735 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a0b3d">
+<meta name="description" content="מטבעות כיתה – מערכת תגמול התנהגות למורים מחליפים">
+<title>מטבעות כיתה</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23ffc83d' stroke='%23c27a00' stroke-width='8'/%3E%3Ctext x='50' y='66' font-size='46' text-anchor='middle' fill='%237a4a00'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<!-- Optional font: loaded without blocking rendering. Without internet the system font is used. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+  // Request the font only when online, so an offline laptop shows no network errors.
+  if (navigator.onLine !== false) {
+    var fl = document.createElement('link');
+    fl.rel = 'stylesheet'; fl.media = 'print';
+    fl.href = 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap';
+    fl.onload = function () { this.media = 'all'; };
+    document.head.appendChild(fl);
+  }
+</script>
+<style>
+/* ==========================================================
+   1. Tokens & base
+   ========================================================== */
+:root{
+  --bg0:#12062b; --bg1:#1d0b45; --bg2:#2c1170;
+  --card:#25124f; --card2:#30186a; --card3:#3a1f80;
+  --line:rgba(255,255,255,.12); --line2:rgba(255,255,255,.2);
+  --txt:#fbf7ff; --muted:#cdbdf5; --dim:#a893e0;
+  --gold:#ffc83d; --gold2:#ff9f1c; --goldDeep:#c27a00; --goldInk:#3a2300;
+  --pink:#ff5fa2; --violet:#9b6bff; --cyan:#4fd8ff;
+  --green:#2fd98a; --greenTxt:#7af7bf; --greenDeep:#0f7a4b;
+  --red:#ff5d6c; --redTxt:#ff9aa4; --redDeep:#a3192a;
+  --radius:22px; --radius-sm:14px;
+  --shadow:0 14px 34px rgba(6,0,24,.45);
+  --font:'Rubik','Segoe UI','Arial Hebrew',Arial,system-ui,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100vh; font-family:var(--font); color:var(--txt); line-height:1.45;
+  background-color:var(--bg0);
+  background-image:
+    radial-gradient(900px 600px at 85% -10%, rgba(155,107,255,.45), transparent 60%),
+    radial-gradient(700px 500px at -10% 30%, rgba(255,95,162,.22), transparent 60%),
+    radial-gradient(800px 600px at 50% 120%, rgba(255,200,61,.16), transparent 60%),
+    linear-gradient(180deg, var(--bg1), var(--bg0) 70%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;line-height:1.2}
+.num{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.muted{color:var(--muted)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:10px}
+[hidden]{display:none!important}
+
+/* Floating decorative sparkles in the background */
+.sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.sky span{position:absolute;font-size:22px;opacity:.16;animation:drift 18s linear infinite}
+@keyframes drift{from{transform:translateY(110vh) rotate(0)}to{transform:translateY(-15vh) rotate(360deg)}}
+#app{position:relative;z-index:1}
+
+/* ==========================================================
+   2. Buttons, cards, inputs
+   ========================================================== */
+.btn{
+  --b-bg:var(--card3); --b-sh:#1a0b40; --b-tx:var(--txt);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:0;border-radius:14px;padding:11px 18px;font-weight:700;font-size:15px;
+  background:var(--b-bg);color:var(--b-tx);
+  box-shadow:0 4px 0 var(--b-sh),0 8px 18px rgba(0,0,0,.25);
+  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--b-sh),0 3px 8px rgba(0,0,0,.25)}
+.btn:disabled{cursor:not-allowed;filter:saturate(.35);opacity:.75}
+.btn-gold{--b-bg:linear-gradient(180deg,#ffe07a,#ffb81f);--b-sh:var(--goldDeep);--b-tx:var(--goldInk)}
+.btn-green{--b-bg:linear-gradient(180deg,#5ff0ac,#22c47a);--b-sh:var(--greenDeep);--b-tx:#04291a}
+.btn-red{--b-bg:linear-gradient(180deg,#ff8a95,#ef4457);--b-sh:var(--redDeep);--b-tx:#2b0208}
+.btn-ghost{--b-bg:rgba(255,255,255,.08);--b-sh:rgba(0,0,0,.35);box-shadow:0 3px 0 var(--b-sh);border:1px solid var(--line2)}
+.btn-small{padding:7px 12px;font-size:13px;border-radius:11px}
+.icon-btn{
+  width:44px;height:44px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.08);
+  font-size:20px;display:inline-grid;place-items:center;transition:transform .15s,background .15s;
+}
+.icon-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}
+.link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:4px;padding:8px;font-size:15px}
+.link-btn:hover{color:var(--gold)}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)),var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);
+  min-width:0;
+}
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-title h2{font-size:20px;font-weight:800}
+.card-title .sub{font-size:13px;color:var(--muted)}
+
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);min-width:0}
+.field input,.field select,.note-field input{
+  width:100%;background:rgba(0,0,0,.25);border:2px solid var(--line2);border-radius:12px;padding:10px 12px;
+  color:var(--txt);font-size:15px;transition:border-color .15s,background .15s;
+}
+.field input:focus,.field select:focus,.note-field input:focus{outline:none;border-color:var(--gold);background:rgba(0,0,0,.35)}
+.field input::placeholder,.note-field input::placeholder{color:#9a86cf}
+.field select option{background:#24124f}
+
+/* ==========================================================
+   3. Shared layout: screens & top bar
+   ========================================================== */
+.screen{max-width:1320px;margin:0 auto;padding:18px clamp(16px,3vw,34px) 56px;animation:screenIn .45s ease both}
+@keyframes screenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.hello{display:flex;align-items:center;gap:14px;min-width:0}
+.avatar{
+  width:62px;height:62px;flex:none;border-radius:20px;display:grid;place-items:center;font-size:36px;
+  background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 6px 0 #5a2aa8,0 10px 24px rgba(155,107,255,.4);
+}
+.hello h1{font-size:clamp(22px,4vw,32px);font-weight:900}
+.hello p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* ==========================================================
+   4. Login
+   ========================================================== */
+.login{max-width:980px;text-align:center;padding-top:clamp(18px,6vh,64px)}
+.login-top{display:flex;justify-content:flex-end;margin-bottom:6px}
+.logo-coin{
+  width:118px;height:118px;margin:0 auto 18px;border-radius:50%;position:relative;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff3b8,#ffd34d 35%,#ffb31f 70%,#e08b00);
+  box-shadow:inset 0 -8px 0 rgba(160,90,0,.45),inset 0 6px 0 rgba(255,255,255,.45),0 10px 0 var(--goldDeep),0 20px 40px rgba(255,190,40,.35);
+  animation:bob 3.2s ease-in-out infinite;overflow:hidden;
+}
+.logo-coin::before{content:"";position:absolute;inset:12px;border-radius:50%;border:4px dashed rgba(140,80,0,.35)}
+.logo-coin::after{content:"";position:absolute;top:-20%;left:-60%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:rotate(20deg);animation:shine 3.6s ease-in-out infinite}
+.logo-coin b{font-size:56px;color:#8a5200;text-shadow:0 2px 0 rgba(255,255,255,.5);position:relative}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+@keyframes shine{0%,55%{left:-60%}85%,100%{left:130%}}
+.login h1{
+  font-size:clamp(38px,8vw,64px);font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(180deg,#fff6cf,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 rgba(120,60,0,.5));
+}
+.login .lead{font-size:clamp(17px,3vw,21px);color:var(--muted);margin:8px 0 28px}
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin:0 auto;max-width:860px}
+.stu-btn{
+  border:2px solid var(--line2);border-radius:22px;padding:20px 10px 16px;
+  background:linear-gradient(180deg,var(--card3),var(--card));
+  box-shadow:0 6px 0 #160838,0 12px 24px rgba(0,0,0,.3);
+  display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .2s;
+  animation:popIn .5s cubic-bezier(.3,1.5,.6,1) both;animation-delay:calc(var(--i,0) * 45ms);
+}
+.stu-btn .emo{font-size:48px;line-height:1;transition:transform .3s}
+.stu-btn .nm{font-size:19px;font-weight:800}
+.stu-btn:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 10px 0 #160838,0 18px 30px rgba(255,200,61,.18)}
+.stu-btn:hover .emo{transform:scale(1.15) rotate(-8deg)}
+.stu-btn:active{transform:translateY(2px)}
+@keyframes popIn{from{opacity:0;transform:scale(.7) translateY(16px)}to{opacity:1;transform:none}}
+.login-foot{margin-top:30px}
+.empty-note{padding:26px;border:2px dashed var(--line2);border-radius:20px;color:var(--muted);max-width:520px;margin:0 auto}
+
+/* ==========================================================
+   5. Student dashboard
+   ========================================================== */
+.dash{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+.hero{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(500px 220px at 90% 0%,rgba(255,200,61,.22),transparent 70%),
+    radial-gradient(400px 260px at 0% 100%,rgba(255,95,162,.22),transparent 70%),
+    linear-gradient(135deg,#3b1a8a,#24104f);
+  border:1px solid rgba(255,200,61,.35);
+}
+.hero-grid{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.balance-wrap{text-align:center;min-width:170px}
+.balance-label{font-size:14px;color:var(--muted);font-weight:500}
+.balance{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
+.coin{
+  width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:900;color:#8a5200;font-size:28px;
+  background:radial-gradient(circle at 35% 30%,#fff3b8,#ffd34d 40%,#ffb31f 75%,#e08b00);
+  box-shadow:inset 0 -5px 0 rgba(160,90,0,.45),0 5px 0 var(--goldDeep);
+  animation:spinY 4s ease-in-out infinite;
+}
+.coin.sm{width:22px;height:22px;font-size:12px;box-shadow:inset 0 -2px 0 rgba(160,90,0,.45),0 2px 0 var(--goldDeep);animation:none;vertical-align:middle;display:inline-grid}
+@keyframes spinY{0%,70%,100%{transform:rotateY(0)}85%{transform:rotateY(180deg)}}
+.balance-num{font-size:clamp(56px,9vw,84px);font-weight:900;color:var(--gold);line-height:1;text-shadow:0 5px 0 rgba(120,60,0,.55),0 0 30px rgba(255,200,61,.35);font-variant-numeric:tabular-nums}
+.balance-num.bump{animation:bump .6s cubic-bezier(.3,1.8,.5,1)}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.level-box{min-width:0}
+.level-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid rgba(255,200,61,.45);font-weight:800;font-size:16px}
+.level-badge .li{font-size:22px}
+.xp{margin-top:12px;height:18px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid var(--line);overflow:hidden;position:relative}
+.xp i{
+  position:absolute;inset-block:0;inset-inline-start:0;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--gold2),var(--gold),#fff1a8);
+  box-shadow:0 0 16px rgba(255,200,61,.6);transition:width 1s cubic-bezier(.2,.8,.2,1);
+}
+.xp i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.25) 0 8px,transparent 8px 16px);animation:stripes 1.2s linear infinite}
+@keyframes stripes{to{background-position:32px 0}}
+.xp-text{font-size:14px;color:var(--muted);margin-top:8px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:13px;color:var(--muted)}
+.stat b{color:var(--txt);font-size:16px}
+
+/* Shop */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:12px}
+.reward{
+  position:relative;border-radius:18px;padding:16px 14px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:linear-gradient(180deg,var(--card3),var(--card2));border:2px solid var(--line);
+  transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .2s;
+}
+.reward:hover{transform:translateY(-5px);box-shadow:0 14px 26px rgba(0,0,0,.35)}
+.reward.can{border-color:rgba(255,200,61,.6);box-shadow:0 0 0 0 rgba(255,200,61,.0)}
+.reward.can::before{content:"✨";position:absolute;top:8px;inset-inline-start:10px;font-size:15px;animation:twinkle 1.8s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+.r-icon{font-size:44px;line-height:1.1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.r-name{font-weight:800;font-size:16px;min-height:2.4em;display:flex;align-items:center}
+.r-cost{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--gold);font-size:17px}
+.r-bar{width:100%;height:7px;border-radius:9px;background:rgba(0,0,0,.35);overflow:hidden;margin:2px 0 6px}
+.r-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--pink));border-radius:9px;transition:width .8s ease}
+.reward.can .r-bar i{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.reward .btn{width:100%}
+.reward .btn:disabled{font-size:13px}
+
+/* Feed */
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto;padding-inline-end:4px;scrollbar-width:thin;scrollbar-color:var(--card3) transparent}
+.feed-item{
+  display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.2);
+  border:1px solid var(--line);border-inline-start:5px solid var(--dim);
+}
+.feed-item.pos{border-inline-start-color:var(--green)}
+.feed-item.neg{border-inline-start-color:var(--red)}
+.feed-item.buy{border-inline-start-color:var(--gold)}
+.feed-item.anim{animation:feedIn .45s cubic-bezier(.2,1.2,.4,1) both;animation-delay:calc(var(--i,0) * 55ms)}
+@keyframes feedIn{from{opacity:0;transform:translateX(-24px) scale(.97)}to{opacity:1;transform:none}}
+.f-main{flex:1;min-width:0}
+.f-text{font-weight:700;font-size:15px}
+.f-note{margin-top:4px;font-size:14px;color:#efe6ff;background:rgba(155,107,255,.18);border-radius:10px;padding:5px 9px;display:inline-block;overflow-wrap:anywhere}
+.f-time{display:block;font-size:12px;color:var(--dim);margin-top:4px}
+.f-amt{font-weight:900;font-size:18px;padding:4px 10px;border-radius:12px;flex:none;min-width:52px;text-align:center}
+.pos .f-amt{color:var(--greenTxt);background:rgba(47,217,138,.14)}
+.neg .f-amt,.buy .f-amt{color:var(--redTxt);background:rgba(255,93,108,.14)}
+.zero .f-amt{color:var(--muted);background:rgba(255,255,255,.08)}
+.more-btn{margin-top:12px;width:100%}
+.empty{padding:22px;text-align:center;color:var(--muted);border:2px dashed var(--line2);border-radius:16px}
+.empty .big{font-size:34px;display:block;margin-bottom:6px}
+
+/* Leaderboard */
+.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.board li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.board li.me{border-color:var(--gold);background:rgba(255,200,61,.12)}
+.board .rk{width:30px;text-align:center;font-size:20px;font-weight:900}
+.board .be{font-size:24px}
+.board .bn{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .bv{font-weight:800;color:var(--gold)}
+
+/* Charts */
+.chart-block+.chart-block{margin-top:22px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.chart-head h3{font-size:16px;font-weight:700}
+.legend{display:flex;gap:12px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.chart{position:relative;min-height:120px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible;direction:ltr;touch-action:pan-y;border-radius:12px}
+.chart svg:focus{outline:none}
+.chart svg:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+.ax text{fill:var(--dim);font-size:11px;font-family:var(--font)}
+.gridl{stroke:rgba(255,255,255,.08);stroke-width:1}
+.axis-base{stroke:rgba(255,255,255,.28);stroke-width:1}
+.bal-line{fill:none;stroke:var(--gold);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 3px 6px rgba(255,200,61,.35))}
+.bal-dot{fill:#2a1260;stroke:var(--gold);stroke-width:2}
+.cross{stroke:rgba(255,255,255,.45);stroke-dasharray:4 4}
+.hl{fill:var(--gold);stroke:#fff;stroke-width:2}
+.bar-pos{fill:var(--green)}
+.bar-neg{fill:var(--red)}
+.bar-hover{fill:rgba(255,255,255,.07)}
+.tt{
+  position:absolute;top:0;left:0;pointer-events:none;z-index:3;min-width:150px;max-width:240px;
+  background:rgba(14,4,40,.96);border:1px solid var(--line2);border-radius:12px;padding:8px 11px;font-size:13px;
+  box-shadow:0 10px 24px rgba(0,0,0,.45);opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;
+}
+.tt.show{opacity:1}
+.tt strong{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
+.tt .tp{color:var(--greenTxt);font-weight:700}
+.tt .tn{color:var(--redTxt);font-weight:700}
+.tt .tg{color:var(--gold);font-weight:700}
+.chart-empty{display:grid;place-items:center;text-align:center;min-height:170px;border:2px dashed var(--line2);border-radius:16px;color:var(--muted);padding:16px}
+.chart-empty .big{font-size:34px;display:block}
+
+/* ==========================================================
+   6. Teacher panel
+   ========================================================== */
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;background:rgba(0,0,0,.22);padding:6px;border-radius:18px;border:1px solid var(--line);width:fit-content;max-width:100%}
+.tab{border:0;background:transparent;padding:10px 16px;border-radius:13px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:background .15s,color .15s}
+.tab:hover{color:var(--txt);background:rgba(255,255,255,.06)}
+.tab[aria-selected="true"]{background:linear-gradient(180deg,#ffe07a,#ffb81f);color:var(--goldInk);box-shadow:0 3px 0 var(--goldDeep)}
+.badge{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--pink);color:#fff;font-size:12px;font-weight:800;display:inline-grid;place-items:center}
+.tab[aria-selected="true"] .badge{background:#7a2a00}
+
+.t-actions{display:grid;grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:20px;align-items:start}
+.roster{position:sticky;top:14px}
+.roster-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 230px);overflow-y:auto;padding:2px;scrollbar-width:thin}
+.stu-row{
+  width:100%;position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:15px;border:2px solid var(--line);
+  background:rgba(0,0,0,.2);text-align:start;transition:border-color .15s,background .15s,transform .15s;
+}
+.stu-row:hover{border-color:var(--line2);transform:translateX(-3px)}
+.stu-row .ck{width:24px;height:24px;border-radius:8px;border:2px solid var(--line2);display:grid;place-items:center;font-size:14px;font-weight:900;color:transparent;flex:none;transition:all .15s}
+.stu-row .emo{font-size:26px;flex:none}
+.stu-row .nm{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stu-row .cn{font-weight:800;color:var(--gold);display:flex;align-items:center;gap:5px;flex:none}
+.stu-row[aria-pressed="true"]{border-color:var(--gold);background:rgba(255,200,61,.13)}
+.stu-row[aria-pressed="true"] .ck{background:var(--gold);border-color:var(--gold);color:var(--goldInk)}
+.stu-row.pulse{animation:rowPulse .7s ease}
+@keyframes rowPulse{0%{box-shadow:0 0 0 0 rgba(255,200,61,.7)}100%{box-shadow:0 0 0 14px rgba(255,200,61,0)}}
+.float-delta{position:absolute;inset-inline-end:60px;top:4px;font-weight:900;font-size:20px;pointer-events:none;animation:floatUp 1.2s ease-out forwards;direction:ltr}
+.float-delta.p{color:var(--greenTxt)} .float-delta.n{color:var(--redTxt)}
+@keyframes floatUp{0%{opacity:0;transform:translateY(8px) scale(.7)}20%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-34px) scale(1)}}
+.sel-info{font-size:13px;color:var(--muted);margin:-6px 0 10px}
+
+.note-field{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);margin-bottom:18px}
+.note-field input.has{border-color:var(--violet)}
+.grp{font-size:17px;font-weight:800;margin:6px 0 10px;display:flex;align-items:center;gap:8px}
+.grp.pos{color:var(--greenTxt)} .grp.neg{color:var(--redTxt)}
+.beh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.beh{
+  display:flex;align-items:center;gap:10px;padding:14px 14px;border-radius:17px;border:2px solid;text-align:start;
+  transition:transform .15s cubic-bezier(.3,1.6,.6,1),filter .15s,box-shadow .15s;font-weight:700;font-size:15px;min-height:64px;
+}
+.beh .bi{font-size:30px;flex:none;transition:transform .2s}
+.beh .bl{flex:1;min-width:0}
+.beh .bc{font-weight:900;font-size:17px;flex:none}
+.beh.p{background:linear-gradient(180deg,rgba(47,217,138,.26),rgba(47,217,138,.1));border-color:rgba(47,217,138,.6);box-shadow:0 4px 0 #0c5b39}
+.beh.p .bc{color:var(--greenTxt)}
+.beh.n{background:linear-gradient(180deg,rgba(255,93,108,.26),rgba(255,93,108,.1));border-color:rgba(255,93,108,.6);box-shadow:0 4px 0 #6d1220}
+.beh.n .bc{color:var(--redTxt)}
+.beh:hover{transform:translateY(-3px);filter:brightness(1.12)}
+.beh:hover .bi{transform:scale(1.15) rotate(-8deg)}
+.beh:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+
+.orders{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.order{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.22);border:1px solid var(--line);flex-wrap:wrap}
+.order.pending{border-color:rgba(255,200,61,.5)}
+.order.done{opacity:.68}
+.order .oi{font-size:32px}
+.order .om{flex:1;min-width:160px}
+.order .ot{font-weight:800}
+.order .os{font-size:13px;color:var(--muted)}
+.done-tag{color:var(--greenTxt);font-weight:700;font-size:14px}
+
+.edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;align-items:start}
+.add-form{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid var(--line);margin-bottom:14px}
+.field-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 110px;gap:10px}
+.field-row.r3b{grid-template-columns:minmax(0,1fr) 80px 104px 80px}
+.emoji-pick{display:flex;flex-wrap:wrap;gap:6px}
+.emoji-pick button{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);font-size:20px;transition:transform .12s,background .12s}
+.emoji-pick button:hover{transform:scale(1.12);background:rgba(255,255,255,.14)}
+.ed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;scrollbar-width:thin}
+.ed-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:13px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.ed-list .ei{font-size:24px;flex:none}
+.ed-list .en{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-list .ev{font-weight:800;flex:none}
+.ed-list .ev.p{color:var(--greenTxt)} .ed-list .ev.n{color:var(--redTxt)} .ed-list .ev.g{color:var(--gold)}
+.del{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,93,108,.4);background:rgba(255,93,108,.12);font-size:16px;flex:none;transition:background .15s,transform .15s}
+.del:hover{background:rgba(255,93,108,.3);transform:scale(1.06)}
+.switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.switch-row input{position:absolute;opacity:0;width:1px;height:1px}
+.switch{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.18);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .25s cubic-bezier(.3,1.5,.6,1);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.switch-row input:checked+.switch{background:var(--green)}
+.switch-row input:checked+.switch::after{transform:translateX(-22px)}
+.switch-row input:focus-visible+.switch{outline:3px solid var(--gold);outline-offset:3px}
+.danger{margin-top:16px;padding:14px;border-radius:16px;border:1px dashed rgba(255,93,108,.55);background:rgba(255,93,108,.07)}
+.danger h3{font-size:15px;color:var(--redTxt);margin-bottom:4px}
+.danger p{margin:0 0 12px;font-size:13px;color:var(--muted)}
+
+/* ==========================================================
+   7. Overlays: toasts, modal, level-up, confetti
+   ========================================================== */
+#toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(92vw,460px);pointer-events:none}
+.toast{
+  pointer-events:auto;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:16px;font-weight:700;font-size:15px;
+  background:rgba(22,8,60,.97);border:1px solid var(--line2);box-shadow:0 14px 30px rgba(0,0,0,.45);
+  opacity:0;transform:translateY(-16px) scale(.95);transition:opacity .25s,transform .3s cubic-bezier(.3,1.6,.6,1);max-width:100%;
+}
+.toast.show{opacity:1;transform:none}
+.toast.success{border-color:rgba(47,217,138,.7)}
+.toast.error{border-color:rgba(255,93,108,.8)}
+.toast.warn{border-color:rgba(255,93,108,.55)}
+.toast .t-ico{font-size:20px;flex:none}
+
+.modal-back{position:fixed;inset:0;z-index:50;background:rgba(8,2,24,.7);backdrop-filter:blur(4px);display:grid;place-items:center;padding:16px;opacity:0;transition:opacity .2s}
+.modal-back.open{opacity:1}
+.modal{
+  width:min(100%,420px);background:linear-gradient(180deg,#3a1f80,#26124f);border:1px solid rgba(255,200,61,.4);border-radius:24px;padding:24px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5);transform:scale(.88) translateY(20px);transition:transform .3s cubic-bezier(.3,1.5,.6,1);text-align:center;
+}
+.modal-back.open .modal{transform:none}
+.modal .m-icon{font-size:52px;line-height:1;margin-bottom:8px}
+.modal h2{font-size:22px;font-weight:900;margin-bottom:8px}
+.modal .m-body{color:var(--muted);font-size:15px;margin-bottom:18px}
+.modal .m-body b{color:var(--txt)}
+.modal .m-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.modal .m-actions .btn{min-width:120px}
+.pin-input{width:100%;text-align:center;font-size:30px;letter-spacing:12px;font-weight:800;background:rgba(0,0,0,.3);border:2px solid var(--line2);border-radius:16px;padding:12px;color:var(--txt);direction:ltr;margin-top:6px}
+.pin-input:focus{outline:none;border-color:var(--gold)}
+.shake{animation:shake .45s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+.levelup{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(8,2,24,.55);animation:fadeIn .25s ease both;cursor:pointer;padding:16px}
+.levelup.out{animation:fadeOut .35s ease both}
+.lu-card{position:relative;text-align:center;padding:30px 36px;border-radius:30px;background:linear-gradient(180deg,#ffe58a,#ffb81f);color:var(--goldInk);box-shadow:0 10px 0 var(--goldDeep),0 30px 70px rgba(255,190,40,.45);animation:luPop .7s cubic-bezier(.3,1.7,.5,1) both;max-width:92vw}
+.lu-burst{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:repeating-conic-gradient(rgba(255,220,100,.35) 0 10deg,transparent 10deg 20deg);animation:spin 9s linear infinite;pointer-events:none;mask-image:radial-gradient(circle,#000 30%,transparent 70%);-webkit-mask-image:radial-gradient(circle,#000 30%,transparent 70%)}
+.lu-icon{font-size:72px;line-height:1;animation:bob 1.6s ease-in-out infinite}
+.lu-title{font-size:34px;font-weight:900;margin-top:8px}
+.lu-name{font-size:20px;font-weight:700;margin-top:4px}
+.lu-hint{font-size:13px;margin-top:10px;opacity:.75}
+@keyframes luPop{from{transform:scale(.3) rotate(-10deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70}
+
+/* ==========================================================
+   8. Responsive
+   ========================================================== */
+@media (max-width:920px){
+  .dash{display:flex;flex-direction:column}
+  .col{display:contents}
+  .o-hero{order:1}.o-shop{order:2}.o-feed{order:3}.o-charts{order:4}.o-board{order:5}
+  .t-actions{grid-template-columns:1fr}
+  .roster{position:static}
+  .roster-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-height:none}
+  .feed{max-height:480px}
+}
+@media (max-width:560px){
+  .card{padding:16px;border-radius:18px}
+  .hero-grid{grid-template-columns:1fr;gap:16px}
+  .student-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .stu-btn{padding:16px 8px 12px}
+  .stu-btn .emo{font-size:40px}
+  .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .reward{padding:12px 10px}
+  .r-icon{font-size:36px}
+  .r-name{font-size:14px}
+  .beh-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .beh{flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 8px}
+  .roster-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stu-row{padding:8px;gap:6px}
+  .stu-row .ck{display:none}
+  .stu-row .emo{font-size:22px}
+  .stu-row .cn .coin{display:none}
+  .field-row,.field-row.r3b{grid-template-columns:1fr 1fr}
+  .field-row .field:first-child{grid-column:1/-1}
+  .tabs{width:100%}
+  .tab{flex:1;justify-content:center;padding:10px 8px;font-size:14px}
+  .avatar{width:52px;height:52px;font-size:30px;border-radius:16px}
+  .topbar .btn{padding:9px 12px;font-size:14px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .sky{display:none}
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"></div>
+<main id="app" aria-live="off"></main>
+<div id="toasts" role="status" aria-live="polite"></div>
+<div id="modal-root"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<noscript><p style="text-align:center;padding:40px">יש להפעיל JavaScript כדי להשתמש במטבעות כיתה.</p></noscript>
+
+<script>
+'use strict';
+/* ==========================================================
+   1. Constants & helpers
+   ========================================================== */
+const STORE_KEY = 'classCoins_v2';
+const SOUND_KEY = 'classCoins_sound';
+const TEACHER_PIN = '1234';
+const COINS_PER_LEVEL = 50;
+const LEVELS = ['מתחיל', 'חוקר', 'לוחם', 'גיבור', 'אלוף', 'אגדה'];
+const LEVEL_ICONS = ['🌱', '🔍', '⚔️', '🦸', '🏆', '👑'];
+const DAY = 86400000;
+const CHART_DAYS = 14;
+const MAX_LOG = 6000;
+const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+const STUDENT_EMOJIS = ['🦁','🦄','🐯','🦊','🐼','🐬','🦅','🐱','🐶','🐸','🐵','🐨','🐙','🦖','🐝','🚀','⚽','🌈'];
+const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toInt(v, min, max, def) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+}
+function cleanText(v, max) {
+  return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
+}
+/** Signed amount using a real minus sign. Always wrap in .num so RTL doesn't flip the sign. */
+function signed(n) { return n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '0'; }
+function numSpan(n) { return `<span class="num">${signed(n)}</span>`; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function hhmm(t) { const d = new Date(t); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function dayStart(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function dayLabel(t) { const d = new Date(t); return d.getDate() + '.' + (d.getMonth() + 1); }
+function fmtDay(t) {
+  const today = dayStart(Date.now()), ds = dayStart(t);
+  if (ds === today) return 'היום';
+  if (ds === dayStart(today - 1)) return 'אתמול';
+  return `יום ${WEEKDAYS[new Date(t).getDay()]} ${dayLabel(t)}`;
+}
+function fmtWhen(t) { return `${fmtDay(t)} · ${hhmm(t)}`; }
+/** Start-of-day timestamps for the last n days (DST-safe), oldest first. */
+function lastDays(n) {
+  const out = []; let d = dayStart(Date.now());
+  for (let i = 0; i < n; i++) { out.unshift(d); d = dayStart(d - 1); }
+  return out;
+}
+function levelIndex(total) { return Math.min(LEVELS.length - 1, Math.floor(Math.max(0, total) / COINS_PER_LEVEL)); }
+function studentById(id) { return state.students.find(s => s.id === id) || null; }
+
+/* ==========================================================
+   2. Storage (always wrapped: falls back to memory)
+   ========================================================== */
+let storageWarned = false;
+function lsGet(key) {
+  try { return window.localStorage.getItem(key); } catch (e) { return null; }
+}
+function lsSet(key, value) {
+  try { window.localStorage.setItem(key, value); return true; }
+  catch (e) {
+    if (!storageWarned) {
+      storageWarned = true;
+      setTimeout(() => toast('השמירה במכשיר לא זמינה – הנתונים נשמרים זמנית בזיכרון בלבד', 'info', 4500), 50);
+    }
+    return false;
+  }
+}
+function save() {
+  if (state.log.length > MAX_LOG) state.log.splice(0, state.log.length - MAX_LOG);
+  lsSet(STORE_KEY, JSON.stringify(state));
+}
+/** Validate & sanitize anything read from storage. Returns null if unusable. */
+function normalize(raw) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.students)) return null;
+  const ids = [];
+  const keepId = v => { const n = toInt(v, 1, 1e9, 0); if (n) ids.push(n); return n; };
+  const students = raw.students.map(s => s && ({
+    id: keepId(s.id), name: cleanText(s.name, 24) || 'תלמיד', emoji: cleanText(s.emoji, 8) || '⭐',
+    coins: toInt(s.coins, 0, 1e7, 0), totalEarned: toInt(s.totalEarned, 0, 1e8, 0)
+  })).filter(s => s && s.id);
+  const behaviors = (Array.isArray(raw.behaviors) ? raw.behaviors : []).map(b => b && ({
+    id: keepId(b.id), label: cleanText(b.label, 30) || 'התנהגות', icon: cleanText(b.icon, 8) || '⭐', coins: toInt(b.coins, -1000, 1000, 0)
+  })).filter(b => b && b.id && b.coins !== 0);
+  const rewards = (Array.isArray(raw.rewards) ? raw.rewards : []).map(r => r && ({
+    id: keepId(r.id), label: cleanText(r.label, 30) || 'פרס', icon: cleanText(r.icon, 8) || '🎁', cost: toInt(r.cost, 1, 1e6, 1)
+  })).filter(r => r && r.id);
+  const sIds = new Set(students.map(s => s.id));
+  const log = (Array.isArray(raw.log) ? raw.log : []).map(e => {
+    if (!e) return null;
+    const x = { t: toInt(e.t, 0, 9e15, 0), studentId: toInt(e.studentId, 0, 1e9, 0), text: cleanText(e.text, 80), note: cleanText(e.note, 140), delta: toInt(e.delta, -1e6, 1e6, 0) };
+    if (e.kind === 'buy') x.kind = 'buy';
+    return x;
+  }).filter(e => e && e.t && sIds.has(e.studentId));
+  const orders = (Array.isArray(raw.orders) ? raw.orders : []).map(o => o && ({
+    id: keepId(o.id), t: toInt(o.t, 0, 9e15, 0), studentId: toInt(o.studentId, 0, 1e9, 0),
+    reward: cleanText(o.reward, 30), icon: cleanText(o.icon, 8) || '🎁', done: !!o.done
+  })).filter(o => o && o.id && o.t);
+  const settings = { leaderboard: !!(raw.settings && raw.settings.leaderboard) };
+  const nextId = Math.max(toInt(raw.nextId, 1, 1e9, 1), (ids.length ? Math.max(...ids) : 0) + 1);
+  return { students, behaviors, rewards, log, orders, settings, nextId };
+}
+function loadState() {
+  const raw = lsGet(STORE_KEY);
+  if (raw) {
+    try { const s = normalize(JSON.parse(raw)); if (s) return s; } catch (e) { /* corrupted: reseed */ }
+  }
+  const seeded = createSeed();
+  lsSet(STORE_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+
+/* ==========================================================
+   3. Seed data (demo class with ~2 weeks of history)
+   ========================================================== */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const SEED_BEHAVIORS = [
+  { label: 'ציון לשבח', icon: '🏅', coins: 10 },
+  { label: 'חיזוק חיובי', icon: '🌟', coins: 5 },
+  { label: 'עזרה לחבר', icon: '🤝', coins: 8 },
+  { label: 'השתתפות פעילה', icon: '🙋', coins: 5 },
+  { label: 'הפרעה בשיעור', icon: '🗣️', coins: -5 },
+  { label: 'אי הכנת ציוד', icon: '🎒', coins: -3 },
+  { label: 'חוסר כבוד', icon: '😠', coins: -10 },
+  { label: 'איחור', icon: '⏰', coins: -2 }
+];
+const SEED_REWARDS = [
+  { label: 'פיצה לכיתה', icon: '🍕', cost: 50 },
+  { label: 'מכתב חיובי להורים', icon: '✉️', cost: 30 },
+  { label: 'בחירת מקום ישיבה', icon: '🪑', cost: 20 },
+  { label: 'ללא שיעורי בית', icon: '📘', cost: 40 },
+  { label: 'שוקולד', icon: '🍫', cost: 15 }
+];
+const SEED_STUDENTS = [['נועם', '🦁'], ['מיה', '🦄'], ['יובל', '🐯'], ['תמר', '🦊'], ['איתי', '🐼'], ['שירה', '🐬'], ['דור', '🦅'], ['ליה', '🐱']];
+const POS_NOTES = ['כל הכבוד, ככה ממשיכים! 💪', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
+const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש 🙂', 'נא להגיע בזמן לשיעור'];
+
+function createSeed() {
+  const rnd = mulberry32(20261021);
+  const pick = arr => arr[Math.floor(rnd() * arr.length)];
+  const now = Date.now();
+  const days = lastDays(CHART_DAYS);
+  const posB = SEED_BEHAVIORS.filter(b => b.coins > 0), negB = SEED_BEHAVIORS.filter(b => b.coins < 0);
+  let id = 1;
+  const behaviors = SEED_BEHAVIORS.map(b => ({ id: id++, ...b }));
+  const rewards = SEED_REWARDS.map(r => ({ id: id++, ...r }));
+  const students = [], log = [], orders = [], used = new Set();
+
+  // One plausible 2-week history: behavior events at school hours, replayed in time order
+  // with the 0-floor applied, plus occasional purchases between events.
+  function simulate() {
+    const bias = 0.64 + rnd() * 0.16;
+    const raw = [];
+    for (const ds of days) {
+      const wd = new Date(ds).getDay();
+      if (wd === 6) continue; // no school on Saturday
+      const n = wd === 5 ? 1 : 1 + Math.floor(rnd() * 3);
+      for (let k = 0; k < n; k++) {
+        const t = ds + (8 * 60 + Math.floor(rnd() * 390)) * 60000 + Math.floor(rnd() * 60) * 1000;
+        if (t > now - 3 * 60000) continue;
+        const b = rnd() < bias ? pick(posB) : pick(negB);
+        raw.push({ t, b, note: rnd() < 0.3 ? pick(b.coins > 0 ? POS_NOTES : NEG_NOTES) : '' });
+      }
+    }
+    raw.sort((a, b) => a.t - b.t);
+    let bal = 0, earned = 0;
+    const events = [], buys = [];
+    raw.forEach((ev, i) => {
+      const after = Math.max(0, bal + ev.b.coins), applied = after - bal;
+      bal = after; if (applied > 0) earned += applied;
+      events.push({ t: ev.t, text: `${ev.b.icon} ${ev.b.label}`, note: ev.note, delta: applied });
+      const affordable = SEED_REWARDS.filter(r => r.cost <= bal);
+      if (affordable.length && bal >= 25 && rnd() < 0.38) {
+        const next = raw[i + 1] ? raw[i + 1].t : now;
+        const tb = ev.t + Math.min(30 * 60000, Math.floor((next - ev.t) / 2));
+        if (tb > ev.t && tb < now - 60000) {
+          const r = pick(affordable);
+          bal -= r.cost;
+          events.push({ t: tb, text: `${r.icon} קנייה: ${r.label}`, note: '', delta: -r.cost, kind: 'buy' });
+          buys.push({ t: tb, reward: r.label, icon: r.icon });
+        }
+      }
+    });
+    return { coins: bal, earned, events, buys };
+  }
+
+  for (const [name, emoji] of SEED_STUDENTS) {
+    let best = null, bestScore = Infinity;
+    for (let attempt = 0; attempt < 400; attempt++) {
+      const sim = simulate();
+      const score = (sim.coins < 10 ? 10 - sim.coins : sim.coins > 40 ? sim.coins - 40 : 0) + (used.has(sim.coins) ? 5 : 0) + (sim.events.length < 6 ? 5 : 0);
+      if (score < bestScore) { best = sim; bestScore = score; }
+      if (score === 0) break;
+    }
+    used.add(best.coins);
+    const sid = id++;
+    students.push({ id: sid, name, emoji, coins: best.coins, totalEarned: best.earned });
+    best.events.forEach(e => log.push({ ...e, studentId: sid }));
+    best.buys.forEach(b => orders.push({ id: id++, t: b.t, studentId: sid, reward: b.reward, icon: b.icon, done: now - b.t > DAY }));
+  }
+  log.sort((a, b) => a.t - b.t);
+  orders.sort((a, b) => a.t - b.t);
+  return { students, behaviors, rewards, log, orders, settings: { leaderboard: false }, nextId: id };
+}
+
+/* ==========================================================
+   4. App state (one persistent object + transient UI state)
+   ========================================================== */
+let state = loadState();
+const ui = {
+  screen: 'login',        // 'login' | 'student' | 'teacher'
+  studentId: null,
+  tab: 'actions',         // teacher tab: 'actions' | 'orders' | 'edit'
+  selected: new Set(),    // teacher multi-select
+  note: '',
+  shownBalance: 0,        // last balance shown (for count-up)
+  shownLevel: null,       // last level shown (for level-up celebration)
+  feedSeen: 0,            // number of feed items already animated in
+  feedLimit: 20,
+  built: ''               // which skeleton is currently in #app
+};
+
+/* ==========================================================
+   5. Mutations (every one persists, then re-renders)
+   ========================================================== */
+/** Apply a coin change with the 0-floor; logs the actually applied delta. */
+function applyDelta(student, delta, text, note, kind) {
+  const before = student.coins;
+  const after = Math.max(0, before + delta);
+  const applied = after - before;
+  student.coins = after;
+  if (applied > 0) student.totalEarned += applied;
+  const entry = { t: Date.now(), studentId: student.id, text, note: note || '', delta: applied };
+  if (kind) entry.kind = kind;
+  state.log.push(entry);
+  return applied;
+}
+
+function awardBehavior(behaviorId) {
+  const b = state.behaviors.find(x => x.id === behaviorId);
+  if (!b) return;
+  const targets = state.students.filter(s => ui.selected.has(s.id));
+  if (!targets.length) {
+    toast('בחרו קודם לפחות תלמיד אחד מהרשימה', 'error');
+    play('error');
+    shake($('.roster'));
+    return;
+  }
+  const note = cleanText(ui.note, 120);
+  const results = [], ups = [];
+  for (const s of targets) {
+    const lvBefore = levelIndex(s.totalEarned);
+    results.push([s.id, applyDelta(s, b.coins, `${b.icon} ${b.label}`, note)]);
+    const lvAfter = levelIndex(s.totalEarned);
+    if (lvAfter > lvBefore) ups.push([s, lvAfter]);
+  }
+  ui.note = '';
+  const noteInput = $('#note');
+  if (noteInput) { noteInput.value = ''; noteInput.classList.remove('has'); }
+  save();
+  render();
+  results.forEach(([id, applied]) => floatDelta(id, applied));
+  const who = targets.length === 1 ? `ל${esc(targets[0].name)}` : `ל-${targets.length} תלמידים`;
+  toast(`${esc(b.icon)} ${esc(b.label)} ${numSpan(b.coins)} ${who}${note ? ' · עם הערה' : ''}`, b.coins > 0 ? 'success' : 'warn');
+  if (b.coins > 0) { confetti(targets.length > 3 ? 160 : 110); play('coin'); } else play('down');
+  ups.forEach(([s, l], i) => setTimeout(() => { toast(`🎉 רמה חדשה ל${esc(s.name)}: רמה ${l + 1} · ${LEVELS[l]}!`, 'success', 3800); play('level'); }, 500 + i * 300));
+}
+
+function buyReward(rewardId) {
+  const s = studentById(ui.studentId), r = state.rewards.find(x => x.id === rewardId);
+  if (!s || !r) return;
+  if (s.coins < r.cost) { toast(`חסרים לך עוד ${r.cost - s.coins} מטבעות`, 'error'); play('error'); return; }
+  openModal({
+    icon: r.icon,
+    title: 'לקנות את הפרס?',
+    body: `<b>${esc(r.label)}</b> תמורת <b>${r.cost}</b> מטבעות.<br>אחרי הקנייה יישארו לך <b>${s.coins - r.cost}</b> מטבעות.`,
+    okText: '🛍️ כן, לקנות!',
+    onOk: () => {
+      const cur = studentById(ui.studentId), rw = state.rewards.find(x => x.id === rewardId);
+      if (!cur || !rw || cur.coins < rw.cost) { toast('אין מספיק מטבעות', 'error'); return; }
+      applyDelta(cur, -rw.cost, `${rw.icon} קנייה: ${rw.label}`, '', 'buy');
+      state.orders.push({ id: state.nextId++, t: Date.now(), studentId: cur.id, reward: rw.label, icon: rw.icon, done: false });
+      save();
+      render();
+      confetti(170);
+      play('buy');
+      toast(`🎉 קנית ${esc(rw.icon)} ${esc(rw.label)}! ההזמנה נשלחה למורה`, 'success', 3400);
+    }
+  });
+}
+
+function markDelivered(orderId) {
+  const o = state.orders.find(x => x.id === orderId);
+  if (!o || o.done) return;
+  o.done = true;
+  save(); render();
+  toast(`${esc(o.icon)} ${esc(o.reward)} סומן כנמסר`, 'success');
+  play('coin');
+}
+
+function addStudent(fd) {
+  const name = cleanText(fd.get('name'), 20);
+  if (!name) { toast('נא להזין שם', 'error'); return false; }
+  const emoji = cleanText(fd.get('emoji'), 8) || '⭐';
+  const start = toInt(fd.get('coins'), 0, 999, 0);
+  const s = { id: state.nextId++, name, emoji, coins: 0, totalEarned: 0 };
+  state.students.push(s);
+  if (start > 0) applyDelta(s, start, '🎁 מטבעות פתיחה', '');
+  save(); render();
+  toast(`${esc(emoji)} ${esc(name)} נוסף/ה לכיתה`, 'success');
+  return true;
+}
+function addBehavior(fd) {
+  const label = cleanText(fd.get('label'), 30);
+  if (!label) { toast('נא להזין שם להתנהגות', 'error'); return false; }
+  const amount = toInt(fd.get('amount'), 1, 100, 0);
+  if (!amount) { toast('נא להזין כמות מטבעות (1–100)', 'error'); return false; }
+  const coins = fd.get('sign') === 'neg' ? -amount : amount;
+  const icon = cleanText(fd.get('icon'), 8) || (coins > 0 ? '⭐' : '⚠️');
+  state.behaviors.push({ id: state.nextId++, label, icon, coins });
+  save(); render();
+  toast(`ההתנהגות "${esc(label)}" נוספה`, 'success');
+  return true;
+}
+function addReward(fd) {
+  const label = cleanText(fd.get('label'), 30);
+  if (!label) { toast('נא להזין שם לפרס', 'error'); return false; }
+  const cost = toInt(fd.get('cost'), 1, 9999, 0);
+  if (!cost) { toast('נא להזין מחיר (1–9999)', 'error'); return false; }
+  const icon = cleanText(fd.get('icon'), 8) || '🎁';
+  state.rewards.push({ id: state.nextId++, label, icon, cost });
+  save(); render();
+  toast(`הפרס "${esc(label)}" נוסף לחנות`, 'success');
+  return true;
+}
+function deleteItem(kind, id) {
+  // Resolve the list lazily: another tab may replace `state` while the confirm modal is open.
+  const getList = () => kind === 'student' ? state.students : kind === 'behavior' ? state.behaviors : state.rewards;
+  const item = getList().find(x => x.id === id);
+  if (!item) return;
+  const name = item.name || item.label;
+  const icon = item.emoji || item.icon;
+  const extra = kind === 'student' ? '<br>גם ההיסטוריה וההזמנות של התלמיד/ה יימחקו.' : '';
+  openModal({
+    icon: '🗑️', title: 'למחוק?', danger: true,
+    body: `<b>${esc(icon)} ${esc(name)}</b> יימחק לצמיתות.${extra}`,
+    okText: 'מחיקה',
+    onOk: () => {
+      const list = getList(), i = list.findIndex(x => x.id === id);
+      if (i < 0) return;
+      list.splice(i, 1);
+      if (kind === 'student') {
+        state.log = state.log.filter(e => e.studentId !== id);
+        state.orders = state.orders.filter(o => o.studentId !== id);
+        ui.selected.delete(id);
+      }
+      save(); render();
+      toast(`${esc(name)} נמחק`, 'info');
+    }
+  });
+}
+function setLeaderboard(on) {
+  state.settings.leaderboard = !!on;
+  save(); render();
+  toast(on ? '🏆 טבלת המובילים מוצגת לתלמידים' : 'טבלת המובילים הוסתרה', 'info');
+}
+function resetAll() {
+  openModal({
+    icon: '⚠️', title: 'לאפס את כל הנתונים?', danger: true,
+    body: 'כל התלמידים, ההיסטוריה, ההזמנות וההגדרות יימחקו, והמערכת תחזור <b>לנתוני ההדגמה ההתחלתיים</b>. אי אפשר לבטל.',
+    okText: 'כן, לאפס הכל',
+    onOk: () => {
+      state = createSeed();
+      ui.selected.clear(); ui.note = '';
+      save();
+      ui.built = '';
+      render();
+      toast('הנתונים אופסו לנתוני ההדגמה', 'success');
+    }
+  });
+}
+
+/* ==========================================================
+   6. Effects: toast, modal, sound, confetti, count-up, level-up
+   ========================================================== */
+function toast(html, type = 'info', ms = 2800) {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  const icon = { success: '✅', error: '⚠️', warn: '📉', info: '💡' }[type] || '💡';
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="t-ico" aria-hidden="true">${icon}</span><span>${html}</span>`;
+  box.appendChild(el);
+  while (box.children.length > 4) box.firstElementChild.remove();
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, ms);
+}
+
+function shake(el) {
+  if (!el) return;
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 500);
+}
+
+// --- Modal (always a <form>: Enter confirms, Esc / backdrop / cancel closes) ---
+let modal = null;
+function openModal({ icon = '', title, body = '', okText = 'אישור', cancelText = 'ביטול', danger = false, onOk, onOpen }) {
+  closeModal(true);
+  const opener = document.activeElement;
+  const back = document.createElement('div');
+  back.className = 'modal-back';
+  back.innerHTML = `
+    <form class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title" novalidate>
+      ${icon ? `<div class="m-icon" aria-hidden="true">${esc(icon)}</div>` : ''}
+      <h2 id="m-title">${esc(title)}</h2>
+      <div class="m-body">${body}</div>
+      <div class="m-actions">
+        <button type="submit" class="btn ${danger ? 'btn-red' : 'btn-gold'}" data-m="ok">${esc(okText)}</button>
+        <button type="button" class="btn btn-ghost" data-m="cancel">${esc(cancelText)}</button>
+      </div>
+    </form>`;
+  $('#modal-root').appendChild(back);
+  const form = $('form', back);
+  modal = { back, opener };
+  back.addEventListener('mousedown', e => { if (e.target === back) closeModal(); });
+  $('[data-m="cancel"]', back).addEventListener('click', () => closeModal());
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const keepOpen = onOk && onOk(new FormData(form), form) === false;
+    if (!keepOpen) closeModal();
+  });
+  requestAnimationFrame(() => back.classList.add('open'));
+  const first = $('input', form) || $('[data-m="ok"]', form);
+  setTimeout(() => first && first.focus(), 30);
+  if (onOpen) onOpen(form);
+}
+function closeModal(instant) {
+  if (!modal) return;
+  const { back, opener } = modal;
+  modal = null;
+  back.classList.remove('open');
+  const done = () => back.remove();
+  if (instant || reduceMotion.matches) done(); else setTimeout(done, 220);
+  if (!instant && opener && opener.isConnected && typeof opener.focus === 'function') opener.focus({ preventScroll: true });
+}
+function trapFocus(e) {
+  if (!modal || e.key !== 'Tab') return;
+  const items = $$('button, input, select, [tabindex]:not([tabindex="-1"])', modal.back).filter(x => !x.disabled);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  else if (!modal.back.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+}
+
+// --- Sound (WebAudio, generated tones only; OFF by default) ---
+const sound = { on: lsGet(SOUND_KEY) === '1', ctx: null };
+function audioCtx() {
+  if (!sound.ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { sound.ctx = new AC(); } catch (e) { return null; }
+  }
+  if (sound.ctx.state === 'suspended') sound.ctx.resume().catch(() => {});
+  return sound.ctx;
+}
+function tone(ctx, freq, at, dur, type = 'sine', vol = 0.12, freqEnd) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  const t0 = ctx.currentTime + at;
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(ctx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function play(name) {
+  if (!sound.on) return;
+  const ctx = audioCtx();
+  if (!ctx) return;
+  try {
+    if (name === 'coin') { tone(ctx, 988, 0, 0.09, 'square', 0.06); tone(ctx, 1319, 0.08, 0.28, 'square', 0.06); }
+    else if (name === 'buy') { [784, 988, 1175, 1568].forEach((f, i) => tone(ctx, f, i * 0.07, 0.2, 'triangle', 0.12)); }
+    else if (name === 'level') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(ctx, f, i * 0.09, 0.3, 'triangle', 0.12)); }
+    else if (name === 'down') { tone(ctx, 440, 0, 0.25, 'triangle', 0.1, 220); }
+    else if (name === 'error') { tone(ctx, 200, 0, 0.16, 'sawtooth', 0.05); tone(ctx, 150, 0.14, 0.22, 'sawtooth', 0.05); }
+  } catch (e) { /* audio is optional */ }
+}
+function toggleSound() {
+  sound.on = !sound.on;
+  lsSet(SOUND_KEY, sound.on ? '1' : '0');
+  updateSoundButtons();
+  if (sound.on) { audioCtx(); play('coin'); }
+  toast(sound.on ? '🔊 הצלילים הופעלו' : '🔇 הצלילים כובו', 'info', 1800);
+}
+function soundBtn() {
+  return `<button type="button" class="icon-btn sound-btn" data-action="sound"></button>`;
+}
+function updateSoundButtons() {
+  $$('.sound-btn').forEach(b => {
+    b.textContent = sound.on ? '🔊' : '🔇';
+    b.setAttribute('aria-pressed', String(sound.on));
+    b.setAttribute('aria-label', sound.on ? 'כיבוי צלילים' : 'הפעלת צלילים');
+    b.title = sound.on ? 'צלילים פועלים' : 'צלילים כבויים';
+  });
+}
+
+// --- Confetti (single canvas, stops itself when idle) ---
+const fx = { cv: null, ctx: null, parts: [], raf: 0, w: 0, h: 0 };
+const CONFETTI_COLORS = ['#ffc83d', '#ff9f1c', '#9b6bff', '#ff5fa2', '#2fd98a', '#4fd8ff', '#ffffff'];
+function sizeConfetti() {
+  if (!fx.cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  fx.w = window.innerWidth; fx.h = window.innerHeight;
+  fx.cv.width = fx.w * dpr; fx.cv.height = fx.h * dpr;
+  fx.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function confetti(amount = 120) {
+  if (reduceMotion.matches) return;
+  if (!fx.cv) {
+    fx.cv = $('#confetti');
+    fx.ctx = fx.cv.getContext('2d');
+    if (!fx.ctx) return;
+    sizeConfetti();
+  }
+  for (let i = 0; i < amount; i++) {
+    const fromLeft = i % 2 === 0;
+    fx.parts.push({
+      x: fromLeft ? -10 : fx.w + 10, y: fx.h * (0.55 + Math.random() * 0.25),
+      vx: (fromLeft ? 1 : -1) * (4 + Math.random() * 9), vy: -(9 + Math.random() * 11),
+      w: 6 + Math.random() * 6, h: 9 + Math.random() * 8, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.35,
+      c: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)], round: Math.random() < 0.25, life: 0
+    });
+  }
+  if (!fx.raf) fx.raf = requestAnimationFrame(confettiTick);
+}
+function confettiTick() {
+  const { ctx } = fx;
+  ctx.clearRect(0, 0, fx.w, fx.h);
+  fx.parts = fx.parts.filter(p => p.y < fx.h + 30 && p.life < 260);
+  for (const p of fx.parts) {
+    p.life++; p.vy += 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+    if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2); ctx.fill(); }
+    else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.life / 8)) + 2);
+    ctx.restore();
+  }
+  if (fx.parts.length) fx.raf = requestAnimationFrame(confettiTick);
+  else { fx.raf = 0; ctx.clearRect(0, 0, fx.w, fx.h); }
+}
+
+// --- Count-up for the balance number ---
+const counters = new WeakMap();
+function countUp(el, from, to, dur = 900) {
+  const prev = counters.get(el);
+  if (prev) cancelAnimationFrame(prev);
+  if (reduceMotion.matches || from === to) { el.textContent = to; return; }
+  const start = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    if (p < 1) counters.set(el, requestAnimationFrame(step)); else counters.delete(el);
+  };
+  counters.set(el, requestAnimationFrame(step));
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+}
+
+// --- Level-up celebration ---
+function celebrateLevel(idx) {
+  const old = $('.levelup');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'levelup';
+  el.setAttribute('role', 'alert');
+  el.innerHTML = `<div class="lu-card"><div class="lu-burst" aria-hidden="true"></div>
+    <div class="lu-icon" aria-hidden="true">${LEVEL_ICONS[idx]}</div>
+    <div class="lu-title">עלית רמה!</div>
+    <div class="lu-name">רמה ${idx + 1} · ${LEVELS[idx]}</div>
+    <div class="lu-hint">לחיצה בכל מקום לסגירה</div></div>`;
+  document.body.appendChild(el);
+  confetti(220);
+  play('level');
+  let closed = false;
+  const close = () => { if (closed) return; closed = true; el.classList.add('out'); setTimeout(() => el.remove(), reduceMotion.matches ? 0 : 340); };
+  el.addEventListener('click', close);
+  setTimeout(close, 3600);
+}
+
+// --- Floating "+N" on a teacher roster row ---
+function floatDelta(studentId, n) {
+  const row = $(`.stu-row[data-id="${studentId}"]`);
+  if (!row) return;
+  row.classList.remove('pulse'); void row.offsetWidth; row.classList.add('pulse');
+  if (reduceMotion.matches) return;
+  const f = document.createElement('span');
+  f.className = `float-delta ${n >= 0 ? 'p' : 'n'}`;
+  f.textContent = signed(n);
+  f.setAttribute('aria-hidden', 'true');
+  row.appendChild(f);
+  setTimeout(() => f.remove(), 1250);
+}
+
+/* ==========================================================
+   7. Charts (hand-drawn inline SVG)
+   ========================================================== */
+function niceScale(v, ticks = 4) {
+  v = Math.max(v, 4);
+  const raw = v / ticks, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+  return { max: Math.ceil(v / step) * step, step };
+}
+function chartEmpty(msg) {
+  return `<div class="chart-empty"><div><span class="big" aria-hidden="true">📭</span>${esc(msg)}</div></div>`;
+}
+function studentLog(id) { return state.log.filter(e => e.studentId === id).sort((a, b) => a.t - b.t); }
+
+/** Shared pointer/keyboard hover logic. getX(i) returns the svg x of item i; show(i) returns {x,y,html}. */
+function attachHover(el, svg, count, getX, show, hide) {
+  const tt = $('.tt', el);
+  let idx = -1;
+  const W = svg.viewBox.baseVal.width;
+  const localX = e => { const r = svg.getBoundingClientRect(); return (e.clientX - r.left) * (W / r.width); };
+  const nearest = x => { let b = 0, bd = Infinity; for (let i = 0; i < count; i++) { const d = Math.abs(getX(i) - x); if (d < bd) { bd = d; b = i; } } return b; };
+  const set = i => {
+    if (i === idx && tt.classList.contains('show')) return;
+    idx = i;
+    const { x, y, html } = show(i);
+    tt.innerHTML = html;
+    const r = svg.getBoundingClientRect(), scale = r.width / W;
+    const half = tt.offsetWidth / 2, maxL = el.clientWidth - half - 2;
+    tt.style.left = Math.max(half + 2, Math.min(maxL, x * scale)) + 'px';
+    tt.style.top = Math.max(tt.offsetHeight + 14, y * scale) + 'px';
+    tt.classList.add('show');
+  };
+  const off = () => { idx = -1; tt.classList.remove('show'); hide(); };
+  svg.addEventListener('pointermove', e => set(nearest(localX(e))));
+  svg.addEventListener('pointerdown', e => set(nearest(localX(e))));
+  svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') off(); });
+  svg.addEventListener('blur', off);
+  svg.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const d = e.key === 'ArrowRight' ? 1 : -1;
+      set(idx < 0 ? (d > 0 ? 0 : count - 1) : Math.max(0, Math.min(count - 1, idx + d)));
+    } else if (e.key === 'Escape') off();
+  });
+  el._hideTip = off;
+}
+
+function drawBalanceChart(el, s) {
+  const days = lastDays(CHART_DAYS), from = days[0], now = Date.now();
+  const entries = studentLog(s.id);
+  let bal = s.coins - entries.reduce((a, e) => a + e.delta, 0); // baseline (0 when history is complete)
+  let startBal = Math.max(0, bal);
+  const pts = [];
+  for (const e of entries) {
+    bal += e.delta;
+    if (e.t < from) startBal = Math.max(0, bal);
+    else pts.push({ t: e.t, bal: Math.max(0, bal), e });
+  }
+  if (!pts.length) { el.innerHTML = chartEmpty('עדיין אין אירועים ב-14 הימים האחרונים'); return; }
+
+  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 210 : 250;
+  const P = { l: 38, r: 14, t: 18, b: 30 };
+  const endBal = pts[pts.length - 1].bal;
+  const { max, step } = niceScale(Math.max(startBal, ...pts.map(p => p.bal)) * 1.12);
+  const X = t => P.l + (t - from) / (now - from) * (W - P.l - P.r);
+  const Y = v => P.t + (1 - v / max) * (H - P.t - P.b);
+  const line = [[from, startBal], ...pts.map(p => [p.t, p.bal]), [now, endBal]];
+  const d = line.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join('');
+  const area = `${d}L${X(now).toFixed(1)},${Y(0)}L${X(from).toFixed(1)},${Y(0)}Z`;
+
+  let grid = '';
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    grid += `<line class="gridl" x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${P.l - 7}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  }
+  const every = Math.max(1, Math.ceil(52 / ((W - P.l - P.r) / CHART_DAYS)));
+  let xl = '';
+  for (let i = days.length - 1; i >= 0; i -= every) {
+    const x = X(days[i]);
+    xl += `<line class="gridl" x1="${x}" x2="${x}" y1="${H - P.b}" y2="${H - P.b + 5}"/><text x="${x}" y="${H - P.b + 18}" text-anchor="middle">${i === days.length - 1 ? 'היום' : dayLabel(days[i])}</text>`;
+  }
+  const dots = pts.length <= 80 ? pts.map(p => `<circle class="bal-dot" cx="${X(p.t).toFixed(1)}" cy="${Y(p.bal).toFixed(1)}" r="3.2"/>`).join('') : '';
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
+      aria-label="גרף יתרה ב-14 הימים האחרונים: מ-${startBal} ל-${endBal} מטבעות. אפשר לעבור בין נקודות עם החצים.">
+      <defs><linearGradient id="gBal" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffc83d" stop-opacity=".55"/><stop offset="1" stop-color="#9b6bff" stop-opacity=".04"/>
+      </linearGradient></defs>
+      <g class="ax">${grid}${xl}</g>
+      <line class="axis-base" x1="${P.l}" x2="${W - P.r}" y1="${Y(0)}" y2="${Y(0)}"/>
+      <path d="${area}" fill="url(#gBal)"/>
+      <path class="bal-line" d="${d}"/>
+      ${dots}
+      <g class="hov" style="display:none"><line class="cross" y1="${P.t}" y2="${H - P.b}"/><circle class="hl" r="6"/></g>
+    </svg><div class="tt" aria-hidden="true"></div>`;
+  const svg = $('svg', el), hov = $('.hov', svg), cross = $('.cross', hov), hl = $('.hl', hov);
+  attachHover(el, svg, pts.length, i => X(pts[i].t), i => {
+    const p = pts[i], x = X(p.t), y = Y(p.bal);
+    hov.style.display = '';
+    cross.setAttribute('x1', x); cross.setAttribute('x2', x);
+    hl.setAttribute('cx', x); hl.setAttribute('cy', y);
+    const cls = p.e.delta > 0 ? 'tp' : p.e.delta < 0 ? 'tn' : '';
+    return { x, y, html: `<strong>${esc(fmtWhen(p.t))}</strong><div>${esc(p.e.text)} <span class="num ${cls}">${signed(p.e.delta)}</span></div><div>יתרה: <span class="tg">${p.bal}</span> מטבעות</div>` };
+  }, () => { hov.style.display = 'none'; });
+}
+
+function drawBarChart(el, s) {
+  const days = lastDays(CHART_DAYS);
+  const index = new Map(days.map((d, i) => [d, i]));
+  const agg = days.map(d => ({ d, earned: 0, lost: 0, spent: 0 }));
+  let any = false;
+  for (const e of state.log) {
+    if (e.studentId !== s.id) continue;
+    const i = index.get(dayStart(e.t));
+    if (i === undefined) continue;
+    any = true;
+    if (e.delta > 0) agg[i].earned += e.delta;
+    else if (e.kind === 'buy') agg[i].spent -= e.delta;
+    else agg[i].lost -= e.delta;
+  }
+  if (!any) { el.innerHTML = chartEmpty('עדיין אין נתונים יומיים להצגה'); return; }
+
+  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 200 : 230;
+  const P = { l: 34, r: 10, t: 14, b: 30 };
+  const { max, step } = niceScale(Math.max(...agg.map(a => Math.max(a.earned, a.lost))) * 1.1);
+  const gw = (W - P.l - P.r) / CHART_DAYS;
+  const bw = Math.max(4, Math.min(16, gw * 0.32));
+  const Y = v => P.t + (1 - v / max) * (H - P.t - P.b);
+  const cx = i => P.l + gw * (i + 0.5);
+  let grid = '';
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    grid += `<line class="gridl" x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${P.l - 7}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  }
+  const every = Math.max(1, Math.ceil(52 / gw));
+  let xl = '', bars = '';
+  agg.forEach((a, i) => {
+    if ((days.length - 1 - i) % every === 0) xl += `<text x="${cx(i)}" y="${H - P.b + 18}" text-anchor="middle">${i === days.length - 1 ? 'היום' : dayLabel(a.d)}</text>`;
+    const base = Y(0);
+    if (a.earned) bars += `<rect class="bar-pos" x="${(cx(i) - bw - 1).toFixed(1)}" y="${Y(a.earned).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.earned)).toFixed(1)}" rx="3"/>`;
+    if (a.lost) bars += `<rect class="bar-neg" x="${(cx(i) + 1).toFixed(1)}" y="${Y(a.lost).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.lost)).toFixed(1)}" rx="3"/>`;
+  });
+  const totE = agg.reduce((x, a) => x + a.earned, 0), totL = agg.reduce((x, a) => x + a.lost, 0);
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
+      aria-label="גרף עמודות יומי: ${totE} מטבעות נצברו ו-${totL} ירדו ב-14 הימים האחרונים. אפשר לעבור בין ימים עם החצים.">
+      <rect class="bar-hover" x="0" y="${P.t}" width="${gw.toFixed(1)}" height="${H - P.t - P.b}" rx="6" style="display:none"/>
+      <g class="ax">${grid}${xl}</g>
+      <line class="axis-base" x1="${P.l}" x2="${W - P.r}" y1="${Y(0)}" y2="${Y(0)}"/>
+      ${bars}
+    </svg><div class="tt" aria-hidden="true"></div>`;
+  const svg = $('svg', el), hb = $('.bar-hover', svg);
+  attachHover(el, svg, CHART_DAYS, cx, i => {
+    const a = agg[i];
+    hb.style.display = ''; hb.setAttribute('x', (P.l + gw * i).toFixed(1));
+    const html = `<strong>${esc(fmtDay(a.d))}</strong>`
+      + `<div>נצברו: <span class="num tp">${signed(a.earned)}</span></div>`
+      + `<div>ירדו: <span class="num tn">${signed(-a.lost)}</span></div>`
+      + (a.spent ? `<div>קניות בחנות: <span class="tg">${a.spent}</span></div>` : '');
+    return { x: cx(i), y: Y(Math.max(a.earned, a.lost)), html };
+  }, () => { hb.style.display = 'none'; });
+}
+
+/* ==========================================================
+   8. Screens
+   ========================================================== */
+const app = $('#app');
+
+function render() {
+  // Remember focus so keyboard users keep their place after a re-render.
+  const a = document.activeElement;
+  let focusSel = null;
+  if (a && a !== document.body && app.contains(a)) {
+    if (a.id) focusSel = '#' + a.id;
+    else if (a.dataset && a.dataset.action) {
+      focusSel = `[data-action="${a.dataset.action}"]` + (a.dataset.id ? `[data-id="${a.dataset.id}"]` : '') + (a.dataset.tab ? `[data-tab="${a.dataset.tab}"]` : '');
+    }
+  }
+  if (ui.screen === 'student' && !studentById(ui.studentId)) ui.screen = 'login';
+  if (ui.screen === 'login') renderLogin();
+  else if (ui.screen === 'student') renderStudent();
+  else renderTeacher();
+  updateSoundButtons();
+  if (focusSel && !a.isConnected) {
+    const n = app.querySelector(focusSel);
+    if (n) n.focus({ preventScroll: true });
+  }
+}
+function go(screen, extra = {}) {
+  Object.assign(ui, { screen }, extra);
+  closeModal(true);
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ---------- 8a. Login ----------
+function renderLogin() {
+  ui.built = 'login';
+  const list = state.students.length
+    ? `<div class="student-grid">${state.students.map((s, i) => `
+        <button type="button" class="stu-btn" style="--i:${i}" data-action="login" data-id="${s.id}">
+          <span class="emo" aria-hidden="true">${esc(s.emoji)}</span><span class="nm">${esc(s.name)}</span>
+        </button>`).join('')}</div>`
+    : `<div class="empty-note">עדיין אין תלמידים בכיתה.<br>המורה יכול להוסיף תלמידים דרך כניסת המורה.</div>`;
+  app.innerHTML = `
+    <div class="screen login">
+      <div class="login-top">${soundBtn()}</div>
+      <div class="logo-coin" aria-hidden="true"><b>★</b></div>
+      <h1>מטבעות כיתה</h1>
+      <p class="lead">מי את/ה? בחרו את השם שלכם כדי להיכנס 👇</p>
+      ${list}
+      <div class="login-foot"><button type="button" class="link-btn" data-action="teacher-login">🧑‍🏫 כניסת מורה מחליף</button></div>
+    </div>`;
+}
+function openPinModal() {
+  openModal({
+    icon: '🔐', title: 'כניסת מורה מחליף',
+    body: `<label for="pin" class="sr-only">קוד כניסה</label>
+      <div>הזינו את קוד המורה</div>
+      <input id="pin" name="pin" class="pin-input" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="••••">`,
+    okText: 'כניסה',
+    onOk: (fd, form) => {
+      if (String(fd.get('pin') || '').trim() === TEACHER_PIN) {
+        setTimeout(() => go('teacher', { tab: 'actions' }), 0);
+        return true;
+      }
+      toast('קוד שגוי, נסו שוב', 'error');
+      play('error');
+      shake(form);
+      const inp = $('#pin', form); inp.value = ''; inp.focus();
+      return false;
+    }
+  });
+}
+
+// ---------- 8b. Student dashboard ----------
+function renderStudent() {
+  const s = studentById(ui.studentId);
+  const key = 'student:' + s.id;
+  if (ui.built !== key) {
+    ui.built = key;
+    app.innerHTML = `
+      <div class="screen">
+        <header class="topbar">
+          <div class="hello"><span class="avatar" aria-hidden="true">${esc(s.emoji)}</span>
+            <div><h1>שלום ${esc(s.name)}!</h1><p>כאן רואים את המטבעות, הרמה והפרסים שלך</p></div></div>
+          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">🔄 החלפת תלמיד</button></div>
+        </header>
+        <div class="dash">
+          <div class="col">
+            <section class="card hero o-hero" aria-label="היתרה והרמה שלי">
+              <div class="hero-grid">
+                <div class="balance-wrap">
+                  <div class="balance-label">המטבעות שלי</div>
+                  <div class="balance"><span class="coin" aria-hidden="true">★</span><span class="balance-num" id="bal">0</span></div>
+                </div>
+                <div class="level-box">
+                  <div class="level-badge" id="lvl-badge"></div>
+                  <div class="xp" role="progressbar" aria-label="התקדמות לרמה הבאה" aria-valuemin="0" aria-valuemax="100" id="xp"><i></i></div>
+                  <div class="xp-text" id="xp-text"></div>
+                  <div class="stats" id="stats"></div>
+                </div>
+              </div>
+            </section>
+            <section class="card o-shop" aria-labelledby="shop-h">
+              <div class="card-title"><h2 id="shop-h">🛍️ חנות הפרסים</h2><span class="sub">אוספים מטבעות וקונים פרסים</span></div>
+              <div class="shop-grid" id="shop"></div>
+            </section>
+            <section class="card o-charts" aria-labelledby="charts-h">
+              <div class="card-title"><h2 id="charts-h">📈 ההתקדמות שלי</h2><span class="sub">14 הימים האחרונים</span></div>
+              <div class="chart-block">
+                <div class="chart-head"><h3>היתרה שלי לאורך זמן</h3></div>
+                <div class="chart" id="chart-bal"></div>
+              </div>
+              <div class="chart-block">
+                <div class="chart-head"><h3>מטבעות שנצברו וירדו בכל יום</h3>
+                  <div class="legend"><span><i style="background:var(--green)"></i>נצברו</span><span><i style="background:var(--red)"></i>ירדו</span></div></div>
+                <div class="chart" id="chart-bars"></div>
+              </div>
+            </section>
+          </div>
+          <div class="col">
+            <section class="card o-feed" aria-labelledby="feed-h">
+              <div class="card-title"><h2 id="feed-h">🧾 על מה קיבלתי מטבעות</h2></div>
+              <div id="feed-wrap"></div>
+            </section>
+            <section class="card o-board" id="board-card" aria-labelledby="board-h" hidden>
+              <div class="card-title"><h2 id="board-h">🏆 טבלת המובילים</h2><span class="sub">לפי מטבעות שנצברו</span></div>
+              <ol class="board" id="board"></ol>
+            </section>
+          </div>
+        </div>
+      </div>`;
+  }
+  renderHero(s);
+  renderShop(s);
+  renderFeed(s);
+  renderCharts(s);
+  renderBoard(s);
+}
+
+function renderHero(s) {
+  const balEl = $('#bal');
+  if (ui.shownBalance !== s.coins) { countUp(balEl, ui.shownBalance, s.coins); ui.shownBalance = s.coins; }
+  else balEl.textContent = s.coins;
+
+  const li = levelIndex(s.totalEarned);
+  const maxed = li === LEVELS.length - 1;
+  const into = s.totalEarned - li * COINS_PER_LEVEL;
+  const pct = maxed ? 100 : Math.round(into / COINS_PER_LEVEL * 100);
+  $('#lvl-badge').innerHTML = `<span class="li" aria-hidden="true">${LEVEL_ICONS[li]}</span> רמה ${li + 1} · ${LEVELS[li]}`;
+  const xp = $('#xp');
+  xp.setAttribute('aria-valuenow', pct);
+  $('i', xp).style.width = pct + '%';
+  $('#xp-text').textContent = maxed
+    ? 'הגעת לרמה הגבוהה ביותר! 👑'
+    : `עוד ${COINS_PER_LEVEL - into} מטבעות לרמה ${li + 2} · ${LEVELS[li + 1]}`;
+  const bought = state.orders.filter(o => o.studentId === s.id).length;
+  $('#stats').innerHTML = `<span class="stat">נצברו בסך הכל: <b>${s.totalEarned}</b></span><span class="stat">פרסים שקניתי: <b>${bought}</b></span>`;
+
+  if (ui.shownLevel !== null && li > ui.shownLevel) celebrateLevel(li);
+  ui.shownLevel = li;
+}
+
+function renderShop(s) {
+  const el = $('#shop');
+  if (!state.rewards.length) { el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="big">🎁</span>אין עדיין פרסים בחנות</div>`; return; }
+  el.innerHTML = state.rewards.map(r => {
+    const can = s.coins >= r.cost, pct = Math.min(100, Math.round(s.coins / r.cost * 100));
+    return `<article class="reward ${can ? 'can' : ''}">
+      <div class="r-icon" aria-hidden="true">${esc(r.icon)}</div>
+      <div class="r-name">${esc(r.label)}</div>
+      <div class="r-cost"><span class="coin sm" aria-hidden="true">★</span><span>${r.cost}</span><span class="sr-only">מטבעות</span></div>
+      <div class="r-bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
+      <button type="button" class="btn ${can ? 'btn-gold' : 'btn-ghost'}" data-action="buy" data-id="${r.id}" ${can ? '' : 'disabled'}
+        aria-label="${can ? `קנה ${esc(r.label)} ב-${r.cost} מטבעות` : `חסרים עוד ${r.cost - s.coins} מטבעות ל${esc(r.label)}`}">
+        ${can ? 'קנה' : `חסרים עוד ${r.cost - s.coins}`}</button>
+    </article>`;
+  }).join('');
+}
+
+function renderFeed(s) {
+  const wrap = $('#feed-wrap');
+  const items = state.log.filter(e => e.studentId === s.id).sort((a, b) => b.t - a.t);
+  if (!items.length) { wrap.innerHTML = `<div class="empty"><span class="big">🌱</span>עדיין אין אירועים. כל התנהגות טובה מביאה מטבעות!</div>`; ui.feedSeen = 0; return; }
+  const fresh = Math.max(0, items.length - ui.feedSeen); // newest N haven't been animated yet
+  const firstRender = ui.feedSeen === 0;
+  const shown = items.slice(0, ui.feedLimit);
+  wrap.innerHTML = `<ol class="feed" aria-label="היסטוריית מטבעות">${shown.map((e, i) => {
+    const cls = e.kind === 'buy' ? 'buy' : e.delta > 0 ? 'pos' : e.delta < 0 ? 'neg' : 'zero';
+    const anim = (firstRender ? i < 12 : i < fresh) ? ' anim' : '';
+    return `<li class="feed-item ${cls}${anim}" style="--i:${Math.min(i, 12)}">
+      <div class="f-main"><div class="f-text">${esc(e.text)}</div>
+        ${e.note ? `<div class="f-note">💬 ${esc(e.note)}</div>` : ''}
+        <time class="f-time" datetime="${new Date(e.t).toISOString()}">${esc(fmtWhen(e.t))}</time></div>
+      <div class="f-amt num">${signed(e.delta)}</div></li>`;
+  }).join('')}</ol>${items.length > shown.length ? `<button type="button" class="btn btn-ghost more-btn" data-action="feed-more">הצגת עוד (${items.length - shown.length})</button>` : ''}`;
+  ui.feedSeen = items.length;
+}
+
+function renderCharts(s) {
+  drawBalanceChart($('#chart-bal'), s);
+  drawBarChart($('#chart-bars'), s);
+}
+
+function renderBoard(s) {
+  const card = $('#board-card');
+  card.hidden = !state.settings.leaderboard;
+  if (card.hidden) return;
+  const medals = ['🥇', '🥈', '🥉', '4', '5'];
+  const top = [...state.students].sort((a, b) => b.totalEarned - a.totalEarned || a.name.localeCompare(b.name, 'he')).slice(0, 5);
+  $('#board').innerHTML = top.map((x, i) => `<li class="${x.id === s.id ? 'me' : ''}">
+    <span class="rk">${medals[i]}</span><span class="be" aria-hidden="true">${esc(x.emoji)}</span>
+    <span class="bn">${esc(x.name)}${x.id === s.id ? ' (אני)' : ''}</span><span class="bv">${x.totalEarned}</span></li>`).join('');
+}
+
+// ---------- 8c. Teacher panel ----------
+function renderTeacher() {
+  const key = 'teacher:' + ui.tab;
+  if (ui.built !== key) {
+    ui.built = key;
+    const tab = (id, label) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="t-panel" aria-selected="${ui.tab === id}" data-action="tab" data-tab="${id}">${label}</button>`;
+    app.innerHTML = `
+      <div class="screen">
+        <header class="topbar">
+          <div class="hello"><span class="avatar" aria-hidden="true">🧑‍🏫</span>
+            <div><h1>פאנל מורה מחליף</h1><p>בוחרים תלמידים ולוחצים על התנהגות</p></div></div>
+          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">🚪 יציאה</button></div>
+        </header>
+        <nav class="tabs" role="tablist" aria-label="אזורי פאנל המורה">
+          ${tab('actions', '🎯 פעולות')}${tab('orders', '🎁 פרסים שנרכשו <span class="badge" id="orders-badge" hidden></span>')}${tab('edit', '✏️ עריכה')}
+        </nav>
+        <div id="t-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}">${teacherSkeleton(ui.tab)}</div>
+      </div>`;
+  }
+  const pending = state.orders.filter(o => !o.done).length;
+  const badge = $('#orders-badge');
+  badge.hidden = !pending; badge.textContent = pending;
+  if (ui.tab === 'actions') { renderRoster(); renderBehaviors(); }
+  else if (ui.tab === 'orders') renderOrders();
+  else renderEditLists();
+}
+
+function teacherSkeleton(tab) {
+  if (tab === 'actions') return `
+    <div class="t-actions">
+      <section class="card roster" aria-labelledby="roster-h">
+        <div class="card-title"><h2 id="roster-h">👥 תלמידים</h2><button type="button" class="btn btn-ghost btn-small" data-action="select-all" id="sel-all"></button></div>
+        <p class="sel-info" id="sel-info" aria-live="polite"></p>
+        <ul class="roster-list" id="roster"></ul>
+      </section>
+      <section class="card" aria-label="התנהגויות">
+        <label class="note-field"><span>📝 הערה לפעולה הבאה (לא חובה – תוצג לתלמיד)</span>
+          <input id="note" maxlength="120" autocomplete="off" placeholder="למשל: עזרת לחבר בתרגיל 4" value="${esc(ui.note)}" class="${ui.note ? 'has' : ''}"></label>
+        <h2 class="grp pos">👍 התנהגות חיובית</h2><div class="beh-grid" id="beh-pos"></div>
+        <h2 class="grp neg">👎 התנהגות שלילית</h2><div class="beh-grid" id="beh-neg"></div>
+      </section>
+    </div>`;
+  if (tab === 'orders') return `
+    <section class="card" aria-labelledby="orders-h">
+      <div class="card-title"><h2 id="orders-h">🎁 פרסים שנרכשו</h2><span class="sub" id="orders-sub"></span></div>
+      <div id="orders-wrap"></div>
+    </section>`;
+  const emojiPick = STUDENT_EMOJIS.map(e => `<button type="button" data-action="pick-emoji" data-emoji="${esc(e)}" aria-label="בחירת ${esc(e)}">${esc(e)}</button>`).join('');
+  return `
+    <div class="edit-grid">
+      <section class="card" aria-labelledby="ed-s-h">
+        <div class="card-title"><h2 id="ed-s-h">👥 תלמידים</h2></div>
+        <form class="add-form" data-form="student" autocomplete="off">
+          <div class="field-row">
+            <label class="field"><span>שם</span><input name="name" required maxlength="20" placeholder="שם התלמיד/ה"></label>
+            <label class="field"><span>אימוג׳י</span><input name="emoji" maxlength="8" value="⭐"></label>
+            <label class="field"><span>מטבעות פתיחה</span><input name="coins" type="number" inputmode="numeric" min="0" max="999" value="0"></label>
+          </div>
+          <div class="emoji-pick" role="group" aria-label="בחירה מהירה של אימוג׳י">${emojiPick}</div>
+          <button type="submit" class="btn btn-gold">➕ הוספת תלמיד</button>
+        </form>
+        <ul class="ed-list" id="ed-students"></ul>
+      </section>
+      <section class="card" aria-labelledby="ed-b-h">
+        <div class="card-title"><h2 id="ed-b-h">🎯 התנהגויות</h2></div>
+        <form class="add-form" data-form="behavior" autocomplete="off">
+          <div class="field-row r3b">
+            <label class="field"><span>תיאור</span><input name="label" required maxlength="30" placeholder="למשל: סידור הכיתה"></label>
+            <label class="field"><span>אייקון</span><input name="icon" maxlength="8" placeholder="🧹"></label>
+            <label class="field"><span>סוג</span><select name="sign"><option value="pos">➕ חיובי</option><option value="neg">➖ שלילי</option></select></label>
+            <label class="field"><span>מטבעות</span><input name="amount" type="number" inputmode="numeric" min="1" max="100" value="5" required></label>
+          </div>
+          <button type="submit" class="btn btn-gold">➕ הוספת התנהגות</button>
+        </form>
+        <ul class="ed-list" id="ed-behaviors"></ul>
+      </section>
+      <section class="card" aria-labelledby="ed-r-h">
+        <div class="card-title"><h2 id="ed-r-h">🛍️ פרסים</h2></div>
+        <form class="add-form" data-form="reward" autocomplete="off">
+          <div class="field-row">
+            <label class="field"><span>שם הפרס</span><input name="label" required maxlength="30" placeholder="למשל: 10 דקות משחק"></label>
+            <label class="field"><span>אייקון</span><input name="icon" maxlength="8" placeholder="🎮"></label>
+            <label class="field"><span>מחיר</span><input name="cost" type="number" inputmode="numeric" min="1" max="9999" value="25" required></label>
+          </div>
+          <button type="submit" class="btn btn-gold">➕ הוספת פרס</button>
+        </form>
+        <ul class="ed-list" id="ed-rewards"></ul>
+      </section>
+      <section class="card" aria-labelledby="ed-set-h">
+        <div class="card-title"><h2 id="ed-set-h">⚙️ הגדרות</h2></div>
+        <label class="switch-row"><input type="checkbox" id="set-board"><span class="switch" aria-hidden="true"></span>
+          <span>הצגת טבלת מובילים (5 הראשונים) במסך התלמיד</span></label>
+        <div class="danger">
+          <h3>⚠️ איפוס נתונים</h3>
+          <p>מחיקת כל הנתונים וחזרה לנתוני ההדגמה ההתחלתיים.</p>
+          <button type="button" class="btn btn-red" data-action="reset">🗑️ איפוס כל הנתונים</button>
+        </div>
+      </section>
+    </div>`;
+}
+
+function renderRoster() {
+  // Drop selections of students that no longer exist.
+  for (const id of ui.selected) if (!studentById(id)) ui.selected.delete(id);
+  const all = state.students.length > 0 && ui.selected.size === state.students.length;
+  const selAll = $('#sel-all');
+  selAll.textContent = all ? '✖ ניקוי בחירה' : '✔ בחר הכל';
+  selAll.setAttribute('aria-pressed', String(all));
+  selAll.disabled = !state.students.length;
+  $('#sel-info').textContent = state.students.length
+    ? (ui.selected.size ? `נבחרו ${ui.selected.size} מתוך ${state.students.length}` : 'לא נבחרו תלמידים')
+    : 'אין תלמידים – אפשר להוסיף בלשונית עריכה';
+  $('#roster').innerHTML = state.students.map(s => {
+    const on = ui.selected.has(s.id);
+    return `<li><button type="button" class="stu-row" data-action="toggle" data-id="${s.id}" aria-pressed="${on}">
+      <span class="ck" aria-hidden="true">✓</span><span class="emo" aria-hidden="true">${esc(s.emoji)}</span>
+      <span class="nm">${esc(s.name)}</span><span class="cn"><span class="coin sm" aria-hidden="true">★</span>${s.coins}</span></button></li>`;
+  }).join('');
+}
+
+function renderBehaviors() {
+  const btn = b => `<button type="button" class="beh ${b.coins > 0 ? 'p' : 'n'}" data-action="behavior" data-id="${b.id}"
+      aria-label="${esc(b.label)}, ${b.coins > 0 ? 'פלוס' : 'מינוס'} ${Math.abs(b.coins)} מטבעות">
+      <span class="bi" aria-hidden="true">${esc(b.icon)}</span><span class="bl">${esc(b.label)}</span><span class="bc num">${signed(b.coins)}</span></button>`;
+  const pos = state.behaviors.filter(b => b.coins > 0), neg = state.behaviors.filter(b => b.coins < 0);
+  const none = `<div class="empty" style="grid-column:1/-1">אין התנהגויות – אפשר להוסיף בלשונית עריכה</div>`;
+  $('#beh-pos').innerHTML = pos.length ? pos.map(btn).join('') : none;
+  $('#beh-neg').innerHTML = neg.length ? neg.map(btn).join('') : none;
+}
+
+function renderOrders() {
+  const pending = state.orders.filter(o => !o.done).sort((a, b) => b.t - a.t);
+  const done = state.orders.filter(o => o.done).sort((a, b) => b.t - a.t);
+  $('#orders-sub').textContent = `${pending.length} ממתינים · ${done.length} נמסרו`;
+  const row = o => {
+    const s = studentById(o.studentId);
+    return `<li class="order ${o.done ? 'done' : 'pending'}">
+      <span class="oi" aria-hidden="true">${esc(o.icon)}</span>
+      <div class="om"><div class="ot">${esc(o.reward)}</div>
+        <div class="os">${s ? `${esc(s.emoji)} ${esc(s.name)}` : 'תלמיד שנמחק'} · ${esc(fmtWhen(o.t))}</div></div>
+      ${o.done ? '<span class="done-tag">✅ נמסר</span>'
+        : `<button type="button" class="btn btn-green btn-small" data-action="deliver" data-id="${o.id}">✔ סימון כנמסר</button>`}</li>`;
+  };
+  $('#orders-wrap').innerHTML = state.orders.length
+    ? `<ul class="orders">${pending.map(row).join('')}${done.map(row).join('')}</ul>`
+    : `<div class="empty"><span class="big">🎁</span>עדיין לא נרכשו פרסים</div>`;
+}
+
+function renderEditLists() {
+  const item = (kind, id, icon, name, val, cls) => `<li><span class="ei" aria-hidden="true">${esc(icon)}</span><span class="en">${esc(name)}</span>
+    <span class="ev num ${cls}">${val}</span><button type="button" class="del" data-action="delete" data-kind="${kind}" data-id="${id}" aria-label="מחיקת ${esc(name)}">🗑️</button></li>`;
+  const empty = '<li class="muted" style="justify-content:center">הרשימה ריקה</li>';
+  $('#ed-students').innerHTML = state.students.map(s => item('student', s.id, s.emoji, s.name, `${s.coins} 🪙`, 'g')).join('') || empty;
+  $('#ed-behaviors').innerHTML = state.behaviors.map(b => item('behavior', b.id, b.icon, b.label, signed(b.coins), b.coins > 0 ? 'p' : 'n')).join('') || empty;
+  $('#ed-rewards').innerHTML = state.rewards.map(r => item('reward', r.id, r.icon, r.label, `${r.cost} 🪙`, 'g')).join('') || empty;
+  $('#set-board').checked = !!state.settings.leaderboard;
+}
+
+/* ==========================================================
+   9. Events & boot
+   ========================================================== */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.disabled) return;
+  const id = Number(el.dataset.id);
+  switch (el.dataset.action) {
+    case 'login': go('student', { studentId: id, shownBalance: 0, shownLevel: null, feedSeen: 0, feedLimit: 20 }); break;
+    case 'logout': go('login'); break;
+    case 'teacher-login': openPinModal(); break;
+    case 'sound': toggleSound(); break;
+    case 'buy': buyReward(id); break;
+    case 'feed-more': ui.feedLimit += 20; renderFeed(studentById(ui.studentId)); break;
+    case 'tab': if (ui.tab !== el.dataset.tab) { ui.tab = el.dataset.tab; render(); $(`#tab-${ui.tab}`).focus(); } break;
+    case 'toggle': ui.selected.has(id) ? ui.selected.delete(id) : ui.selected.add(id); render(); break;
+    case 'select-all':
+      if (ui.selected.size === state.students.length) ui.selected.clear();
+      else state.students.forEach(s => ui.selected.add(s.id));
+      render(); break;
+    case 'behavior': awardBehavior(id); break;
+    case 'deliver': markDelivered(id); break;
+    case 'delete': deleteItem(el.dataset.kind, id); break;
+    case 'reset': resetAll(); break;
+    case 'pick-emoji': {
+      const inp = el.closest('form').elements.emoji;
+      inp.value = el.dataset.emoji; inp.focus(); break;
+    }
+  }
+});
+
+document.addEventListener('submit', e => {
+  const form = e.target, kind = form.dataset.form;
+  if (!kind) return;
+  e.preventDefault();
+  const fd = new FormData(form);
+  const ok = kind === 'student' ? addStudent(fd) : kind === 'behavior' ? addBehavior(fd) : addReward(fd);
+  if (ok) {
+    form.reset();
+    if (form.elements.name) form.elements.name.focus(); else if (form.elements.label) form.elements.label.focus();
+  } else play('error');
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'note') { ui.note = e.target.value; e.target.classList.toggle('has', !!e.target.value.trim()); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'set-board') setLeaderboard(e.target.checked);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if ($('.levelup')) { $('.levelup').click(); return; }
+    if (modal) { e.preventDefault(); closeModal(); }
+  }
+  trapFocus(e);
+});
+
+// Tap outside a chart hides its tooltip (touch devices).
+document.addEventListener('pointerdown', e => {
+  $$('.chart').forEach(c => { if (!c.contains(e.target) && c._hideTip) c._hideTip(); });
+});
+
+// Redraw charts at the real width after resizing (keeps text crisp & readable).
+let resizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    sizeConfetti();
+    if (ui.screen === 'student' && studentById(ui.studentId)) renderCharts(studentById(ui.studentId));
+  }, 150);
+});
+
+// Keep a second open tab (e.g. teacher laptop + student screen) in sync.
+window.addEventListener('storage', e => {
+  if (e.key === SOUND_KEY) { sound.on = e.newValue === '1'; updateSoundButtons(); return; }
+  if (e.key !== STORE_KEY || !e.newValue) return;
+  try {
+    const next = normalize(JSON.parse(e.newValue));
+    if (!next) return;
+    state = next;
+    if (ui.screen === 'student' && !studentById(ui.studentId)) { ui.screen = 'login'; toast('התלמיד/ה הוסר/ה מהכיתה', 'info'); }
+    render();
+  } catch (err) { /* ignore malformed external writes */ }
+});
+
+// Decorative sky (skipped for reduced motion)
+(function makeSky() {
+  if (reduceMotion.matches) return;
+  const sky = $('.sky'), icons = ['✨', '⭐', '🪙', '💜', '✨', '⭐'];
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('span');
+    s.textContent = icons[i % icons.length];
+    s.style.left = (i * 8.3 + Math.random() * 5) + '%';
+    s.style.animationDelay = (-Math.random() * 18) + 's';
+    s.style.animationDuration = (14 + Math.random() * 12) + 's';
+    s.style.fontSize = (14 + Math.random() * 16) + 'px';
+    sky.appendChild(s);
+  }
+})();
+
+render();
+</script>
+</body>
+</html>
