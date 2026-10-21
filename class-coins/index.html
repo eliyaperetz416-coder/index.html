@@ -117,7 +117,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);min-width:0}
 .field input,.field select,.note-field input{
   width:100%;background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:12px;padding:10px 12px;
-  color:var(--ink);font-size:15px;transition:border-color .15s,background .15s;
+  color:var(--ink);font-size:16px;transition:border-color .15s,background .15s;
 }
 .field input:focus,.field select:focus,.note-field input:focus{outline:none;border-color:var(--gold);background:rgba(0,0,0,.35)}
 .field input::placeholder,.note-field input::placeholder{color:#7d74b3}
@@ -126,12 +126,13 @@ h1,h2,h3{margin:0;line-height:1.2}
 /* ==========================================================
    3. Shared layout: screens & top bar
    ========================================================== */
-.screen{max-width:1320px;margin:0 auto;padding:18px clamp(16px,3vw,34px) 56px;animation:screenIn .45s ease both}
+.screen{max-width:1320px;margin:0 auto;padding:18px clamp(16px,3vw,34px) 56px;animation:screenIn .25s ease both}
 @keyframes screenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 .hello{display:flex;align-items:center;gap:14px;min-width:0}
 .hello h1{font-size:clamp(22px,4vw,30px);font-weight:800}
 .hello p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.hello p b,.cl-name{color:var(--gold)}
 .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
 /* ==========================================================
@@ -166,6 +167,33 @@ h1,h2,h3{margin:0;line-height:1.2}
 @keyframes popIn{from{opacity:0;transform:scale(.7) translateY(16px)}to{opacity:1;transform:none}}
 .login-foot{margin-top:30px}
 .empty-note{padding:26px;border:2px dashed var(--line);border-radius:20px;color:var(--muted);max-width:520px;margin:0 auto}
+
+/* Class picker */
+.class-page{max-width:980px;margin:0 auto}
+.class-head{text-align:center;margin:clamp(4px,3vh,26px) 0 20px}
+.class-head h2{font-size:clamp(26px,5vw,38px);font-weight:800;line-height:1.2}
+.search{position:relative;max-width:560px;margin:0 auto 18px}
+.search .ic{position:absolute;inset-inline-start:16px;top:50%;transform:translateY(-50%);width:22px;height:22px;color:var(--brand2);pointer-events:none}
+.search input{width:100%;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px;padding:15px 18px;padding-inline-start:50px;font-size:18px;color:var(--ink);transition:border-color .15s,background .15s,box-shadow .15s}
+.search input::placeholder{color:#8a81c4}
+.search input:focus{outline:none;border-color:var(--gold);background:rgba(0,0,0,.4);box-shadow:0 0 0 4px rgba(255,200,61,.16)}
+.class-actions{display:flex;justify-content:center;margin:0 0 22px}
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;text-align:start}
+.class-card{
+  position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:14px;text-align:start;padding:20px 18px 18px;border-radius:22px;
+  border:1px solid var(--line);background:var(--card2);box-shadow:0 5px 0 #0b0820;
+  transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .12s;
+}
+.class-card:hover{transform:translateY(-5px);border-color:var(--gold)}
+.class-card:active{transform:translateY(3px);box-shadow:0 1px 0 #0b0820}
+.class-card .cname{font-size:30px;font-weight:800;line-height:1.1}
+.class-card .meta{display:flex;gap:8px;flex-wrap:wrap}
+.class-card .pill{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--muted)}
+.class-card .pill b{color:var(--ink);font-weight:700}
+.class-card .pill.gold b{color:var(--gold)}
+.class-card .last{position:absolute;top:14px;inset-inline-end:14px;font-size:12px;font-weight:700;color:var(--goldInk);background:linear-gradient(180deg,#ffe07a,var(--gold2));padding:3px 10px;border-radius:999px}
+.class-grid.enter .class-card{animation:popIn .4s cubic-bezier(.3,1.5,.6,1) both;animation-delay:calc(var(--i,0) * 50ms)}
+.cls-input{direction:rtl;letter-spacing:0;font-size:20px}
 
 /* ==========================================================
    5. Student dashboard
@@ -397,6 +425,11 @@ h1,h2,h3{margin:0;line-height:1.2}
 .pw-tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
 .pw-tag.set{color:var(--goodTxt);background:rgba(55,227,160,.12)}
 .pw-tag.unset{color:var(--muted);background:rgba(255,255,255,.06)}
+.edit-btn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);display:grid;place-items:center;flex:none;transition:background .15s,transform .15s}
+.edit-btn:hover{background:rgba(255,255,255,.14);transform:scale(1.06)}
+.move{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.mini-select{background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:10px;padding:5px 8px;color:var(--ink);font-size:14px}
+.mini-select option{background:var(--card)}
 .del{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,93,122,.4);background:rgba(255,93,122,.12);color:var(--badTxt);display:grid;place-items:center;flex:none;transition:background .15s,transform .15s}
 .del:hover{background:rgba(255,93,122,.3);transform:scale(1.06)}
 .switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line);font-weight:700}
@@ -505,6 +538,12 @@ h1,h2,h3{margin:0;line-height:1.2}
   .topbar .btn{padding:9px 12px;font-size:14px}
 }
 
+@media (max-width:599px){
+  .class-grid{grid-template-columns:1fr}
+  .class-card{padding:18px 16px 16px}
+  .class-card .cname{font-size:26px}
+}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 }
@@ -566,6 +605,7 @@ h1,h2,h3{margin:0;line-height:1.2}
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
   <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-4 3-6 7-6 0 4-3 6-7 6z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
 
 <main id="app"></main>
@@ -579,7 +619,10 @@ h1,h2,h3{margin:0;line-height:1.2}
 /* ==========================================================
    1. Constants & helpers
    ========================================================== */
-const STORE_KEY = 'classCoins_v4';
+const STORE_KEY = 'classCoins_v5';
+const LEGACY_KEY = 'classCoins_v4';              // read once for migration, never modified (kept as a backup)
+const LAST_CLASS_KEY = 'classCoins_v5_lastClass'; // sessionStorage only: last picked class in this session
+const DEFAULT_CLASS_NAME = "ז'1";
 const SOUND_KEY = 'classCoins_sound';
 const SEEN_LEVEL_KEY = 'classCoins_v4_seenLevel';
 const TEACHER_CODE = 'amit';           // compared case-insensitively
@@ -630,6 +673,40 @@ function lastDays(n) {
 }
 function levelIndex(total) { return Math.min(LEVELS.length - 1, Math.floor(Math.max(0, total) / COINS_PER_LEVEL)); }
 function studentById(id) { return state.students.find(s => s.id === id) || null; }
+
+// --- Classes ---
+/** Class names compare without case, spaces and quote/geresh marks, so ז'1, ז׳1 and ז1 are the same. */
+function normClass(v) { return String(v == null ? '' : v).toLowerCase().replace(/[\s'"`´‘’“”׳״]/g, ''); }
+function classById(id) { return state.classes.find(c => c.id === id) || null; }
+function classStudents(id) { return state.students.filter(s => s.classId === id); }
+function classTotal(id) { return classStudents(id).reduce((a, s) => a + s.coins, 0); }
+function sortedClasses() { return [...state.classes].sort((a, b) => a.name.localeCompare(b.name, 'he', { numeric: true })); }
+function countText(n) { return n === 0 ? 'אין תלמידים' : n === 1 ? 'תלמיד אחד' : `${n} תלמידים`; }
+function classNameTaken(name, exceptId) {
+  const n = normClass(name);
+  return state.classes.some(c => c.id !== exceptId && normClass(c.name) === n);
+}
+function classActions() {
+  return state.actions.filter(a => a.items.some(it => { const s = studentById(it.studentId); return s && s.classId === ui.classId; }));
+}
+function classOrders() {
+  return state.orders.filter(o => { const s = studentById(o.studentId); return s && s.classId === ui.classId; });
+}
+// Last picked class: this browser session only (sessionStorage, memory fallback).
+let lastClassMem = null;
+function lastClassId() {
+  let v = lastClassMem;
+  try { v = Number(window.sessionStorage.getItem(LAST_CLASS_KEY)) || lastClassMem; } catch (e) { /* memory fallback */ }
+  return classById(v) ? v : null;
+}
+function setLastClass(id) {
+  lastClassMem = id;
+  try { window.sessionStorage.setItem(LAST_CLASS_KEY, String(id)); } catch (e) { /* memory fallback */ }
+}
+function clearLastClass() {
+  lastClassMem = null;
+  try { window.sessionStorage.removeItem(LAST_CLASS_KEY); } catch (e) { /* ignore */ }
+}
 function firstName(name) { return String(name).trim().split(' ')[0] || name; }
 
 // --- Drawn icons (SVG sprite) ---
@@ -714,8 +791,11 @@ function normalize(raw) {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.students)) return null;
   const ids = [];
   const keepId = v => { const n = toInt(v, 1, 1e9, 0); if (n) ids.push(n); return n; };
+  const classes = (Array.isArray(raw.classes) ? raw.classes : []).map(c => c && ({
+    id: keepId(c.id), name: cleanText(c.name, 20)
+  })).filter(c => c && c.id && c.name);
   const students = raw.students.map(s => s && ({
-    id: keepId(s.id), name: cleanText(s.name, 24) || 'תלמיד',
+    id: keepId(s.id), name: cleanText(s.name, 24) || 'תלמיד', classId: toInt(s.classId, 0, 1e9, 0),
     pin: /^[0-9a-f]{64}$/.test(s.pin) ? s.pin : '',
     coins: toInt(s.coins, 0, 1e7, 0), totalEarned: toInt(s.totalEarned, 0, 1e8, 0)
   })).filter(s => s && s.id);
@@ -742,15 +822,33 @@ function normalize(raw) {
     note: cleanText(a.note, 140), random: !!a.random,
     items: a.items.map(it => it && ({ studentId: toInt(it.studentId, 0, 1e9, 0), applied: toInt(it.applied, -1e6, 1e6, 0) })).filter(it => it && it.studentId)
   })).filter(a => a && a.id).slice(-MAX_ACTIONS);
+  // Students without a valid class (data saved before classes existed) go to the default class.
+  const classIds = new Set(classes.map(c => c.id));
+  const orphans = students.filter(s => !classIds.has(s.classId));
+  if (orphans.length) {
+    let def = classes.find(c => normClass(c.name) === normClass(DEFAULT_CLASS_NAME));
+    if (!def) {
+      def = { id: (ids.length ? Math.max(...ids) : 0) + 1, name: DEFAULT_CLASS_NAME };
+      ids.push(def.id); classes.push(def);
+    }
+    orphans.forEach(s => { s.classId = def.id; });
+  }
   const settings = { leaderboard: !(raw.settings && raw.settings.leaderboard === false) };
   const nextId = Math.max(toInt(raw.nextId, 1, 1e9, 1), (ids.length ? Math.max(...ids) : 0) + 1);
-  return { students, behaviors, rewards, log, orders, actions, settings, nextId };
+  return { students, behaviors, rewards, classes, log, orders, actions, settings, nextId };
 }
 function loadState() {
-  const raw = lsGet(STORE_KEY);
-  if (raw) {
-    try { const s = normalize(JSON.parse(raw)); if (s) return s; } catch (e) { /* corrupted: reseed */ }
-  }
+  const read = key => {
+    const raw = lsGet(key);
+    if (!raw) return null;
+    try { return normalize(JSON.parse(raw)); } catch (e) { return null; }
+  };
+  const current = read(STORE_KEY);
+  if (current) return current;
+  // One-time migration from v4 (no classes): every student keeps coins, history, password and level,
+  // and lands in the default class. The v4 key is left untouched as a backup.
+  const legacy = read(LEGACY_KEY);
+  if (legacy) { lsSet(STORE_KEY, JSON.stringify(legacy)); return legacy; }
   const seeded = createSeed();
   lsSet(STORE_KEY, JSON.stringify(seeded));
   return seeded;
@@ -798,7 +896,11 @@ const SEED_REWARDS = [
   { label: 'ללא שיעורי בית', cost: 40 },
   { label: 'שוקולד', cost: 15 }
 ];
-const SEED_STUDENTS = ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'];
+const SEED_CLASSES = [
+  { name: "ז'1", students: ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'] },
+  { name: "ז'2", students: ['אורי', 'גל', 'רוני', 'ענבר', 'טל', 'אלון'] },
+  { name: "ז'3", students: ['ניר', 'לינוי', 'אופיר', 'הילה', 'רועי', 'מאי'] }
+];
 const POS_NOTES = ['כל הכבוד, ככה ממשיכים!', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
 const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש', 'נא להגיע בזמן לשיעור'];
 
@@ -811,6 +913,7 @@ function createSeed() {
   let id = 1;
   const behaviors = SEED_BEHAVIORS.map(b => ({ id: id++, ...b }));
   const rewards = SEED_REWARDS.map(r => ({ id: id++, ...r }));
+  const classes = SEED_CLASSES.map(c => ({ id: id++, name: c.name }));
   const students = [], log = [], orders = [], used = new Set();
 
   // One plausible 2-week history: behavior events at school hours, replayed in time order
@@ -851,7 +954,8 @@ function createSeed() {
     return { coins: bal, earned, events, buys };
   }
 
-  for (const name of SEED_STUDENTS) {
+  const roster = SEED_CLASSES.flatMap((cl, ci) => cl.students.map(name => ({ name, classId: classes[ci].id })));
+  for (const { name, classId } of roster) {
     let best = null, bestScore = Infinity;
     for (let attempt = 0; attempt < 400; attempt++) {
       const sim = simulate();
@@ -861,13 +965,13 @@ function createSeed() {
     }
     used.add(best.coins);
     const sid = id++;
-    students.push({ id: sid, name, pin: '', coins: best.coins, totalEarned: best.earned });
+    students.push({ id: sid, name, classId, pin: '', coins: best.coins, totalEarned: best.earned });
     best.events.forEach(e => log.push({ ...e, studentId: sid }));
     best.buys.forEach(b => orders.push({ id: id++, t: b.t, studentId: sid, reward: b.reward, done: now - b.t > DAY }));
   }
   log.sort((a, b) => a.t - b.t);
   orders.sort((a, b) => a.t - b.t);
-  return { students, behaviors, rewards, log, orders, actions: [], settings: { leaderboard: true }, nextId: id };
+  return { students, behaviors, rewards, classes, log, orders, actions: [], settings: { leaderboard: true }, nextId: id };
 }
 
 /* ==========================================================
@@ -875,8 +979,11 @@ function createSeed() {
    ========================================================== */
 let state = loadState();
 const ui = {
-  screen: 'login',        // 'login' | 'student' | 'activity' | 'teacher'
+  screen: 'login',        // 'login' (class picker) | 'login-class' (names) | 'student' | 'activity' | 'teacher-class' | 'teacher'
   studentId: null,
+  classId: null,          // teacher: the class being taught
+  loginClassId: null,     // student login: the class whose names are shown
+  classQuery: '',         // class search text (shared by both pickers)
   tab: 'actions',         // teacher tab: 'actions' | 'orders' | 'edit'
   selected: new Set(),    // teacher multi-select
   note: '',
@@ -906,7 +1013,7 @@ function applyDelta(student, delta, text, note, kind, aid) {
 
 /** Apply a behavior to every selected student, as one undoable action. */
 function applyBehavior(b, { useNote = true, random = false } = {}) {
-  const targets = state.students.filter(s => ui.selected.has(s.id));
+  const targets = state.students.filter(s => ui.selected.has(s.id) && s.classId === ui.classId);
   if (!targets.length) {
     toast(random ? 'בחרו קודם תלמידים בלשונית פעולות' : 'בחרו קודם לפחות תלמיד אחד מהרשימה', 'error');
     play('error');
@@ -947,9 +1054,10 @@ function randomEvent() {
   applyBehavior(pos[Math.floor(Math.random() * pos.length)], { useNote: false, random: true });
 }
 
-/** Reverse the most recent behavior action: coins, totalEarned and its log entries. */
+/** Reverse the latest behavior action of the current class: coins, totalEarned and its log entries. */
 function undoLast() {
-  const a = state.actions[state.actions.length - 1];
+  const mine = classActions();
+  const a = mine[mine.length - 1];
   if (!a) { toast('אין פעולה לביטול', 'info'); return; }
   for (const it of a.items) {
     const s = studentById(it.studentId);
@@ -958,7 +1066,7 @@ function undoLast() {
     if (it.applied > 0) s.totalEarned = Math.max(0, s.totalEarned - it.applied);
   }
   state.log = state.log.filter(e => e.aid !== a.id);
-  state.actions.pop();
+  state.actions = state.actions.filter(x => x.id !== a.id);
   save(); render();
   toast(`בוטלה הפעולה: ${esc(a.label)} ${numSpan(a.coins)}`, 'info');
   play('down');
@@ -1000,7 +1108,7 @@ function addStudent(fd) {
   const name = cleanText(fd.get('name'), 20);
   if (!name) { toast('נא להזין שם', 'error'); return false; }
   const start = toInt(fd.get('coins'), 0, 999, 0);
-  const s = { id: state.nextId++, name, pin: '', coins: 0, totalEarned: 0 };
+  const s = { id: state.nextId++, name, pin: '', classId: ui.classId, coins: 0, totalEarned: 0 };
   state.students.push(s);
   if (start > 0) applyDelta(s, start, 'מטבעות פתיחה', '');
   save(); render();
@@ -1043,16 +1151,95 @@ function deleteItem(kind, id) {
       const list = getList(), i = list.findIndex(x => x.id === id);
       if (i < 0) return;
       list.splice(i, 1);
-      if (kind === 'student') {
-        state.log = state.log.filter(e => e.studentId !== id);
-        state.orders = state.orders.filter(o => o.studentId !== id);
-        ui.selected.delete(id);
-      }
+      if (kind === 'student') purgeStudents([id]);
       save(); render();
       toast(`${esc(name)} נמחק`, 'info');
     }
   });
 }
+/** Remove students together with everything that belongs to them. */
+function purgeStudents(ids) {
+  const gone = new Set(ids);
+  state.students = state.students.filter(s => !gone.has(s.id));
+  state.log = state.log.filter(e => !gone.has(e.studentId));
+  state.orders = state.orders.filter(o => !gone.has(o.studentId));
+  state.actions = state.actions
+    .map(a => ({ ...a, items: a.items.filter(it => !gone.has(it.studentId)) }))
+    .filter(a => a.items.length);
+  gone.forEach(id => ui.selected.delete(id));
+}
+
+function createClass(rawName) {
+  const name = cleanText(rawName, 20);
+  if (!name) { toast('נא להזין שם לכיתה', 'error'); play('error'); return false; }
+  if (classNameTaken(name)) { toast('כבר קיימת כיתה בשם הזה', 'error'); play('error'); return false; }
+  state.classes.push({ id: state.nextId++, name });
+  ui.classQuery = '';
+  const box = $('#class-search'); if (box) box.value = '';
+  save(); render();
+  toast(`הכיתה ${esc(name)} נוספה`, 'success');
+  return true;
+}
+function classNameModal({ icon, title, okText, value, onSave }) {
+  openModal({
+    iconHtml: ic(icon), title,
+    body: `<label class="m-field" for="cls-name">שם הכיתה<input id="cls-name" name="name" class="pin-input cls-input" type="text" maxlength="20" autocomplete="off" value="${esc(value || '')}" placeholder="למשל: ח'1"></label>`,
+    okText, okClass: 'btn-gold',
+    onOk: fd => onSave(fd.get('name'))
+  });
+}
+function openAddClass() {
+  classNameModal({ icon: 'plus', title: 'הוספת כיתה', okText: 'הוספה', onSave: createClass });
+}
+function openRenameClass(id) {
+  const c = classById(id);
+  if (!c) return;
+  classNameModal({
+    icon: 'pencil', title: 'שינוי שם כיתה', okText: 'שמירה', value: c.name,
+    onSave: raw => {
+      const cur = classById(id);
+      if (!cur) return true;
+      const name = cleanText(raw, 20);
+      if (!name) { toast('נא להזין שם לכיתה', 'error'); play('error'); return false; }
+      if (classNameTaken(name, id)) { toast('כבר קיימת כיתה בשם הזה', 'error'); play('error'); return false; }
+      cur.name = name;
+      save(); render();
+      toast(`שם הכיתה עודכן ל-${esc(name)}`, 'success');
+      return true;
+    }
+  });
+}
+function deleteClass(id) {
+  const c = classById(id);
+  if (!c) return;
+  const n = classStudents(id).length;
+  openModal({
+    iconHtml: ic('trash'), danger: true, title: 'למחוק כיתה?',
+    body: n
+      ? `הכיתה <b>${esc(c.name)}</b> תימחק יחד עם <b>${countText(n)}</b>, כולל ההיסטוריה וההזמנות שלהם.<br>אי אפשר לבטל.`
+      : `הכיתה <b>${esc(c.name)}</b> ריקה ותימחק.`,
+    okText: n ? `מחיקה (${countText(n)})` : 'מחיקה',
+    onOk: () => {
+      const cur = classById(id);
+      if (!cur) return;
+      purgeStudents(classStudents(id).map(s => s.id));
+      state.classes = state.classes.filter(x => x.id !== id);
+      if (ui.classId === id) { ui.classId = null; ui.screen = 'teacher-class'; ui.built = ''; }
+      if (ui.loginClassId === id) ui.loginClassId = null;
+      save(); render();
+      toast(`הכיתה ${esc(cur.name)} נמחקה`, 'info');
+    }
+  });
+}
+function moveStudent(id, classId) {
+  const s = studentById(id), c = classById(classId);
+  if (!s || !c || s.classId === classId) return;
+  s.classId = classId;
+  ui.selected.delete(id);
+  save(); render();
+  toast(`${esc(s.name)} הועבר/ה לכיתה ${esc(c.name)}`, 'success');
+}
+
 function resetPassword(id) {
   const s = studentById(id);
   if (!s || !s.pin) return;
@@ -1084,6 +1271,8 @@ function resetAll() {
       seenLevelsMem = {};
       lsSet(SEEN_LEVEL_KEY, '{}');
       ui.selected.clear(); ui.note = '';
+      ui.classId = null; ui.loginClassId = null; ui.screen = 'teacher-class';
+      clearLastClass();
       save();
       ui.built = '';
       render();
@@ -1506,7 +1695,11 @@ function render() {
     }
   }
   if ((ui.screen === 'student' || ui.screen === 'activity') && !studentById(ui.studentId)) ui.screen = 'login';
-  if (ui.screen === 'login') renderLogin();
+  if (ui.screen === 'login-class' && !classById(ui.loginClassId)) ui.screen = 'login';
+  if (ui.screen === 'teacher' && !classById(ui.classId)) ui.screen = 'teacher-class';
+  if (ui.screen === 'login') renderClassPicker('student');
+  else if (ui.screen === 'login-class') renderLoginNames();
+  else if (ui.screen === 'teacher-class') renderClassPicker('teacher');
   else if (ui.screen === 'student') renderStudent();
   else if (ui.screen === 'activity') renderActivity();
   else renderTeacher();
@@ -1518,28 +1711,104 @@ function render() {
 }
 function go(screen, extra = {}) {
   Object.assign(ui, { screen }, extra);
+  ui.classQuery = '';
   closeModal(true);
   render();
   window.scrollTo(0, 0);
 }
 
 // ---------- 8a. Login & passwords ----------
-function renderLogin() {
-  ui.built = 'login';
-  const list = state.students.length
-    ? `<div class="student-grid">${state.students.map((s, i) => `
+function classMatches(query) {
+  const q = normClass(query);
+  return sortedClasses().filter(c => !q || normClass(c.name).includes(q));
+}
+/** Class search + cards. Used by the teacher (after the code) and by students (before their names). */
+function renderClassPicker(mode) {
+  const key = 'classpick:' + mode;
+  if (ui.built !== key) {
+    ui.built = key;
+    const search = `<div class="search">${ic('search')}<input id="class-search" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+        placeholder="חיפוש כיתה..." aria-label="חיפוש כיתה" aria-controls="class-grid" value="${esc(ui.classQuery)}"></div>`;
+    const grid = `<p class="sr-only" id="class-status" role="status"></p><div class="class-grid enter" id="class-grid"></div>`;
+    app.innerHTML = mode === 'teacher' ? `
+      <div class="screen">
+        <header class="topbar">
+          <div class="hello"><span class="av lg" style="--h:255" aria-hidden="true">מ</span>
+            <div><h1>פאנל מורה מחליף</h1><p>בחרו כיתה כדי להתחיל</p></div></div>
+          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">${ic('logout')} יציאה</button></div>
+        </header>
+        <div class="class-page">
+          <div class="class-head"><h2>באיזו כיתה אתה מלמד היום?</h2></div>
+          ${search}
+          <div class="class-actions"><button type="button" class="btn btn-ghost btn-small" data-action="add-class">${ic('plus')} הוספת כיתה</button></div>
+          ${grid}
+        </div>
+      </div>` : `
+      <div class="screen login">
+        <div class="login-top">${soundBtn()}</div>
+        <div class="logo-coin" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#i-coin"/></svg></div>
+        <h1>מטבעות כיתה</h1>
+        <p class="lead">באיזו כיתה אתם? חפשו או בחרו את הכיתה שלכם</p>
+        <div class="class-page">${search}${grid}</div>
+        <div class="login-foot"><button type="button" class="link-btn" data-action="teacher-login">${ic('lock')} כניסת מורה מחליף</button></div>
+      </div>`;
+    setTimeout(() => { const g = $('#class-grid'); if (g) g.classList.remove('enter'); }, 900);
+  }
+  updateClassGrid();
+}
+function updateClassGrid() {
+  const grid = $('#class-grid');
+  if (!grid) return;
+  const teacher = ui.screen === 'teacher-class';
+  const status = $('#class-status');
+  if (!state.classes.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${ic('users')}עדיין אין כיתות. ${teacher ? 'אפשר להוסיף כיתה עם הכפתור "הוספת כיתה".' : 'המורה צריך להוסיף כיתה.'}</div>`;
+    if (status) status.textContent = 'אין כיתות';
+    return;
+  }
+  const list = classMatches(ui.classQuery), last = lastClassId();
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${ic('search')}לא נמצאה כיתה</div>`;
+    if (status) status.textContent = 'לא נמצאה כיתה';
+    return;
+  }
+  grid.innerHTML = list.map((c, i) => {
+    const n = classStudents(c.id).length, total = classTotal(c.id);
+    return `<button type="button" class="class-card" style="--i:${i}" data-action="pick-class" data-id="${c.id}"
+        aria-label="${esc(c.name)}, ${countText(n)}, סה״כ ${total} מטבעות">
+      ${c.id === last ? '<span class="last">נבחרה לאחרונה</span>' : ''}
+      <span class="cname">${esc(c.name)}</span>
+      <span class="meta"><span class="pill">${ic('users')}<b>${countText(n)}</b></span>
+        <span class="pill gold">סה״כ <b class="num">${total}</b>${coinIc()}</span></span></button>`;
+  }).join('');
+  if (status) status.textContent = list.length === 1 ? 'נמצאה כיתה אחת' : `נמצאו ${list.length} כיתות`;
+}
+function pickClass(id) {
+  if (!classById(id)) return;
+  setLastClass(id);
+  if (ui.screen === 'teacher-class') { ui.selected.clear(); go('teacher', { classId: id, tab: 'actions' }); }
+  else go('login-class', { loginClassId: id });
+}
+
+/** Students of ONE class only (the class picked on the previous screen). */
+function renderLoginNames() {
+  const cl = classById(ui.loginClassId);
+  ui.built = 'login-class:' + cl.id;
+  const students = classStudents(cl.id);
+  const list = students.length
+    ? `<div class="student-grid">${students.map((s, i) => `
         <button type="button" class="stu-btn" style="--i:${i}" data-action="login" data-id="${s.id}">
           ${avatar(s)}<span class="nm">${esc(s.name)}</span><span class="hint">${s.pin ? '' : 'כניסה ראשונה'}</span>
         </button>`).join('')}</div>`
-    : `<div class="empty-note">עדיין אין תלמידים בכיתה.<br>המורה יכול להוסיף תלמידים דרך כניסת המורה.</div>`;
+    : `<div class="empty-note">עדיין אין תלמידים בכיתה הזו.<br>המורה יכול להוסיף תלמידים בלשונית עריכה.</div>`;
   app.innerHTML = `
     <div class="screen login">
       <div class="login-top">${soundBtn()}</div>
       <div class="logo-coin" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#i-coin"/></svg></div>
       <h1>מטבעות כיתה</h1>
-      <p class="lead">מי את/ה? בחרו את השם שלכם כדי להיכנס</p>
+      <p class="lead">כיתה <b class="cl-name">${esc(cl.name)}</b> · מי את/ה? בחרו את השם שלכם</p>
       ${list}
-      <div class="login-foot"><button type="button" class="link-btn" data-action="teacher-login">${ic('lock')} כניסת מורה מחליף</button></div>
+      <div class="login-foot"><button type="button" class="link-btn" data-action="change-class">${ic('swap')} החלפת כיתה</button></div>
     </div>`;
 }
 function enterStudent(id) {
@@ -1547,7 +1816,7 @@ function enterStudent(id) {
 }
 function startStudentLogin(id) {
   const s = studentById(id);
-  if (!s) return;
+  if (!s || s.classId !== ui.loginClassId) return;
   if (!s.pin) openCreatePassword(s); else openEnterPassword(s);
 }
 function openCreatePassword(s) {
@@ -1606,7 +1875,7 @@ function openTeacherLogin() {
     okText: 'כניסה', okClass: 'btn-gold',
     onOk: (fd, form) => {
       if (String(fd.get('code') || '').trim().toLowerCase() === TEACHER_CODE) {
-        setTimeout(() => go('teacher', { tab: 'actions' }), 0);
+        setTimeout(() => go('teacher-class'), 0);
         return true;
       }
       toast('קוד שגוי, נסו שוב', 'error');
@@ -1632,7 +1901,7 @@ function renderStudent() {
     ui.built = key;
     app.innerHTML = `
       <div class="screen">
-        ${studentTopbar(s, `שלום ${esc(s.name)}!`, 'כאן רואים את המטבעות, הרמה והפרסים שלך',
+        ${studentTopbar(s, `שלום ${esc(s.name)}!`, `כיתה ${esc((classById(s.classId) || {}).name || '')} · כאן רואים את המטבעות, הרמה והפרסים שלך`,
           `<button type="button" class="btn btn-ghost" data-action="logout">${ic('swap')} החלפת תלמיד</button>`)}
         <div class="dash">
           <section class="card hud" aria-label="היתרה והרמה שלי">
@@ -1669,7 +1938,7 @@ function renderStudent() {
                 <div class="shop-grid" id="shop"></div>
               </section>
               <section class="card" id="board-card" aria-labelledby="board-h" hidden>
-                <div class="card-title"><h2 id="board-h">${ic('trophy')} לוח המובילים</h2><span class="sub">לפי מטבעות שנצברו</span></div>
+                <div class="card-title"><h2 id="board-h">${ic('trophy')} לוח המובילים</h2><span class="sub">לפי מטבעות שנצברו בכיתה</span></div>
                 <ol class="board" id="board"></ol>
               </section>
             </div>
@@ -1760,7 +2029,7 @@ function renderBoard(s) {
   const card = $('#board-card');
   card.hidden = !state.settings.leaderboard;
   if (card.hidden) return;
-  const top = [...state.students].sort((a, b) => b.totalEarned - a.totalEarned || a.name.localeCompare(b.name, 'he')).slice(0, 5);
+  const top = [...classStudents(s.classId)].sort((a, b) => b.totalEarned - a.totalEarned || a.name.localeCompare(b.name, 'he')).slice(0, 5);
   $('#board').innerHTML = top.map((x, i) => `<li class="${x.id === s.id ? 'me' : ''}">
     <span class="rk r${i + 1}">${i + 1}</span>${avatar(x, 'sm')}
     <span class="bn">${esc(firstName(x.name))}${x.id === s.id ? ' (אני)' : ''}</span><span class="bv">${x.totalEarned}${coinIc()}</span></li>`).join('');
@@ -1814,7 +2083,8 @@ function renderActivity() {
 
 // ---------- 8d. Teacher panel ----------
 function renderTeacher() {
-  const key = 'teacher:' + ui.tab;
+  const cl = classById(ui.classId);
+  const key = 'teacher:' + ui.tab + ':' + cl.id;
   if (ui.built !== key) {
     ui.built = key;
     const tab = (id, icon, label) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="t-panel" aria-selected="${ui.tab === id}" data-action="tab" data-tab="${id}">${ic(icon)}${label}</button>`;
@@ -1822,8 +2092,8 @@ function renderTeacher() {
       <div class="screen">
         <header class="topbar">
           <div class="hello"><span class="av lg" style="--h:255" aria-hidden="true">מ</span>
-            <div><h1>פאנל מורה מחליף</h1><p>בוחרים תלמידים ולוחצים על התנהגות</p></div></div>
-          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">${ic('logout')} יציאה</button></div>
+            <div><h1>פאנל מורה מחליף</h1><p>כיתה <b class="cl-name">${esc(cl.name)}</b> · בוחרים תלמידים ולוחצים על התנהגות</p></div></div>
+          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="change-class">${ic('swap')} החלפת כיתה</button><button type="button" class="btn btn-ghost" data-action="logout">${ic('logout')} יציאה</button></div>
         </header>
         <nav class="tabs" role="tablist" aria-label="אזורי פאנל המורה">
           ${tab('actions', 'target', 'פעולות')}${tab('orders', 'bag', 'פרסים שנרכשו <span class="badge" id="orders-badge" hidden></span>')}${tab('edit', 'pencil', 'עריכה')}
@@ -1831,8 +2101,8 @@ function renderTeacher() {
         <div id="t-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}">${teacherSkeleton(ui.tab)}</div>
       </div>`;
   }
-  for (const id of ui.selected) if (!studentById(id)) ui.selected.delete(id);
-  const pending = state.orders.filter(o => !o.done).length;
+  for (const id of [...ui.selected]) { const st = studentById(id); if (!st || st.classId !== cl.id) ui.selected.delete(id); }
+  const pending = classOrders().filter(o => !o.done).length;
   const badge = $('#orders-badge');
   badge.hidden = !pending; badge.textContent = pending;
   if (ui.tab === 'actions') { renderRoster(); renderBehaviors(); renderRecent(); }
@@ -1867,10 +2137,19 @@ function teacherSkeleton(tab) {
       <div class="card-title"><h2 id="orders-h">${ic('bag')} פרסים שנרכשו</h2><span class="sub" id="orders-sub"></span></div>
       <div id="orders-wrap"></div>
     </section>`;
+  const cl = classById(ui.classId);
   return `
     <div class="edit-grid">
+      <section class="card" aria-labelledby="ed-c-h">
+        <div class="card-title"><h2 id="ed-c-h">${ic('users')} כיתות</h2><span class="sub">הוספה, שינוי שם ומחיקה</span></div>
+        <form class="add-form" data-form="class" autocomplete="off">
+          <label class="field"><span>שם כיתה חדשה</span><input name="name" required maxlength="20" placeholder="למשל: ח'1"></label>
+          <button type="submit" class="btn btn-gold">${ic('plus')} הוספת כיתה</button>
+        </form>
+        <ul class="ed-list" id="ed-classes"></ul>
+      </section>
       <section class="card" aria-labelledby="ed-s-h">
-        <div class="card-title"><h2 id="ed-s-h">${ic('users')} תלמידים</h2></div>
+        <div class="card-title"><h2 id="ed-s-h">${ic('users')} תלמידי כיתה ${esc(cl.name)}</h2></div>
         <form class="add-form" data-form="student" autocomplete="off">
           <div class="field-row">
             <label class="field"><span>שם</span><input name="name" required maxlength="20" placeholder="שם התלמיד/ה"></label>
@@ -1922,15 +2201,16 @@ function teacherSkeleton(tab) {
 }
 
 function renderRoster() {
-  const all = state.students.length > 0 && ui.selected.size === state.students.length;
+  const list = classStudents(ui.classId);
+  const all = list.length > 0 && list.every(s => ui.selected.has(s.id));
   const selAll = $('#sel-all');
   selAll.innerHTML = all ? `${ic('check')} ניקוי בחירה` : `${ic('check')} בחר הכל`;
   selAll.setAttribute('aria-pressed', String(all));
-  selAll.disabled = !state.students.length;
-  $('#sel-info').textContent = state.students.length
-    ? (ui.selected.size ? `נבחרו ${ui.selected.size} מתוך ${state.students.length}` : 'לא נבחרו תלמידים')
-    : 'אין תלמידים – אפשר להוסיף בלשונית עריכה';
-  $('#roster').innerHTML = state.students.map(s => {
+  selAll.disabled = !list.length;
+  $('#sel-info').textContent = list.length
+    ? (ui.selected.size ? `נבחרו ${ui.selected.size} מתוך ${list.length}` : 'לא נבחרו תלמידים')
+    : 'אין תלמידים בכיתה – אפשר להוסיף בלשונית עריכה';
+  $('#roster').innerHTML = list.map(s => {
     const on = ui.selected.has(s.id);
     return `<li><button type="button" class="stu-row" data-action="toggle" data-id="${s.id}" aria-pressed="${on}">
       <span class="ck" aria-hidden="true">${ic('check')}</span>${avatar(s, 'sm')}
@@ -1949,7 +2229,7 @@ function renderBehaviors() {
 }
 
 function renderRecent() {
-  const last = state.actions.slice(-5).reverse();
+  const last = classActions().slice(-5).reverse();
   $('#undo-btn').disabled = !last.length;
   $('#recent').innerHTML = last.length ? last.map(a => {
     const names = a.items.map(it => studentById(it.studentId)).filter(Boolean).map(s => s.name);
@@ -1960,8 +2240,9 @@ function renderRecent() {
 }
 
 function renderOrders() {
-  const pending = state.orders.filter(o => !o.done).sort((a, b) => b.t - a.t);
-  const done = state.orders.filter(o => o.done).sort((a, b) => b.t - a.t);
+  const mine = classOrders();
+  const pending = mine.filter(o => !o.done).sort((a, b) => b.t - a.t);
+  const done = mine.filter(o => o.done).sort((a, b) => b.t - a.t);
   $('#orders-sub').textContent = `${pending.length} ממתינים · ${done.length} נמסרו`;
   const row = o => {
     const s = studentById(o.studentId);
@@ -1972,7 +2253,7 @@ function renderOrders() {
       ${o.done ? `<span class="done-tag">${ic('check-circle')} נמסר</span>`
         : `<button type="button" class="btn btn-good btn-small" data-action="deliver" data-id="${o.id}">${ic('check')} סימון כנמסר</button>`}</li>`;
   };
-  $('#orders-wrap').innerHTML = state.orders.length
+  $('#orders-wrap').innerHTML = mine.length
     ? `<ul class="orders">${pending.map(row).join('')}${done.map(row).join('')}</ul>`
     : `<div class="empty">${ic('bag')}עדיין לא נרכשו פרסים</div>`;
 }
@@ -1980,13 +2261,17 @@ function renderOrders() {
 function renderEditLists() {
   const del = (kind, id, name) => `<button type="button" class="del" data-action="delete" data-kind="${kind}" data-id="${id}" aria-label="מחיקת ${esc(name)}">${ic('trash')}</button>`;
   const empty = '<li class="muted" style="justify-content:center">הרשימה ריקה</li>';
-  $('#ed-students').innerHTML = state.students.map(s => `<li>${avatar(s, 'sm')}<span class="en">${esc(s.name)}</span>
+  $('#ed-students').innerHTML = classStudents(ui.classId).map(s => `<li>${avatar(s, 'sm')}<span class="en">${esc(s.name)}</span>
       <span class="ev num g">${s.coins}${coinIc()}</span>${del('student', s.id, s.name)}
       <div class="ed-sub">
         <span class="pw-tag ${s.pin ? 'set' : 'unset'}">${ic(s.pin ? 'lock' : 'key')}${s.pin ? 'סיסמה מוגדרת' : 'ללא סיסמה'}</span>
         <button type="button" class="btn btn-ghost btn-small" data-action="reset-pin" data-id="${s.id}" ${s.pin ? '' : 'disabled'}
           aria-label="איפוס הסיסמה של ${esc(s.name)}">${ic('key')} אפס סיסמה</button>
+        ${state.classes.length > 1 ? `<label class="move">כיתה <select class="mini-select" data-move="${s.id}" aria-label="העברת ${esc(s.name)} לכיתה אחרת">${sortedClasses().map(c => `<option value="${c.id}"${c.id === s.classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>` : ''}
       </div></li>`).join('') || empty;
+  $('#ed-classes').innerHTML = sortedClasses().map(c => `<li><span class="en">${esc(c.name)}${c.id === ui.classId ? ' <span class="pw-tag set">הכיתה הנוכחית</span>' : ''}</span>
+      <span class="ev muted">${countText(classStudents(c.id).length)}</span>
+      <button type="button" class="edit-btn" data-action="rename-class" data-id="${c.id}" aria-label="שינוי שם הכיתה ${esc(c.name)}">${ic('pencil')}</button>${del('class', c.id, c.name)}</li>`).join('') || empty;
   $('#ed-behaviors').innerHTML = state.behaviors.map(b => `<li><span class="en">${esc(b.label)}</span>
       <span class="ev num ${b.coins > 0 ? 'p' : 'n'}">${signed(b.coins)}</span>${del('behavior', b.id, b.label)}</li>`).join('') || empty;
   $('#ed-rewards').innerHTML = state.rewards.map(r => `<li>${giftIc('coin-ic')}<span class="en">${esc(r.label)}</span>
@@ -2007,7 +2292,16 @@ document.addEventListener('click', e => {
   const id = Number(el.dataset.id);
   switch (el.dataset.action) {
     case 'login': startStudentLogin(id); break;
-    case 'logout': go('login'); break;
+    case 'logout': {
+      const st = studentById(ui.studentId);
+      if ((ui.screen === 'student' || ui.screen === 'activity') && st) go('login-class', { loginClassId: st.classId, studentId: null });
+      else go('login');
+      break;
+    }
+    case 'pick-class': pickClass(id); break;
+    case 'change-class': go(ui.screen === 'login-class' ? 'login' : 'teacher-class'); break;
+    case 'add-class': openAddClass(); break;
+    case 'rename-class': openRenameClass(id); break;
     case 'teacher-login': openTeacherLogin(); break;
     case 'sound': toggleSound(); break;
     case 'buy': buyReward(id); break;
@@ -2016,15 +2310,17 @@ document.addEventListener('click', e => {
     case 'filter': ui.filter = el.dataset.filter; render(); break;
     case 'tab': if (ui.tab !== el.dataset.tab) { ui.tab = el.dataset.tab; render(); $(`#tab-${ui.tab}`).focus(); } break;
     case 'toggle': ui.selected.has(id) ? ui.selected.delete(id) : ui.selected.add(id); render(); break;
-    case 'select-all':
-      if (ui.selected.size === state.students.length) ui.selected.clear();
-      else state.students.forEach(s => ui.selected.add(s.id));
+    case 'select-all': {
+      const list = classStudents(ui.classId);
+      if (list.length && list.every(s => ui.selected.has(s.id))) ui.selected.clear();
+      else list.forEach(s => ui.selected.add(s.id));
       render(); break;
+    }
     case 'behavior': awardBehavior(id); break;
     case 'undo': undoLast(); break;
     case 'random-event': randomEvent(); break;
     case 'deliver': markDelivered(id); break;
-    case 'delete': deleteItem(el.dataset.kind, id); break;
+    case 'delete': if (el.dataset.kind === 'class') deleteClass(id); else deleteItem(el.dataset.kind, id); break;
     case 'reset-pin': resetPassword(id); break;
     case 'reset': resetAll(); break;
   }
@@ -2035,7 +2331,7 @@ document.addEventListener('submit', e => {
   if (!kind) return;
   e.preventDefault();
   const fd = new FormData(form);
-  const ok = kind === 'student' ? addStudent(fd) : kind === 'behavior' ? addBehavior(fd) : addReward(fd);
+  const ok = kind === 'student' ? addStudent(fd) : kind === 'behavior' ? addBehavior(fd) : kind === 'class' ? createClass(fd.get('name')) : addReward(fd);
   if (ok) {
     form.reset();
     if (form.elements.name) form.elements.name.focus(); else if (form.elements.label) form.elements.label.focus();
@@ -2043,13 +2339,29 @@ document.addEventListener('submit', e => {
 });
 
 document.addEventListener('input', e => {
+  if (e.target.id === 'class-search') { ui.classQuery = e.target.value; updateClassGrid(); return; }
   if (e.target.id === 'note') { ui.note = e.target.value; e.target.classList.toggle('has', !!e.target.value.trim()); }
 });
 document.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.move) { moveStudent(Number(e.target.dataset.move), Number(e.target.value)); return; }
   if (e.target.id === 'set-board') setLeaderboard(e.target.checked);
 });
 
 document.addEventListener('keydown', e => {
+  // Class search: Enter opens the first match, Esc clears the text.
+  if (e.target && e.target.id === 'class-search' && !modal) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = classMatches(ui.classQuery)[0];
+      if (first) pickClass(first.id); else { toast('לא נמצאה כיתה', 'error'); play('error'); shake(e.target.parentElement); }
+      return;
+    }
+    if (e.key === 'Escape' && e.target.value) {
+      e.preventDefault();
+      e.target.value = ''; ui.classQuery = ''; updateClassGrid();
+      return;
+    }
+  }
   if (e.key === 'Escape') {
     if ($('.levelup')) { $('.levelup').click(); return; }
     if (modal) { e.preventDefault(); closeModal(); }
