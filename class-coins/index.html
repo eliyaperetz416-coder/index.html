@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#1a0b3d">
+<meta name="theme-color" content="#120e2b">
 <meta name="description" content="מטבעות כיתה – מערכת תגמול התנהגות למורים מחליפים">
 <title>מטבעות כיתה</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23ffc83d' stroke='%23c27a00' stroke-width='8'/%3E%3Ctext x='50' y='66' font-size='46' text-anchor='middle' fill='%237a4a00'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='22' fill='%23c27a00'/%3E%3Ccircle cx='24' cy='22.5' r='21' fill='%23ffc83d'/%3E%3Cpath d='M24 12L26.7 19.28L34.46 19.6L28.37 24.42L30.47 31.9L24 27.6L17.53 31.9L19.63 24.42L13.54 19.6L21.3 19.28Z' fill='%23a55f00'/%3E%3C/svg%3E">
 <!-- Optional font: loaded without blocking rendering. Without internet the system font is used. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
   if (navigator.onLine !== false) {
     var fl = document.createElement('link');
     fl.rel = 'stylesheet'; fl.media = 'print';
-    fl.href = 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap';
+    fl.href = 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap';
     fl.onload = function () { this.media = 'all'; };
     document.head.appendChild(fl);
   }
@@ -25,29 +25,25 @@
    1. Tokens & base
    ========================================================== */
 :root{
-  --bg0:#12062b; --bg1:#1d0b45; --bg2:#2c1170;
-  --card:#25124f; --card2:#30186a; --card3:#3a1f80;
-  --line:rgba(255,255,255,.12); --line2:rgba(255,255,255,.2);
-  --txt:#fbf7ff; --muted:#cdbdf5; --dim:#a893e0;
-  --gold:#ffc83d; --gold2:#ff9f1c; --goldDeep:#c27a00; --goldInk:#3a2300;
-  --pink:#ff5fa2; --violet:#9b6bff; --cyan:#4fd8ff;
-  --green:#2fd98a; --greenTxt:#7af7bf; --greenDeep:#0f7a4b;
-  --red:#ff5d6c; --redTxt:#ff9aa4; --redDeep:#a3192a;
-  --radius:22px; --radius-sm:14px;
-  --shadow:0 14px 34px rgba(6,0,24,.45);
-  --font:'Rubik','Segoe UI','Arial Hebrew',Arial,system-ui,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';
+  --bg:#120e2b; --card:#211a4d; --card2:#2b2363; --line:#3d3480;
+  --ink:#f4f1ff; --muted:#a9a1d9;
+  --brand:#7c5cff; --brand2:#a78bff; --brandDeep:#4b32b8;
+  --gold:#ffc83d; --gold2:#ff9f1c; --goldDeep:#b86f00; --goldInk:#3a2300;
+  --good:#37e3a0; --goodTxt:#7ff0c4; --goodDeep:#14895c;
+  --bad:#ff5d7a; --badTxt:#ff9aae; --badDeep:#a8233d;
+  --radius:22px;
+  --shadow:0 14px 34px rgba(5,2,20,.45);
+  --font:'Rubik','Segoe UI','Arial Hebrew',Arial,system-ui,sans-serif;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{
-  margin:0; min-height:100vh; font-family:var(--font); color:var(--txt); line-height:1.45;
-  background-color:var(--bg0);
+  margin:0; min-height:100vh; font-family:var(--font); color:var(--ink); line-height:1.45;
+  background-color:var(--bg);
   background-image:
-    radial-gradient(900px 600px at 85% -10%, rgba(155,107,255,.45), transparent 60%),
-    radial-gradient(700px 500px at -10% 30%, rgba(255,95,162,.22), transparent 60%),
-    radial-gradient(800px 600px at 50% 120%, rgba(255,200,61,.16), transparent 60%),
-    linear-gradient(180deg, var(--bg1), var(--bg0) 70%);
+    radial-gradient(900px 620px at 100% 0%, rgba(124,92,255,.38), transparent 62%),
+    radial-gradient(800px 560px at 0% 100%, rgba(255,200,61,.16), transparent 62%);
   background-attachment:fixed;
   overflow-x:hidden;
 }
@@ -59,58 +55,73 @@ h1,h2,h3{margin:0;line-height:1.2}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:10px}
 [hidden]{display:none!important}
-
-/* Floating decorative sparkles in the background */
-.sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.sky span{position:absolute;font-size:22px;opacity:.16;animation:drift 18s linear infinite}
-@keyframes drift{from{transform:translateY(110vh) rotate(0)}to{transform:translateY(-15vh) rotate(360deg)}}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em}
+.coin-ic{width:1.2em;height:1.2em;flex:none;vertical-align:-.25em}
 #app{position:relative;z-index:1}
+
+/* Letter avatar: first letter in a colored circle (hue from the student id) */
+.av{
+  --h:260; --sz:44px;
+  width:var(--sz);height:var(--sz);flex:none;border-radius:50%;display:inline-grid;place-items:center;
+  font-weight:800;font-size:calc(var(--sz) * .46);color:#fff;line-height:1;
+  background:linear-gradient(135deg,hsl(var(--h) 85% 64%),hsl(calc(var(--h) + 40) 72% 44%));
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.3);text-shadow:0 1px 2px rgba(0,0,0,.3);
+}
+.av.sm{--sz:32px}
+.av.md{--sz:40px}
+.av.lg{--sz:62px;border-radius:50%}
+.av.xl{--sz:72px}
+
+/* Hexagon level badge */
+.hexb{position:relative;display:inline-grid;place-items:center;width:var(--s,54px);height:calc(var(--s,54px) * 1.083);flex:none}
+.hexb svg{position:absolute;inset:0;width:100%;height:100%}
+.hexb b{position:relative;font-weight:800;color:#5a3300;font-size:calc(var(--s,54px) * .4);margin-top:calc(var(--s,54px) * -.04)}
 
 /* ==========================================================
    2. Buttons, cards, inputs
    ========================================================== */
 .btn{
-  --b-bg:var(--card3); --b-sh:#1a0b40; --b-tx:var(--txt);
+  --b-bg:linear-gradient(180deg,var(--brand2),var(--brand)); --b-sh:var(--brandDeep); --b-tx:#fff;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   border:0;border-radius:14px;padding:11px 18px;font-weight:700;font-size:15px;
   background:var(--b-bg);color:var(--b-tx);
-  box-shadow:0 4px 0 var(--b-sh),0 8px 18px rgba(0,0,0,.25);
-  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
+  box-shadow:0 4px 0 var(--b-sh);
+  transition:transform .12s ease,box-shadow .12s ease,filter .15s ease;
   user-select:none;-webkit-tap-highlight-color:transparent;
 }
-.btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.08)}
-.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--b-sh),0 3px 8px rgba(0,0,0,.25)}
-.btn:disabled{cursor:not-allowed;filter:saturate(.35);opacity:.75}
-.btn-gold{--b-bg:linear-gradient(180deg,#ffe07a,#ffb81f);--b-sh:var(--goldDeep);--b-tx:var(--goldInk)}
-.btn-green{--b-bg:linear-gradient(180deg,#5ff0ac,#22c47a);--b-sh:var(--greenDeep);--b-tx:#04291a}
-.btn-red{--b-bg:linear-gradient(180deg,#ff8a95,#ef4457);--b-sh:var(--redDeep);--b-tx:#2b0208}
-.btn-ghost{--b-bg:rgba(255,255,255,.08);--b-sh:rgba(0,0,0,.35);box-shadow:0 3px 0 var(--b-sh);border:1px solid var(--line2)}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--b-sh)}
+.btn:disabled{cursor:not-allowed;filter:saturate(.3);opacity:.7}
+.btn-gold{--b-bg:linear-gradient(180deg,#ffe07a,var(--gold) 45%,var(--gold2));--b-sh:var(--goldDeep);--b-tx:var(--goldInk)}
+.btn-good{--b-bg:linear-gradient(180deg,#7ff0c4,var(--good));--b-sh:var(--goodDeep);--b-tx:#03281a}
+.btn-bad{--b-bg:linear-gradient(180deg,#ff8ea3,var(--bad));--b-sh:var(--badDeep);--b-tx:#2b0410}
+.btn-ghost{--b-bg:rgba(255,255,255,.06);--b-sh:#0b0820;--b-tx:var(--ink);border:1px solid var(--line)}
 .btn-small{padding:7px 12px;font-size:13px;border-radius:11px}
 .icon-btn{
-  width:44px;height:44px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.08);
-  font-size:20px;display:inline-grid;place-items:center;transition:transform .15s,background .15s;
+  width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.06);
+  font-size:20px;display:inline-grid;place-items:center;color:var(--ink);box-shadow:0 4px 0 #0b0820;transition:transform .12s,box-shadow .12s,background .15s;
 }
-.icon-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}
-.link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:4px;padding:8px;font-size:15px}
+.icon-btn:hover{background:rgba(255,255,255,.12)}
+.icon-btn:active{transform:translateY(4px);box-shadow:0 0 0 #0b0820}
+.icon-btn[aria-pressed="true"]{color:var(--gold);border-color:rgba(255,200,61,.5)}
+.link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:4px;padding:8px;font-size:15px;display:inline-flex;align-items:center;gap:6px}
 .link-btn:hover{color:var(--gold)}
 
-.card{
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)),var(--card);
-  border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);
-  min-width:0;
-}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-width:0}
 .card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.card-title h2{font-size:20px;font-weight:800}
+.card-title h2{font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px}
+.card-title h2 .ic{color:var(--brand2)}
 .card-title .sub{font-size:13px;color:var(--muted)}
 
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);min-width:0}
 .field input,.field select,.note-field input{
-  width:100%;background:rgba(0,0,0,.25);border:2px solid var(--line2);border-radius:12px;padding:10px 12px;
-  color:var(--txt);font-size:15px;transition:border-color .15s,background .15s;
+  width:100%;background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:12px;padding:10px 12px;
+  color:var(--ink);font-size:15px;transition:border-color .15s,background .15s;
 }
 .field input:focus,.field select:focus,.note-field input:focus{outline:none;border-color:var(--gold);background:rgba(0,0,0,.35)}
-.field input::placeholder,.note-field input::placeholder{color:#9a86cf}
-.field select option{background:#24124f}
+.field input::placeholder,.note-field input::placeholder{color:#7d74b3}
+.field select option{background:var(--card)}
 
 /* ==========================================================
    3. Shared layout: screens & top bar
@@ -119,11 +130,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 @keyframes screenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 .hello{display:flex;align-items:center;gap:14px;min-width:0}
-.avatar{
-  width:62px;height:62px;flex:none;border-radius:20px;display:grid;place-items:center;font-size:36px;
-  background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 6px 0 #5a2aa8,0 10px 24px rgba(155,107,255,.4);
-}
-.hello h1{font-size:clamp(22px,4vw,32px);font-weight:900}
+.hello h1{font-size:clamp(22px,4vw,30px);font-weight:800}
 .hello p{margin:2px 0 0;color:var(--muted);font-size:14px}
 .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
@@ -132,73 +139,58 @@ h1,h2,h3{margin:0;line-height:1.2}
    ========================================================== */
 .login{max-width:980px;text-align:center;padding-top:clamp(18px,6vh,64px)}
 .login-top{display:flex;justify-content:flex-end;margin-bottom:6px}
-.logo-coin{
-  width:118px;height:118px;margin:0 auto 18px;border-radius:50%;position:relative;display:grid;place-items:center;
-  background:radial-gradient(circle at 35% 30%,#fff3b8,#ffd34d 35%,#ffb31f 70%,#e08b00);
-  box-shadow:inset 0 -8px 0 rgba(160,90,0,.45),inset 0 6px 0 rgba(255,255,255,.45),0 10px 0 var(--goldDeep),0 20px 40px rgba(255,190,40,.35);
-  animation:bob 3.2s ease-in-out infinite;overflow:hidden;
-}
-.logo-coin::before{content:"";position:absolute;inset:12px;border-radius:50%;border:4px dashed rgba(140,80,0,.35)}
-.logo-coin::after{content:"";position:absolute;top:-20%;left:-60%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:rotate(20deg);animation:shine 3.6s ease-in-out infinite}
-.logo-coin b{font-size:56px;color:#8a5200;text-shadow:0 2px 0 rgba(255,255,255,.5);position:relative}
+.logo-coin{width:118px;height:118px;margin:0 auto 18px;border-radius:50%;position:relative;animation:bob 3.2s ease-in-out infinite;overflow:hidden;filter:drop-shadow(0 16px 30px rgba(255,190,40,.3))}
+.logo-coin svg{width:100%;height:100%;display:block}
+.logo-coin::after{content:"";position:absolute;top:-20%;left:-60%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);transform:rotate(20deg);animation:shine 3.6s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
 @keyframes shine{0%,55%{left:-60%}85%,100%{left:130%}}
 .login h1{
-  font-size:clamp(38px,8vw,64px);font-weight:900;letter-spacing:-.5px;
+  font-size:clamp(38px,8vw,64px);font-weight:800;letter-spacing:-.5px;
   background:linear-gradient(180deg,#fff6cf,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 4px 0 rgba(120,60,0,.5));
 }
 .login .lead{font-size:clamp(17px,3vw,21px);color:var(--muted);margin:8px 0 28px}
 .student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin:0 auto;max-width:860px}
 .stu-btn{
-  border:2px solid var(--line2);border-radius:22px;padding:20px 10px 16px;
-  background:linear-gradient(180deg,var(--card3),var(--card));
-  box-shadow:0 6px 0 #160838,0 12px 24px rgba(0,0,0,.3);
-  display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .2s;
+  border:1px solid var(--line);border-radius:22px;padding:20px 10px 16px;background:var(--card2);
+  box-shadow:0 5px 0 #0b0820;
+  display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s;
   animation:popIn .5s cubic-bezier(.3,1.5,.6,1) both;animation-delay:calc(var(--i,0) * 45ms);
 }
-.stu-btn .emo{font-size:48px;line-height:1;transition:transform .3s}
+.stu-btn .av{--sz:58px;transition:transform .3s}
 .stu-btn .nm{font-size:19px;font-weight:800}
-.stu-btn:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 10px 0 #160838,0 18px 30px rgba(255,200,61,.18)}
-.stu-btn:hover .emo{transform:scale(1.15) rotate(-8deg)}
-.stu-btn:active{transform:translateY(2px)}
+.stu-btn .hint{font-size:12px;color:var(--gold);font-weight:500;min-height:1.2em}
+.stu-btn:hover{transform:translateY(-6px);border-color:var(--gold)}
+.stu-btn:hover .av{transform:scale(1.1) rotate(-6deg)}
+.stu-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0b0820}
 @keyframes popIn{from{opacity:0;transform:scale(.7) translateY(16px)}to{opacity:1;transform:none}}
 .login-foot{margin-top:30px}
-.empty-note{padding:26px;border:2px dashed var(--line2);border-radius:20px;color:var(--muted);max-width:520px;margin:0 auto}
+.empty-note{padding:26px;border:2px dashed var(--line);border-radius:20px;color:var(--muted);max-width:520px;margin:0 auto}
 
 /* ==========================================================
    5. Student dashboard
    ========================================================== */
-.dash{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:20px;align-items:start}
+.dash{display:flex;flex-direction:column;gap:20px}
+.cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:20px;align-items:start}
 .col{display:flex;flex-direction:column;gap:20px;min-width:0}
 
-.hero{
-  position:relative;overflow:hidden;
-  background:
-    radial-gradient(500px 220px at 90% 0%,rgba(255,200,61,.22),transparent 70%),
-    radial-gradient(400px 260px at 0% 100%,rgba(255,95,162,.22),transparent 70%),
-    linear-gradient(135deg,#3b1a8a,#24104f);
-  border:1px solid rgba(255,200,61,.35);
+.hud{
+  position:relative;overflow:hidden;padding:24px 26px;
+  background:linear-gradient(135deg,#3b2a99,#6b4cff 60%,#8a6cff);border-color:rgba(255,255,255,.2);
 }
-.hero-grid{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
-.balance-wrap{text-align:center;min-width:170px}
-.balance-label{font-size:14px;color:var(--muted);font-weight:500}
-.balance{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
-.coin{
-  width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:900;color:#8a5200;font-size:28px;
-  background:radial-gradient(circle at 35% 30%,#fff3b8,#ffd34d 40%,#ffb31f 75%,#e08b00);
-  box-shadow:inset 0 -5px 0 rgba(160,90,0,.45),0 5px 0 var(--goldDeep);
-  animation:spinY 4s ease-in-out infinite;
-}
-.coin.sm{width:22px;height:22px;font-size:12px;box-shadow:inset 0 -2px 0 rgba(160,90,0,.45),0 2px 0 var(--goldDeep);animation:none;vertical-align:middle;display:inline-grid}
+.hud-bgcoin{position:absolute;width:260px;height:260px;inset-inline-end:-60px;top:-70px;opacity:.13;transform:rotate(-16deg);pointer-events:none}
+.hud-inner{position:relative;max-width:640px}
+.balance-label{font-size:15px;color:#e4dcff;font-weight:500}
+.balance{display:flex;align-items:center;gap:14px;margin-top:2px}
+.balance .coin-big{width:64px;height:64px;flex:none;animation:spinY 4s ease-in-out infinite;filter:drop-shadow(0 6px 10px rgba(60,20,120,.45))}
 @keyframes spinY{0%,70%,100%{transform:rotateY(0)}85%{transform:rotateY(180deg)}}
-.balance-num{font-size:clamp(56px,9vw,84px);font-weight:900;color:var(--gold);line-height:1;text-shadow:0 5px 0 rgba(120,60,0,.55),0 0 30px rgba(255,200,61,.35);font-variant-numeric:tabular-nums}
+.balance-num{font-size:clamp(58px,9vw,86px);font-weight:800;color:var(--gold);line-height:1;text-shadow:0 5px 0 rgba(90,40,0,.45),0 0 30px rgba(255,200,61,.35);font-variant-numeric:tabular-nums}
 .balance-num.bump{animation:bump .6s cubic-bezier(.3,1.8,.5,1)}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-.level-box{min-width:0}
-.level-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid rgba(255,200,61,.45);font-weight:800;font-size:16px}
-.level-badge .li{font-size:22px}
-.xp{margin-top:12px;height:18px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid var(--line);overflow:hidden;position:relative}
+.level-row{display:flex;align-items:center;gap:14px;margin-top:18px}
+.level-info{flex:1;min-width:0}
+.level-name{font-weight:800;font-size:17px}
+.xp{margin-top:8px;height:16px;border-radius:999px;background:rgba(10,5,40,.4);border:1px solid rgba(255,255,255,.18);overflow:hidden;position:relative}
 .xp i{
   position:absolute;inset-block:0;inset-inline-start:0;width:0;border-radius:999px;
   background:linear-gradient(90deg,var(--gold2),var(--gold),#fff1a8);
@@ -206,67 +198,13 @@ h1,h2,h3{margin:0;line-height:1.2}
 }
 .xp i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.25) 0 8px,transparent 8px 16px);animation:stripes 1.2s linear infinite}
 @keyframes stripes{to{background-position:32px 0}}
-.xp-text{font-size:14px;color:var(--muted);margin-top:8px}
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.stat{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:13px;color:var(--muted)}
-.stat b{color:var(--txt);font-size:16px}
+.xp-text{font-size:14px;color:#e4dcff;margin-top:6px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.stat{background:rgba(10,5,40,.3);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:7px 12px;font-size:13px;color:#e4dcff}
+.stat b{color:#fff;font-size:16px}
 
-/* Shop */
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:12px}
-.reward{
-  position:relative;border-radius:18px;padding:16px 14px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
-  background:linear-gradient(180deg,var(--card3),var(--card2));border:2px solid var(--line);
-  transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .2s;
-}
-.reward:hover{transform:translateY(-5px);box-shadow:0 14px 26px rgba(0,0,0,.35)}
-.reward.can{border-color:rgba(255,200,61,.6);box-shadow:0 0 0 0 rgba(255,200,61,.0)}
-.reward.can::before{content:"✨";position:absolute;top:8px;inset-inline-start:10px;font-size:15px;animation:twinkle 1.8s ease-in-out infinite}
-@keyframes twinkle{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
-.r-icon{font-size:44px;line-height:1.1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
-.r-name{font-weight:800;font-size:16px;min-height:2.4em;display:flex;align-items:center}
-.r-cost{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--gold);font-size:17px}
-.r-bar{width:100%;height:7px;border-radius:9px;background:rgba(0,0,0,.35);overflow:hidden;margin:2px 0 6px}
-.r-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--pink));border-radius:9px;transition:width .8s ease}
-.reward.can .r-bar i{background:linear-gradient(90deg,var(--gold2),var(--gold))}
-.reward .btn{width:100%}
-.reward .btn:disabled{font-size:13px}
-
-/* Feed */
-.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto;padding-inline-end:4px;scrollbar-width:thin;scrollbar-color:var(--card3) transparent}
-.feed-item{
-  display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.2);
-  border:1px solid var(--line);border-inline-start:5px solid var(--dim);
-}
-.feed-item.pos{border-inline-start-color:var(--green)}
-.feed-item.neg{border-inline-start-color:var(--red)}
-.feed-item.buy{border-inline-start-color:var(--gold)}
-.feed-item.anim{animation:feedIn .45s cubic-bezier(.2,1.2,.4,1) both;animation-delay:calc(var(--i,0) * 55ms)}
-@keyframes feedIn{from{opacity:0;transform:translateX(-24px) scale(.97)}to{opacity:1;transform:none}}
-.f-main{flex:1;min-width:0}
-.f-text{font-weight:700;font-size:15px}
-.f-note{margin-top:4px;font-size:14px;color:#efe6ff;background:rgba(155,107,255,.18);border-radius:10px;padding:5px 9px;display:inline-block;overflow-wrap:anywhere}
-.f-time{display:block;font-size:12px;color:var(--dim);margin-top:4px}
-.f-amt{font-weight:900;font-size:18px;padding:4px 10px;border-radius:12px;flex:none;min-width:52px;text-align:center}
-.pos .f-amt{color:var(--greenTxt);background:rgba(47,217,138,.14)}
-.neg .f-amt,.buy .f-amt{color:var(--redTxt);background:rgba(255,93,108,.14)}
-.zero .f-amt{color:var(--muted);background:rgba(255,255,255,.08)}
-.more-btn{margin-top:12px;width:100%}
-.empty{padding:22px;text-align:center;color:var(--muted);border:2px dashed var(--line2);border-radius:16px}
-.empty .big{font-size:34px;display:block;margin-bottom:6px}
-
-/* Leaderboard */
-.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.board li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
-.board li.me{border-color:var(--gold);background:rgba(255,200,61,.12)}
-.board .rk{width:30px;text-align:center;font-size:20px;font-weight:900}
-.board .be{font-size:24px}
-.board .bn{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.board .bv{font-weight:800;color:var(--gold)}
-
-/* Charts */
-.chart-block+.chart-block{margin-top:22px}
-.chart-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.chart-head h3{font-size:16px;font-weight:700}
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 .legend{display:flex;gap:12px;font-size:13px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
@@ -274,115 +212,206 @@ h1,h2,h3{margin:0;line-height:1.2}
 .chart svg{display:block;width:100%;height:auto;overflow:visible;direction:ltr;touch-action:pan-y;border-radius:12px}
 .chart svg:focus{outline:none}
 .chart svg:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
-.ax text{fill:var(--dim);font-size:11px;font-family:var(--font)}
-.gridl{stroke:rgba(255,255,255,.08);stroke-width:1}
-.axis-base{stroke:rgba(255,255,255,.28);stroke-width:1}
-.bal-line{fill:none;stroke:var(--gold);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 3px 6px rgba(255,200,61,.35))}
-.bal-dot{fill:#2a1260;stroke:var(--gold);stroke-width:2}
+.ax text{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.ax .cap{fill:var(--brand2);font-weight:700}
+.gridl{stroke:rgba(169,161,217,.14);stroke-width:1}
+.axis-base{stroke:rgba(169,161,217,.4);stroke-width:1}
+.bal-line{fill:none;stroke:var(--gold);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.bal-dot{fill:var(--card);stroke:var(--gold);stroke-width:2}
+.last-ring{fill:rgba(255,200,61,.22);stroke:none}
+.last-dot{fill:var(--gold);stroke:#fff;stroke-width:2.5}
+.last-val{fill:var(--gold);font-weight:800;font-size:13px;font-family:var(--font)}
 .cross{stroke:rgba(255,255,255,.45);stroke-dasharray:4 4}
 .hl{fill:var(--gold);stroke:#fff;stroke-width:2}
-.bar-pos{fill:var(--green)}
-.bar-neg{fill:var(--red)}
+.bar-pos{fill:var(--good)}
+.bar-neg{fill:var(--bad)}
 .bar-hover{fill:rgba(255,255,255,.07)}
+/* enter animations (only on first draw after opening the dashboard) */
+.chart svg.enter .bal-line{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.1s ease-out .1s forwards}
+.chart svg.enter .bal-area,.chart svg.enter .bal-dot{animation:fadeIn .7s ease .5s both}
+.chart svg.enter .last-g{animation:popDot .5s cubic-bezier(.3,1.8,.5,1) 1.05s both;transform-box:fill-box;transform-origin:center}
+.chart svg.enter .bar{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.2,.9,.3,1.15) both;animation-delay:calc(var(--i,0) * 60ms)}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes popDot{from{transform:scale(0)}to{transform:scale(1)}}
 .tt{
   position:absolute;top:0;left:0;pointer-events:none;z-index:3;min-width:150px;max-width:240px;
-  background:rgba(14,4,40,.96);border:1px solid var(--line2);border-radius:12px;padding:8px 11px;font-size:13px;
+  background:rgba(14,10,40,.97);border:1px solid var(--line);border-radius:12px;padding:8px 11px;font-size:13px;
   box-shadow:0 10px 24px rgba(0,0,0,.45);opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;
 }
 .tt.show{opacity:1}
 .tt strong{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
-.tt .tp{color:var(--greenTxt);font-weight:700}
-.tt .tn{color:var(--redTxt);font-weight:700}
+.tt .tp{color:var(--goodTxt);font-weight:700}
+.tt .tn{color:var(--badTxt);font-weight:700}
 .tt .tg{color:var(--gold);font-weight:700}
-.chart-empty{display:grid;place-items:center;text-align:center;min-height:170px;border:2px dashed var(--line2);border-radius:16px;color:var(--muted);padding:16px}
-.chart-empty .big{font-size:34px;display:block}
+.chart-empty{display:grid;place-items:center;text-align:center;min-height:190px;border:2px dashed var(--line);border-radius:16px;color:var(--muted);padding:18px;background:rgba(0,0,0,.12)}
+.chart-empty .ic{width:42px;height:42px;color:var(--brand2);margin-bottom:6px}
+.chart-empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
+
+/* Shop */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.reward{
+  position:relative;border-radius:18px;padding:16px 12px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:var(--card2);border:1px solid var(--line);
+  transition:transform .2s cubic-bezier(.3,1.6,.6,1),border-color .2s,box-shadow .2s;
+}
+.reward:hover{transform:translateY(-5px);box-shadow:0 14px 26px rgba(0,0,0,.35)}
+.reward.can{border-color:rgba(255,200,61,.6)}
+.r-gift{width:50px;height:50px;filter:drop-shadow(0 5px 8px rgba(0,0,0,.35))}
+.reward.can .r-gift{animation:wiggle 2.4s ease-in-out infinite}
+@keyframes wiggle{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-8deg)}90%{transform:rotate(7deg)}95%{transform:rotate(-4deg)}}
+.r-name{font-weight:700;font-size:15px;min-height:2.4em;display:flex;align-items:center}
+.r-cost{display:flex;align-items:center;gap:6px;font-weight:800;color:var(--gold);font-size:17px}
+.r-bar{width:100%;height:7px;border-radius:9px;background:rgba(0,0,0,.35);overflow:hidden;margin:2px 0 6px}
+.r-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:9px;transition:width .8s ease}
+.reward.can .r-bar i{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.reward .btn{width:100%}
+.reward .btn:disabled{font-size:13px}
+
+/* Feed */
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.feed-item{
+  display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.18);
+  border:1px solid var(--line);border-inline-start:5px solid var(--muted);
+}
+.feed-item.pos{border-inline-start-color:var(--good)}
+.feed-item.neg{border-inline-start-color:var(--bad)}
+.feed-item.buy{border-inline-start-color:var(--gold)}
+.feed-item.anim{animation:feedIn .45s cubic-bezier(.2,1.2,.4,1) both;animation-delay:calc(var(--i,0) * 55ms)}
+@keyframes feedIn{from{opacity:0;transform:translateX(-24px) scale(.97)}to{opacity:1;transform:none}}
+.f-main{flex:1;min-width:0}
+.f-text{font-weight:700;font-size:15px}
+.f-note{margin-top:5px;font-size:14px;color:#ece7ff;background:rgba(124,92,255,.2);border-radius:10px;padding:5px 9px;display:inline-flex;gap:6px;align-items:flex-start;overflow-wrap:anywhere}
+.f-note .ic{color:var(--brand2);margin-top:2px}
+.f-time{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.f-amt{font-weight:800;font-size:17px;padding:4px 10px;border-radius:999px;flex:none;min-width:54px;text-align:center}
+.pos .f-amt{color:var(--goodTxt);background:rgba(55,227,160,.14)}
+.neg .f-amt,.buy .f-amt{color:var(--badTxt);background:rgba(255,93,122,.14)}
+.zero .f-amt{color:var(--muted);background:rgba(255,255,255,.08)}
+.more-btn{margin-top:14px;width:100%}
+.empty{padding:22px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:16px}
+.empty .ic{width:36px;height:36px;color:var(--brand2);display:block;margin:0 auto 6px}
+
+/* Full activity view */
+.act-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px;color:var(--muted);transition:background .15s,color .15s}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed="true"]{background:linear-gradient(180deg,var(--brand2),var(--brand));color:#fff;border-color:transparent;box-shadow:0 3px 0 var(--brandDeep)}
+.chip .n{opacity:.8;font-weight:500;margin-inline-start:4px}
+.day-group+.day-group{margin-top:20px}
+.day-h{font-size:15px;font-weight:800;color:var(--brand2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.day-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.day-h .cnt{font-weight:500;color:var(--muted);font-size:13px}
+
+/* Leaderboard */
+.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.board li{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.board li.me{border-color:var(--gold);background:rgba(255,200,61,.12)}
+.board .rk{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;background:rgba(255,255,255,.08);flex:none}
+.board .r1{background:linear-gradient(180deg,#ffe07a,var(--gold2));color:var(--goldInk)}
+.board .r2{background:linear-gradient(180deg,#eef0ff,#a9b0d6);color:#22264a}
+.board .r3{background:linear-gradient(180deg,#ffc79a,#c9763a);color:#3a1a00}
+.board .bn{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .bv{font-weight:800;color:var(--gold);display:inline-flex;align-items:center;gap:5px}
 
 /* ==========================================================
    6. Teacher panel
    ========================================================== */
 .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;background:rgba(0,0,0,.22);padding:6px;border-radius:18px;border:1px solid var(--line);width:fit-content;max-width:100%}
 .tab{border:0;background:transparent;padding:10px 16px;border-radius:13px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:background .15s,color .15s}
-.tab:hover{color:var(--txt);background:rgba(255,255,255,.06)}
-.tab[aria-selected="true"]{background:linear-gradient(180deg,#ffe07a,#ffb81f);color:var(--goldInk);box-shadow:0 3px 0 var(--goldDeep)}
-.badge{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--pink);color:#fff;font-size:12px;font-weight:800;display:inline-grid;place-items:center}
+.tab:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.tab[aria-selected="true"]{background:linear-gradient(180deg,#ffe07a,var(--gold) 45%,var(--gold2));color:var(--goldInk);box-shadow:0 3px 0 var(--goldDeep)}
+.badge{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--bad);color:#fff;font-size:12px;font-weight:800;display:inline-grid;place-items:center}
 .tab[aria-selected="true"] .badge{background:#7a2a00}
 
 .t-actions{display:grid;grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:20px;align-items:start}
 .roster{position:sticky;top:14px}
-.roster-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 230px);overflow-y:auto;padding:2px;scrollbar-width:thin}
+.roster-list{list-style:none;margin:0;padding:2px;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 230px);overflow-y:auto;scrollbar-width:thin}
 .stu-row{
-  width:100%;position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:15px;border:2px solid var(--line);
-  background:rgba(0,0,0,.2);text-align:start;transition:border-color .15s,background .15s,transform .15s;
+  width:100%;position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:15px;border:2px solid var(--line);
+  background:rgba(0,0,0,.18);text-align:start;transition:border-color .15s,background .15s,transform .15s;
 }
-.stu-row:hover{border-color:var(--line2);transform:translateX(-3px)}
-.stu-row .ck{width:24px;height:24px;border-radius:8px;border:2px solid var(--line2);display:grid;place-items:center;font-size:14px;font-weight:900;color:transparent;flex:none;transition:all .15s}
-.stu-row .emo{font-size:26px;flex:none}
+.stu-row:hover{border-color:var(--brand2);transform:translateX(-3px)}
+.stu-row .ck{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;color:transparent;flex:none;transition:all .15s}
+.stu-row .ck .ic{width:16px;height:16px;stroke-width:3}
 .stu-row .nm{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stu-row .cn{font-weight:800;color:var(--gold);display:flex;align-items:center;gap:5px;flex:none}
-.stu-row[aria-pressed="true"]{border-color:var(--gold);background:rgba(255,200,61,.13)}
+.stu-row[aria-pressed="true"]{border-color:var(--gold);background:rgba(255,200,61,.12)}
 .stu-row[aria-pressed="true"] .ck{background:var(--gold);border-color:var(--gold);color:var(--goldInk)}
 .stu-row.pulse{animation:rowPulse .7s ease}
 @keyframes rowPulse{0%{box-shadow:0 0 0 0 rgba(255,200,61,.7)}100%{box-shadow:0 0 0 14px rgba(255,200,61,0)}}
-.float-delta{position:absolute;inset-inline-end:60px;top:4px;font-weight:900;font-size:20px;pointer-events:none;animation:floatUp 1.2s ease-out forwards;direction:ltr}
-.float-delta.p{color:var(--greenTxt)} .float-delta.n{color:var(--redTxt)}
+.float-delta{position:absolute;inset-inline-end:64px;top:4px;font-weight:800;font-size:20px;pointer-events:none;animation:floatUp 1.2s ease-out forwards;direction:ltr}
+.float-delta.p{color:var(--goodTxt)} .float-delta.n{color:var(--badTxt)}
 @keyframes floatUp{0%{opacity:0;transform:translateY(8px) scale(.7)}20%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-34px) scale(1)}}
 .sel-info{font-size:13px;color:var(--muted);margin:-6px 0 10px}
 
 .note-field{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);margin-bottom:18px}
-.note-field input.has{border-color:var(--violet)}
+.note-field>span{display:flex;align-items:center;gap:6px}
+.note-field input.has{border-color:var(--brand)}
 .grp{font-size:17px;font-weight:800;margin:6px 0 10px;display:flex;align-items:center;gap:8px}
-.grp.pos{color:var(--greenTxt)} .grp.neg{color:var(--redTxt)}
-.beh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.grp.pos{color:var(--goodTxt)} .grp.neg{color:var(--badTxt)}
+.beh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px}
 .beh{
-  display:flex;align-items:center;gap:10px;padding:14px 14px;border-radius:17px;border:2px solid;text-align:start;
-  transition:transform .15s cubic-bezier(.3,1.6,.6,1),filter .15s,box-shadow .15s;font-weight:700;font-size:15px;min-height:64px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:12px 10px 14px;border-radius:17px;border:2px solid;text-align:center;
+  transition:transform .12s ease,filter .15s,box-shadow .12s;font-weight:700;font-size:15px;min-height:92px;
 }
-.beh .bi{font-size:30px;flex:none;transition:transform .2s}
-.beh .bl{flex:1;min-width:0}
-.beh .bc{font-weight:900;font-size:17px;flex:none}
-.beh.p{background:linear-gradient(180deg,rgba(47,217,138,.26),rgba(47,217,138,.1));border-color:rgba(47,217,138,.6);box-shadow:0 4px 0 #0c5b39}
-.beh.p .bc{color:var(--greenTxt)}
-.beh.n{background:linear-gradient(180deg,rgba(255,93,108,.26),rgba(255,93,108,.1));border-color:rgba(255,93,108,.6);box-shadow:0 4px 0 #6d1220}
-.beh.n .bc{color:var(--redTxt)}
-.beh:hover{transform:translateY(-3px);filter:brightness(1.12)}
-.beh:hover .bi{transform:scale(1.15) rotate(-8deg)}
-.beh:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.beh .bc{font-weight:800;font-size:30px;line-height:1.1}
+.beh .bl{min-width:0}
+.beh.p{background:linear-gradient(180deg,rgba(55,227,160,.24),rgba(55,227,160,.08));border-color:rgba(55,227,160,.6);box-shadow:0 4px 0 #0d5e40}
+.beh.p .bc{color:var(--goodTxt)}
+.beh.n{background:linear-gradient(180deg,rgba(255,93,122,.24),rgba(255,93,122,.08));border-color:rgba(255,93,122,.6);box-shadow:0 4px 0 #6d1428}
+.beh.n .bc{color:var(--badTxt)}
+.beh:hover{filter:brightness(1.15)}
+.beh:active{transform:translateY(4px);box-shadow:0 0 0 transparent}
+
+.recent-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.recent-list li{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:13px;background:rgba(0,0,0,.18);border:1px solid var(--line);flex-wrap:wrap}
+.recent-list li:first-child{border-color:rgba(167,139,255,.6)}
+.recent-list .ra{font-weight:800;min-width:44px;text-align:center}
+.recent-list .ra.p{color:var(--goodTxt)} .recent-list .ra.n{color:var(--badTxt)}
+.recent-list .rl{font-weight:700}
+.recent-list .rw{color:var(--muted);font-size:13px;flex:1;min-width:120px}
+.recent-list time{color:var(--muted);font-size:12px}
 
 .orders{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.order{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.22);border:1px solid var(--line);flex-wrap:wrap}
+.order{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.2);border:1px solid var(--line);flex-wrap:wrap}
 .order.pending{border-color:rgba(255,200,61,.5)}
 .order.done{opacity:.68}
-.order .oi{font-size:32px}
+.order .og{width:38px;height:38px;flex:none}
 .order .om{flex:1;min-width:160px}
 .order .ot{font-weight:800}
 .order .os{font-size:13px;color:var(--muted)}
-.done-tag{color:var(--greenTxt);font-weight:700;font-size:14px}
+.done-tag{color:var(--goodTxt);font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px}
 
 .edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;align-items:start}
 .add-form{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid var(--line);margin-bottom:14px}
-.field-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 110px;gap:10px}
-.field-row.r3b{grid-template-columns:minmax(0,1fr) 80px 104px 80px}
-.emoji-pick{display:flex;flex-wrap:wrap;gap:6px}
-.emoji-pick button{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);font-size:20px;transition:transform .12s,background .12s}
-.emoji-pick button:hover{transform:scale(1.12);background:rgba(255,255,255,.14)}
-.ed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;scrollbar-width:thin}
-.ed-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:13px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
-.ed-list .ei{font-size:24px;flex:none}
+.field-row{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px}
+.field-row.r3{grid-template-columns:minmax(0,1fr) 110px 90px}
+.ed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;scrollbar-width:thin}
+.ed-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:13px;background:rgba(0,0,0,.18);border:1px solid var(--line);flex-wrap:wrap}
 .ed-list .en{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ed-list .ev{font-weight:800;flex:none}
-.ed-list .ev.p{color:var(--greenTxt)} .ed-list .ev.n{color:var(--redTxt)} .ed-list .ev.g{color:var(--gold)}
-.del{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,93,108,.4);background:rgba(255,93,108,.12);font-size:16px;flex:none;transition:background .15s,transform .15s}
-.del:hover{background:rgba(255,93,108,.3);transform:scale(1.06)}
-.switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.ed-list .ev{font-weight:800;flex:none;display:inline-flex;align-items:center;gap:4px}
+.ed-list .ev.p{color:var(--goodTxt)} .ed-list .ev.n{color:var(--badTxt)} .ed-list .ev.g{color:var(--gold)}
+.ed-sub{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-inline-start:42px}
+.pw-tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.pw-tag.set{color:var(--goodTxt);background:rgba(55,227,160,.12)}
+.pw-tag.unset{color:var(--muted);background:rgba(255,255,255,.06)}
+.del{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,93,122,.4);background:rgba(255,93,122,.12);color:var(--badTxt);display:grid;place-items:center;flex:none;transition:background .15s,transform .15s}
+.del:hover{background:rgba(255,93,122,.3);transform:scale(1.06)}
+.switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid var(--line);font-weight:700}
 .switch-row input{position:absolute;opacity:0;width:1px;height:1px}
 .switch{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.18);position:relative;flex:none;transition:background .2s}
 .switch::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .25s cubic-bezier(.3,1.5,.6,1);box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.switch-row input:checked+.switch{background:var(--green)}
+.switch-row input:checked+.switch{background:var(--good)}
 .switch-row input:checked+.switch::after{transform:translateX(-22px)}
 .switch-row input:focus-visible+.switch{outline:3px solid var(--gold);outline-offset:3px}
-.danger{margin-top:16px;padding:14px;border-radius:16px;border:1px dashed rgba(255,93,108,.55);background:rgba(255,93,108,.07)}
-.danger h3{font-size:15px;color:var(--redTxt);margin-bottom:4px}
-.danger p{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.tool-box{margin-top:16px;padding:14px;border-radius:16px;border:1px solid rgba(167,139,255,.5);background:rgba(124,92,255,.1)}
+.tool-box h3,.danger h3{font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tool-box h3{color:var(--brand2)}
+.tool-box p,.danger p{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.danger{margin-top:16px;padding:14px;border-radius:16px;border:1px dashed rgba(255,93,122,.55);background:rgba(255,93,122,.07)}
+.danger h3{color:var(--badTxt)}
 
 /* ==========================================================
    7. Overlays: toasts, modal, level-up, confetti
@@ -390,42 +419,49 @@ h1,h2,h3{margin:0;line-height:1.2}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(92vw,460px);pointer-events:none}
 .toast{
   pointer-events:auto;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:16px;font-weight:700;font-size:15px;
-  background:rgba(22,8,60,.97);border:1px solid var(--line2);box-shadow:0 14px 30px rgba(0,0,0,.45);
+  background:rgba(22,16,60,.97);border:1px solid var(--line);box-shadow:0 14px 30px rgba(0,0,0,.45);
   opacity:0;transform:translateY(-16px) scale(.95);transition:opacity .25s,transform .3s cubic-bezier(.3,1.6,.6,1);max-width:100%;
 }
 .toast.show{opacity:1;transform:none}
-.toast.success{border-color:rgba(47,217,138,.7)}
-.toast.error{border-color:rgba(255,93,108,.8)}
-.toast.warn{border-color:rgba(255,93,108,.55)}
-.toast .t-ico{font-size:20px;flex:none}
+.toast .t-ico{width:22px;height:22px}
+.toast.success{border-color:rgba(55,227,160,.7)} .toast.success .t-ico{color:var(--good)}
+.toast.error{border-color:rgba(255,93,122,.8)} .toast.error .t-ico{color:var(--bad)}
+.toast.warn{border-color:rgba(255,93,122,.55)} .toast.warn .t-ico{color:var(--bad)}
+.toast.info .t-ico{color:var(--brand2)}
 
-.modal-back{position:fixed;inset:0;z-index:50;background:rgba(8,2,24,.7);backdrop-filter:blur(4px);display:grid;place-items:center;padding:16px;opacity:0;transition:opacity .2s}
+.modal-back{position:fixed;inset:0;z-index:50;background:rgba(8,5,26,.72);backdrop-filter:blur(4px);display:grid;place-items:center;padding:16px;opacity:0;transition:opacity .2s}
 .modal-back.open{opacity:1}
 .modal{
-  width:min(100%,420px);background:linear-gradient(180deg,#3a1f80,#26124f);border:1px solid rgba(255,200,61,.4);border-radius:24px;padding:24px;
+  width:min(100%,420px);background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:24px;padding:24px;
   box-shadow:0 30px 60px rgba(0,0,0,.5);transform:scale(.88) translateY(20px);transition:transform .3s cubic-bezier(.3,1.5,.6,1);text-align:center;
 }
 .modal-back.open .modal{transform:none}
-.modal .m-icon{font-size:52px;line-height:1;margin-bottom:8px}
-.modal h2{font-size:22px;font-weight:900;margin-bottom:8px}
+.m-icon{display:grid;place-items:center;margin:0 auto 10px}
+.m-icon .ic{width:52px;height:52px;padding:12px;border-radius:50%;background:rgba(124,92,255,.2);color:var(--brand2);box-sizing:content-box}
+.m-icon.danger .ic{background:rgba(255,93,122,.16);color:var(--bad)}
+.m-icon .r-gift{width:60px;height:60px}
+.modal h2{font-size:22px;font-weight:800;margin-bottom:8px}
 .modal .m-body{color:var(--muted);font-size:15px;margin-bottom:18px}
-.modal .m-body b{color:var(--txt)}
+.modal .m-body b{color:var(--ink)}
+.modal .m-body p{margin:0 0 10px}
 .modal .m-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .modal .m-actions .btn{min-width:120px}
-.pin-input{width:100%;text-align:center;font-size:30px;letter-spacing:12px;font-weight:800;background:rgba(0,0,0,.3);border:2px solid var(--line2);border-radius:16px;padding:12px;color:var(--txt);direction:ltr;margin-top:6px}
+.m-field{display:block;text-align:start;margin-top:10px;font-size:13px;color:var(--muted)}
+.pin-input{width:100%;text-align:center;font-size:22px;letter-spacing:4px;font-weight:700;background:rgba(0,0,0,.3);border:2px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--ink);direction:ltr;margin-top:6px}
 .pin-input:focus{outline:none;border-color:var(--gold)}
+.m-hint{font-size:13px;color:var(--muted);margin-top:12px}
 .shake{animation:shake .45s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
-.levelup{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(8,2,24,.55);animation:fadeIn .25s ease both;cursor:pointer;padding:16px}
+.levelup{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(8,5,26,.72);animation:fadeIn .25s ease both;cursor:pointer;padding:16px}
 .levelup.out{animation:fadeOut .35s ease both}
-.lu-card{position:relative;text-align:center;padding:30px 36px;border-radius:30px;background:linear-gradient(180deg,#ffe58a,#ffb81f);color:var(--goldInk);box-shadow:0 10px 0 var(--goldDeep),0 30px 70px rgba(255,190,40,.45);animation:luPop .7s cubic-bezier(.3,1.7,.5,1) both;max-width:92vw}
-.lu-burst{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:repeating-conic-gradient(rgba(255,220,100,.35) 0 10deg,transparent 10deg 20deg);animation:spin 9s linear infinite;pointer-events:none;mask-image:radial-gradient(circle,#000 30%,transparent 70%);-webkit-mask-image:radial-gradient(circle,#000 30%,transparent 70%)}
-.lu-icon{font-size:72px;line-height:1;animation:bob 1.6s ease-in-out infinite}
-.lu-title{font-size:34px;font-weight:900;margin-top:8px}
-.lu-name{font-size:20px;font-weight:700;margin-top:4px}
-.lu-hint{font-size:13px;margin-top:10px;opacity:.75}
-@keyframes luPop{from{transform:scale(.3) rotate(-10deg);opacity:0}to{transform:none;opacity:1}}
+.lu-card{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;max-width:92vw}
+.lu-burst{position:absolute;left:50%;top:70px;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:repeating-conic-gradient(rgba(255,200,61,.3) 0 10deg,transparent 10deg 20deg);animation:spin 9s linear infinite;pointer-events:none;mask-image:radial-gradient(circle,#000 25%,transparent 68%);-webkit-mask-image:radial-gradient(circle,#000 25%,transparent 68%)}
+.lu-card .hexb{--s:140px;animation:luPop .8s cubic-bezier(.3,1.7,.5,1) both;filter:drop-shadow(0 12px 30px rgba(255,190,40,.5))}
+.lu-title{position:relative;font-size:clamp(26px,6vw,38px);font-weight:800;margin-top:22px;color:#fff;text-shadow:0 4px 0 rgba(60,20,120,.6);animation:fadeUp .5s ease .35s both}
+.lu-hint{position:relative;font-size:13px;margin-top:10px;color:var(--muted);animation:fadeUp .5s ease .6s both}
+@keyframes luPop{from{transform:scale(.1) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeOut{from{opacity:1}to{opacity:0}}
@@ -435,48 +471,104 @@ h1,h2,h3{margin:0;line-height:1.2}
    8. Responsive
    ========================================================== */
 @media (max-width:920px){
-  .dash{display:flex;flex-direction:column}
-  .col{display:contents}
-  .o-hero{order:1}.o-shop{order:2}.o-feed{order:3}.o-charts{order:4}.o-board{order:5}
+  .cols,.charts-row{grid-template-columns:1fr}
   .t-actions{grid-template-columns:1fr}
   .roster{position:static}
   .roster-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-height:none}
-  .feed{max-height:480px}
 }
 @media (max-width:560px){
   .card{padding:16px;border-radius:18px}
-  .hero-grid{grid-template-columns:1fr;gap:16px}
+  .hud{padding:20px 18px}
+  .hud-bgcoin{width:180px;height:180px;inset-inline-end:-50px;top:-50px}
+  .balance .coin-big{width:52px;height:52px}
   .student-grid{grid-template-columns:repeat(2,1fr);gap:12px}
   .stu-btn{padding:16px 8px 12px}
-  .stu-btn .emo{font-size:40px}
+  .stu-btn .av{--sz:50px}
   .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .reward{padding:12px 10px}
-  .r-icon{font-size:36px}
   .r-name{font-size:14px}
   .beh-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .beh{flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 8px}
+  .beh{min-height:84px}
+  .beh .bc{font-size:26px}
   .roster-list{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .stu-row{padding:8px;gap:6px}
+  .stu-row{padding:7px 8px;gap:6px}
   .stu-row .ck{display:none}
-  .stu-row .emo{font-size:22px}
-  .stu-row .cn .coin{display:none}
-  .field-row,.field-row.r3b{grid-template-columns:1fr 1fr}
+  .stu-row .av{--sz:28px}
+  .stu-row .cn .coin-ic{display:none}
+  .field-row,.field-row.r3{grid-template-columns:1fr 1fr}
   .field-row .field:first-child{grid-column:1/-1}
+  .ed-sub{padding-inline-start:0}
   .tabs{width:100%}
-  .tab{flex:1;justify-content:center;padding:10px 8px;font-size:14px}
-  .avatar{width:52px;height:52px;font-size:30px;border-radius:16px}
+  .tab{flex:1;justify-content:center;padding:10px 6px;font-size:14px}
+  .tab .ic{display:none}
+  .av.lg{--sz:52px}
   .topbar .btn{padding:9px 12px;font-size:14px}
 }
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
-  .sky{display:none}
 }
 </style>
 </head>
 <body>
-<div class="sky" aria-hidden="true"></div>
-<main id="app" aria-live="off"></main>
+<!-- SVG sprite: every icon in the app is drawn here (no emoji, no image files) -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="gCoin" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fff3b8"/><stop offset=".4" stop-color="#ffd34d"/><stop offset=".8" stop-color="#ffb31f"/><stop offset="1" stop-color="#e08b00"/>
+    </radialGradient>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a"/><stop offset=".55" stop-color="#ffc83d"/><stop offset="1" stop-color="#ff9f1c"/></linearGradient>
+    <linearGradient id="gGift" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bff"/><stop offset="1" stop-color="#6b4cff"/></linearGradient>
+  </defs>
+  <symbol id="i-coin" viewBox="0 0 48 48">
+    <circle cx="24" cy="24.5" r="22" fill="#b86f00"/>
+    <circle cx="24" cy="22.5" r="21" fill="url(#gCoin)"/>
+    <circle cx="24" cy="22.5" r="16" fill="none" stroke="#b86f00" stroke-opacity=".4" stroke-width="2"/>
+    <path d="M24 12L26.7 19.28L34.46 19.6L28.37 24.42L30.47 31.9L24 27.6L17.53 31.9L19.63 24.42L13.54 19.6L21.3 19.28Z" fill="#a55f00"/>
+  </symbol>
+  <symbol id="i-gift" viewBox="0 0 48 48">
+    <path d="M24 14c-3-6-11-8.5-12.5-3.5C10.3 14.6 17 15 24 14zM24 14c3-6 11-8.5 12.5-3.5C37.7 14.6 31 15 24 14z" fill="none" stroke="#ffc83d" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="7" y="21" width="34" height="22" rx="4" fill="url(#gGift)"/>
+    <rect x="5" y="14" width="38" height="9" rx="3" fill="#b9a3ff"/>
+    <rect x="21" y="14" width="6" height="29" fill="url(#gGold)"/>
+  </symbol>
+  <symbol id="i-hex" viewBox="0 0 48 52">
+    <polygon points="24,4 44,15.5 44,40.5 24,52 4,40.5 4,15.5" fill="#b86f00"/>
+    <polygon points="24,2 44,13.5 44,38.5 24,50 4,38.5 4,13.5" fill="url(#gGold)"/>
+    <polygon points="24,7.5 39.5,16.5 39.5,35.5 24,44.5 8.5,35.5 8.5,16.5" fill="none" stroke="#fff6cf" stroke-opacity=".55" stroke-width="1.5"/>
+  </symbol>
+  <symbol id="i-sound-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+  <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 7h13l-3.5-3.5M17 17H4l3.5 3.5"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4M12 17.2v.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8M21 11v6h-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14.5 8.5l2 2"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M10 17h4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M7 15l4-5 3 3 5-7"/></symbol>
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M4 20h16M7 20v-7M11 20V8M15 20v-5M19 20V5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5M8 9h8M8 13h4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a5.5 5.5 0 0 1 3 6"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-5L15.5 4.5a2.1 2.1 0 0 1 3 3L8 18z"/><path d="M13.5 6.5l3 3"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-4 3-6 7-6 0 4-3 6-7 6z"/></symbol>
+</svg>
+
+<main id="app"></main>
 <div id="toasts" role="status" aria-live="polite"></div>
 <div id="modal-root"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -487,17 +579,20 @@ h1,h2,h3{margin:0;line-height:1.2}
 /* ==========================================================
    1. Constants & helpers
    ========================================================== */
-const STORE_KEY = 'classCoins_v2';
+const STORE_KEY = 'classCoins_v4';
 const SOUND_KEY = 'classCoins_sound';
-const TEACHER_PIN = '1234';
+const SEEN_LEVEL_KEY = 'classCoins_v4_seenLevel';
+const TEACHER_CODE = 'amit';           // compared case-insensitively
+const MIN_PASSWORD = 4;
 const COINS_PER_LEVEL = 50;
 const LEVELS = ['מתחיל', 'חוקר', 'לוחם', 'גיבור', 'אלוף', 'אגדה'];
-const LEVEL_ICONS = ['🌱', '🔍', '⚔️', '🦸', '🏆', '👑'];
 const DAY = 86400000;
-const CHART_DAYS = 14;
+const BALANCE_DAYS = 14;
+const BAR_DAYS = 7;
+const FEED_PREVIEW = 12;
 const MAX_LOG = 6000;
+const MAX_ACTIONS = 20;
 const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
-const STUDENT_EMOJIS = ['🦁','🦄','🐯','🦊','🐼','🐬','🦅','🐱','🐶','🐸','🐵','🐨','🐙','🦖','🐝','🚀','⚽','🌈'];
 const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -524,7 +619,7 @@ function fmtDay(t) {
   const today = dayStart(Date.now()), ds = dayStart(t);
   if (ds === today) return 'היום';
   if (ds === dayStart(today - 1)) return 'אתמול';
-  return `יום ${WEEKDAYS[new Date(t).getDay()]} ${dayLabel(t)}`;
+  return `יום ${WEEKDAYS[new Date(t).getDay()]}, ${dayLabel(t)}`;
 }
 function fmtWhen(t) { return `${fmtDay(t)} · ${hhmm(t)}`; }
 /** Start-of-day timestamps for the last n days (DST-safe), oldest first. */
@@ -535,6 +630,63 @@ function lastDays(n) {
 }
 function levelIndex(total) { return Math.min(LEVELS.length - 1, Math.floor(Math.max(0, total) / COINS_PER_LEVEL)); }
 function studentById(id) { return state.students.find(s => s.id === id) || null; }
+function firstName(name) { return String(name).trim().split(' ')[0] || name; }
+
+// --- Drawn icons (SVG sprite) ---
+function ic(name, cls = '') { return `<svg class="ic ${cls}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`; }
+function coinIc(cls = 'coin-ic') { return `<svg class="${cls}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i-coin"/></svg>`; }
+function giftIc(cls = 'r-gift') { return `<svg class="${cls}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i-gift"/></svg>`; }
+function hexBadge(n, size) {
+  return `<span class="hexb" style="${size ? `--s:${size}px` : ''}" aria-hidden="true"><svg viewBox="0 0 48 52" focusable="false"><use href="#i-hex"/></svg><b>${n}</b></span>`;
+}
+/** Letter avatar: first letter of the name in a circle, hue from the id. */
+function avatar(s, cls = '') {
+  const letter = Array.from(String(s.name).trim())[0] || '?';
+  return `<span class="av ${cls}" style="--h:${(s.id * 47) % 360}" aria-hidden="true">${esc(letter)}</span>`;
+}
+
+// --- SHA-256 (sync, pure JS) for hashing student passwords ---
+const sha256 = (() => {
+  const K = [], H0 = [];
+  for (let n = 2, c = 0; c < 64; n++) {
+    let prime = true;
+    for (let d = 2; d * d <= n; d++) if (n % d === 0) { prime = false; break; }
+    if (!prime) continue;
+    if (c < 8) H0[c] = (Math.pow(n, 1 / 2) * 4294967296) | 0;
+    K[c++] = (Math.pow(n, 1 / 3) * 4294967296) | 0;
+  }
+  const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+  return function (text) {
+    const bytes = new TextEncoder().encode(text);
+    const len = bytes.length, total = ((len + 9 + 63) >> 6) << 6;
+    const buf = new Uint8Array(total);
+    buf.set(bytes); buf[len] = 0x80;
+    const dv = new DataView(buf.buffer), bits = len * 8;
+    dv.setUint32(total - 4, bits >>> 0);
+    dv.setUint32(total - 8, Math.floor(bits / 4294967296));
+    const h = H0.slice(), w = new Int32Array(64);
+    for (let off = 0; off < total; off += 64) {
+      for (let i = 0; i < 16; i++) w[i] = dv.getInt32(off + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const a = w[i - 15], b = w[i - 2];
+        const s0 = rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3), s1 = rotr(b, 17) ^ rotr(b, 19) ^ (b >>> 10);
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      }
+      let [a, b, c, d, e, f, g, hh] = h;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25), ch = (e & f) ^ (~e & g);
+        const t1 = (hh + S1 + ch + K[i] + w[i]) | 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22), maj = (a & b) ^ (a & c) ^ (b & c);
+        const t2 = (S0 + maj) | 0;
+        hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      h[0] = (h[0] + a) | 0; h[1] = (h[1] + b) | 0; h[2] = (h[2] + c) | 0; h[3] = (h[3] + d) | 0;
+      h[4] = (h[4] + e) | 0; h[5] = (h[5] + f) | 0; h[6] = (h[6] + g) | 0; h[7] = (h[7] + hh) | 0;
+    }
+    return h.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
+  };
+})();
+function hashPin(studentId, password) { return sha256(`classCoins:${studentId}:${password}`); }
 
 /* ==========================================================
    2. Storage (always wrapped: falls back to memory)
@@ -563,29 +715,36 @@ function normalize(raw) {
   const ids = [];
   const keepId = v => { const n = toInt(v, 1, 1e9, 0); if (n) ids.push(n); return n; };
   const students = raw.students.map(s => s && ({
-    id: keepId(s.id), name: cleanText(s.name, 24) || 'תלמיד', emoji: cleanText(s.emoji, 8) || '⭐',
+    id: keepId(s.id), name: cleanText(s.name, 24) || 'תלמיד',
+    pin: /^[0-9a-f]{64}$/.test(s.pin) ? s.pin : '',
     coins: toInt(s.coins, 0, 1e7, 0), totalEarned: toInt(s.totalEarned, 0, 1e8, 0)
   })).filter(s => s && s.id);
   const behaviors = (Array.isArray(raw.behaviors) ? raw.behaviors : []).map(b => b && ({
-    id: keepId(b.id), label: cleanText(b.label, 30) || 'התנהגות', icon: cleanText(b.icon, 8) || '⭐', coins: toInt(b.coins, -1000, 1000, 0)
+    id: keepId(b.id), label: cleanText(b.label, 30) || 'התנהגות', coins: toInt(b.coins, -1000, 1000, 0)
   })).filter(b => b && b.id && b.coins !== 0);
   const rewards = (Array.isArray(raw.rewards) ? raw.rewards : []).map(r => r && ({
-    id: keepId(r.id), label: cleanText(r.label, 30) || 'פרס', icon: cleanText(r.icon, 8) || '🎁', cost: toInt(r.cost, 1, 1e6, 1)
+    id: keepId(r.id), label: cleanText(r.label, 30) || 'פרס', cost: toInt(r.cost, 1, 1e6, 1)
   })).filter(r => r && r.id);
   const sIds = new Set(students.map(s => s.id));
   const log = (Array.isArray(raw.log) ? raw.log : []).map(e => {
     if (!e) return null;
     const x = { t: toInt(e.t, 0, 9e15, 0), studentId: toInt(e.studentId, 0, 1e9, 0), text: cleanText(e.text, 80), note: cleanText(e.note, 140), delta: toInt(e.delta, -1e6, 1e6, 0) };
     if (e.kind === 'buy') x.kind = 'buy';
+    if (e.aid) x.aid = toInt(e.aid, 0, 1e9, 0);
     return x;
   }).filter(e => e && e.t && sIds.has(e.studentId));
   const orders = (Array.isArray(raw.orders) ? raw.orders : []).map(o => o && ({
     id: keepId(o.id), t: toInt(o.t, 0, 9e15, 0), studentId: toInt(o.studentId, 0, 1e9, 0),
-    reward: cleanText(o.reward, 30), icon: cleanText(o.icon, 8) || '🎁', done: !!o.done
+    reward: cleanText(o.reward, 30), done: !!o.done
   })).filter(o => o && o.id && o.t);
-  const settings = { leaderboard: !!(raw.settings && raw.settings.leaderboard) };
+  const actions = (Array.isArray(raw.actions) ? raw.actions : []).map(a => a && Array.isArray(a.items) && ({
+    id: keepId(a.id), t: toInt(a.t, 0, 9e15, 0), label: cleanText(a.label, 30), coins: toInt(a.coins, -1000, 1000, 0),
+    note: cleanText(a.note, 140), random: !!a.random,
+    items: a.items.map(it => it && ({ studentId: toInt(it.studentId, 0, 1e9, 0), applied: toInt(it.applied, -1e6, 1e6, 0) })).filter(it => it && it.studentId)
+  })).filter(a => a && a.id).slice(-MAX_ACTIONS);
+  const settings = { leaderboard: !(raw.settings && raw.settings.leaderboard === false) };
   const nextId = Math.max(toInt(raw.nextId, 1, 1e9, 1), (ids.length ? Math.max(...ids) : 0) + 1);
-  return { students, behaviors, rewards, log, orders, settings, nextId };
+  return { students, behaviors, rewards, log, orders, actions, settings, nextId };
 }
 function loadState() {
   const raw = lsGet(STORE_KEY);
@@ -595,6 +754,20 @@ function loadState() {
   const seeded = createSeed();
   lsSet(STORE_KEY, JSON.stringify(seeded));
   return seeded;
+}
+
+// Level last shown to each student on this device (for the one-time level-up moment).
+let seenLevelsMem = null;
+function seenLevels() {
+  if (!seenLevelsMem) {
+    try { seenLevelsMem = JSON.parse(lsGet(SEEN_LEVEL_KEY) || '{}') || {}; } catch (e) { seenLevelsMem = {}; }
+    if (typeof seenLevelsMem !== 'object') seenLevelsMem = {};
+  }
+  return seenLevelsMem;
+}
+function setSeenLevel(id, lvl) {
+  seenLevels()[id] = lvl;
+  lsSet(SEEN_LEVEL_KEY, JSON.stringify(seenLevelsMem));
 }
 
 /* ==========================================================
@@ -609,31 +782,31 @@ function mulberry32(a) {
   };
 }
 const SEED_BEHAVIORS = [
-  { label: 'ציון לשבח', icon: '🏅', coins: 10 },
-  { label: 'חיזוק חיובי', icon: '🌟', coins: 5 },
-  { label: 'עזרה לחבר', icon: '🤝', coins: 8 },
-  { label: 'השתתפות פעילה', icon: '🙋', coins: 5 },
-  { label: 'הפרעה בשיעור', icon: '🗣️', coins: -5 },
-  { label: 'אי הכנת ציוד', icon: '🎒', coins: -3 },
-  { label: 'חוסר כבוד', icon: '😠', coins: -10 },
-  { label: 'איחור', icon: '⏰', coins: -2 }
+  { label: 'ציון לשבח', coins: 10 },
+  { label: 'חיזוק חיובי', coins: 5 },
+  { label: 'עזרה לחבר', coins: 8 },
+  { label: 'השתתפות פעילה', coins: 5 },
+  { label: 'הפרעה בשיעור', coins: -5 },
+  { label: 'אי הכנת ציוד', coins: -3 },
+  { label: 'חוסר כבוד', coins: -10 },
+  { label: 'איחור', coins: -2 }
 ];
 const SEED_REWARDS = [
-  { label: 'פיצה לכיתה', icon: '🍕', cost: 50 },
-  { label: 'מכתב חיובי להורים', icon: '✉️', cost: 30 },
-  { label: 'בחירת מקום ישיבה', icon: '🪑', cost: 20 },
-  { label: 'ללא שיעורי בית', icon: '📘', cost: 40 },
-  { label: 'שוקולד', icon: '🍫', cost: 15 }
+  { label: 'פיצה לכיתה', cost: 50 },
+  { label: 'מכתב חיובי להורים', cost: 30 },
+  { label: 'בחירת מקום ישיבה', cost: 20 },
+  { label: 'ללא שיעורי בית', cost: 40 },
+  { label: 'שוקולד', cost: 15 }
 ];
-const SEED_STUDENTS = [['נועם', '🦁'], ['מיה', '🦄'], ['יובל', '🐯'], ['תמר', '🦊'], ['איתי', '🐼'], ['שירה', '🐬'], ['דור', '🦅'], ['ליה', '🐱']];
-const POS_NOTES = ['כל הכבוד, ככה ממשיכים! 💪', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
-const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש 🙂', 'נא להגיע בזמן לשיעור'];
+const SEED_STUDENTS = ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'];
+const POS_NOTES = ['כל הכבוד, ככה ממשיכים!', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
+const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש', 'נא להגיע בזמן לשיעור'];
 
 function createSeed() {
   const rnd = mulberry32(20261021);
   const pick = arr => arr[Math.floor(rnd() * arr.length)];
   const now = Date.now();
-  const days = lastDays(CHART_DAYS);
+  const days = lastDays(BALANCE_DAYS);
   const posB = SEED_BEHAVIORS.filter(b => b.coins > 0), negB = SEED_BEHAVIORS.filter(b => b.coins < 0);
   let id = 1;
   const behaviors = SEED_BEHAVIORS.map(b => ({ id: id++, ...b }));
@@ -662,7 +835,7 @@ function createSeed() {
     raw.forEach((ev, i) => {
       const after = Math.max(0, bal + ev.b.coins), applied = after - bal;
       bal = after; if (applied > 0) earned += applied;
-      events.push({ t: ev.t, text: `${ev.b.icon} ${ev.b.label}`, note: ev.note, delta: applied });
+      events.push({ t: ev.t, text: ev.b.label, note: ev.note, delta: applied });
       const affordable = SEED_REWARDS.filter(r => r.cost <= bal);
       if (affordable.length && bal >= 25 && rnd() < 0.38) {
         const next = raw[i + 1] ? raw[i + 1].t : now;
@@ -670,15 +843,15 @@ function createSeed() {
         if (tb > ev.t && tb < now - 60000) {
           const r = pick(affordable);
           bal -= r.cost;
-          events.push({ t: tb, text: `${r.icon} קנייה: ${r.label}`, note: '', delta: -r.cost, kind: 'buy' });
-          buys.push({ t: tb, reward: r.label, icon: r.icon });
+          events.push({ t: tb, text: `קנייה: ${r.label}`, note: '', delta: -r.cost, kind: 'buy' });
+          buys.push({ t: tb, reward: r.label });
         }
       }
     });
     return { coins: bal, earned, events, buys };
   }
 
-  for (const [name, emoji] of SEED_STUDENTS) {
+  for (const name of SEED_STUDENTS) {
     let best = null, bestScore = Infinity;
     for (let attempt = 0; attempt < 400; attempt++) {
       const sim = simulate();
@@ -688,13 +861,13 @@ function createSeed() {
     }
     used.add(best.coins);
     const sid = id++;
-    students.push({ id: sid, name, emoji, coins: best.coins, totalEarned: best.earned });
+    students.push({ id: sid, name, pin: '', coins: best.coins, totalEarned: best.earned });
     best.events.forEach(e => log.push({ ...e, studentId: sid }));
-    best.buys.forEach(b => orders.push({ id: id++, t: b.t, studentId: sid, reward: b.reward, icon: b.icon, done: now - b.t > DAY }));
+    best.buys.forEach(b => orders.push({ id: id++, t: b.t, studentId: sid, reward: b.reward, done: now - b.t > DAY }));
   }
   log.sort((a, b) => a.t - b.t);
   orders.sort((a, b) => a.t - b.t);
-  return { students, behaviors, rewards, log, orders, settings: { leaderboard: false }, nextId: id };
+  return { students, behaviors, rewards, log, orders, actions: [], settings: { leaderboard: true }, nextId: id };
 }
 
 /* ==========================================================
@@ -702,15 +875,15 @@ function createSeed() {
    ========================================================== */
 let state = loadState();
 const ui = {
-  screen: 'login',        // 'login' | 'student' | 'teacher'
+  screen: 'login',        // 'login' | 'student' | 'activity' | 'teacher'
   studentId: null,
   tab: 'actions',         // teacher tab: 'actions' | 'orders' | 'edit'
   selected: new Set(),    // teacher multi-select
   note: '',
+  filter: 'all',          // activity view: 'all' | 'gain' | 'loss'
   shownBalance: 0,        // last balance shown (for count-up)
-  shownLevel: null,       // last level shown (for level-up celebration)
   feedSeen: 0,            // number of feed items already animated in
-  feedLimit: 20,
+  chartsAnimate: false,   // animate charts on the next draw
   built: ''               // which skeleton is currently in #app
 };
 
@@ -718,7 +891,7 @@ const ui = {
    5. Mutations (every one persists, then re-renders)
    ========================================================== */
 /** Apply a coin change with the 0-floor; logs the actually applied delta. */
-function applyDelta(student, delta, text, note, kind) {
+function applyDelta(student, delta, text, note, kind, aid) {
   const before = student.coins;
   const after = Math.max(0, before + delta);
   const applied = after - before;
@@ -726,38 +899,69 @@ function applyDelta(student, delta, text, note, kind) {
   if (applied > 0) student.totalEarned += applied;
   const entry = { t: Date.now(), studentId: student.id, text, note: note || '', delta: applied };
   if (kind) entry.kind = kind;
+  if (aid) entry.aid = aid;
   state.log.push(entry);
   return applied;
 }
 
-function awardBehavior(behaviorId) {
-  const b = state.behaviors.find(x => x.id === behaviorId);
-  if (!b) return;
+/** Apply a behavior to every selected student, as one undoable action. */
+function applyBehavior(b, { useNote = true, random = false } = {}) {
   const targets = state.students.filter(s => ui.selected.has(s.id));
   if (!targets.length) {
-    toast('בחרו קודם לפחות תלמיד אחד מהרשימה', 'error');
+    toast(random ? 'בחרו קודם תלמידים בלשונית פעולות' : 'בחרו קודם לפחות תלמיד אחד מהרשימה', 'error');
     play('error');
-    shake($('.roster'));
+    shake($('.roster') || $('#demo-box'));
     return;
   }
-  const note = cleanText(ui.note, 120);
-  const results = [], ups = [];
+  const note = useNote ? cleanText(ui.note, 120) : '';
+  const aid = state.nextId++;
+  const items = [], ups = [];
   for (const s of targets) {
     const lvBefore = levelIndex(s.totalEarned);
-    results.push([s.id, applyDelta(s, b.coins, `${b.icon} ${b.label}`, note)]);
+    items.push({ studentId: s.id, applied: applyDelta(s, b.coins, b.label, note, null, aid) });
     const lvAfter = levelIndex(s.totalEarned);
     if (lvAfter > lvBefore) ups.push([s, lvAfter]);
   }
-  ui.note = '';
-  const noteInput = $('#note');
-  if (noteInput) { noteInput.value = ''; noteInput.classList.remove('has'); }
+  state.actions.push({ id: aid, t: Date.now(), label: b.label, coins: b.coins, note, random, items });
+  if (state.actions.length > MAX_ACTIONS) state.actions.splice(0, state.actions.length - MAX_ACTIONS);
+  if (useNote) {
+    ui.note = '';
+    const noteInput = $('#note');
+    if (noteInput) { noteInput.value = ''; noteInput.classList.remove('has'); }
+  }
   save();
   render();
-  results.forEach(([id, applied]) => floatDelta(id, applied));
+  items.forEach(it => floatDelta(it.studentId, it.applied));
   const who = targets.length === 1 ? `ל${esc(targets[0].name)}` : `ל-${targets.length} תלמידים`;
-  toast(`${esc(b.icon)} ${esc(b.label)} ${numSpan(b.coins)} ${who}${note ? ' · עם הערה' : ''}`, b.coins > 0 ? 'success' : 'warn');
+  toast(`${random ? 'אירוע אקראי: ' : ''}${esc(b.label)} ${numSpan(b.coins)} ${who}${note ? ' · עם הערה' : ''}`, b.coins > 0 ? 'success' : 'warn');
   if (b.coins > 0) { confetti(targets.length > 3 ? 160 : 110); play('coin'); } else play('down');
-  ups.forEach(([s, l], i) => setTimeout(() => { toast(`🎉 רמה חדשה ל${esc(s.name)}: רמה ${l + 1} · ${LEVELS[l]}!`, 'success', 3800); play('level'); }, 500 + i * 300));
+  ups.forEach(([s, l], i) => setTimeout(() => { toast(`רמה חדשה ל${esc(s.name)}: רמה ${l + 1} · ${LEVELS[l]}`, 'success', 3800); play('level'); }, 500 + i * 300));
+}
+function awardBehavior(behaviorId) {
+  const b = state.behaviors.find(x => x.id === behaviorId);
+  if (b) applyBehavior(b);
+}
+function randomEvent() {
+  const pos = state.behaviors.filter(b => b.coins > 0);
+  if (!pos.length) { toast('אין התנהגויות חיוביות ברשימה', 'error'); return; }
+  applyBehavior(pos[Math.floor(Math.random() * pos.length)], { useNote: false, random: true });
+}
+
+/** Reverse the most recent behavior action: coins, totalEarned and its log entries. */
+function undoLast() {
+  const a = state.actions[state.actions.length - 1];
+  if (!a) { toast('אין פעולה לביטול', 'info'); return; }
+  for (const it of a.items) {
+    const s = studentById(it.studentId);
+    if (!s) continue;
+    s.coins = Math.max(0, s.coins - it.applied);
+    if (it.applied > 0) s.totalEarned = Math.max(0, s.totalEarned - it.applied);
+  }
+  state.log = state.log.filter(e => e.aid !== a.id);
+  state.actions.pop();
+  save(); render();
+  toast(`בוטלה הפעולה: ${esc(a.label)} ${numSpan(a.coins)}`, 'info');
+  play('down');
 }
 
 function buyReward(rewardId) {
@@ -765,20 +969,20 @@ function buyReward(rewardId) {
   if (!s || !r) return;
   if (s.coins < r.cost) { toast(`חסרים לך עוד ${r.cost - s.coins} מטבעות`, 'error'); play('error'); return; }
   openModal({
-    icon: r.icon,
+    iconHtml: giftIc(),
     title: 'לקנות את הפרס?',
     body: `<b>${esc(r.label)}</b> תמורת <b>${r.cost}</b> מטבעות.<br>אחרי הקנייה יישארו לך <b>${s.coins - r.cost}</b> מטבעות.`,
-    okText: '🛍️ כן, לקנות!',
+    okText: 'כן, לקנות!', okClass: 'btn-gold',
     onOk: () => {
       const cur = studentById(ui.studentId), rw = state.rewards.find(x => x.id === rewardId);
       if (!cur || !rw || cur.coins < rw.cost) { toast('אין מספיק מטבעות', 'error'); return; }
-      applyDelta(cur, -rw.cost, `${rw.icon} קנייה: ${rw.label}`, '', 'buy');
-      state.orders.push({ id: state.nextId++, t: Date.now(), studentId: cur.id, reward: rw.label, icon: rw.icon, done: false });
+      applyDelta(cur, -rw.cost, `קנייה: ${rw.label}`, '', 'buy');
+      state.orders.push({ id: state.nextId++, t: Date.now(), studentId: cur.id, reward: rw.label, done: false });
       save();
       render();
       confetti(170);
       play('buy');
-      toast(`🎉 קנית ${esc(rw.icon)} ${esc(rw.label)}! ההזמנה נשלחה למורה`, 'success', 3400);
+      toast(`קנית ${esc(rw.label)}! ההזמנה נשלחה למורה`, 'success', 3400);
     }
   });
 }
@@ -788,20 +992,19 @@ function markDelivered(orderId) {
   if (!o || o.done) return;
   o.done = true;
   save(); render();
-  toast(`${esc(o.icon)} ${esc(o.reward)} סומן כנמסר`, 'success');
+  toast(`${esc(o.reward)} סומן כנמסר`, 'success');
   play('coin');
 }
 
 function addStudent(fd) {
   const name = cleanText(fd.get('name'), 20);
   if (!name) { toast('נא להזין שם', 'error'); return false; }
-  const emoji = cleanText(fd.get('emoji'), 8) || '⭐';
   const start = toInt(fd.get('coins'), 0, 999, 0);
-  const s = { id: state.nextId++, name, emoji, coins: 0, totalEarned: 0 };
+  const s = { id: state.nextId++, name, pin: '', coins: 0, totalEarned: 0 };
   state.students.push(s);
-  if (start > 0) applyDelta(s, start, '🎁 מטבעות פתיחה', '');
+  if (start > 0) applyDelta(s, start, 'מטבעות פתיחה', '');
   save(); render();
-  toast(`${esc(emoji)} ${esc(name)} נוסף/ה לכיתה`, 'success');
+  toast(`${esc(name)} נוסף/ה לכיתה`, 'success');
   return true;
 }
 function addBehavior(fd) {
@@ -810,8 +1013,7 @@ function addBehavior(fd) {
   const amount = toInt(fd.get('amount'), 1, 100, 0);
   if (!amount) { toast('נא להזין כמות מטבעות (1–100)', 'error'); return false; }
   const coins = fd.get('sign') === 'neg' ? -amount : amount;
-  const icon = cleanText(fd.get('icon'), 8) || (coins > 0 ? '⭐' : '⚠️');
-  state.behaviors.push({ id: state.nextId++, label, icon, coins });
+  state.behaviors.push({ id: state.nextId++, label, coins });
   save(); render();
   toast(`ההתנהגות "${esc(label)}" נוספה`, 'success');
   return true;
@@ -821,8 +1023,7 @@ function addReward(fd) {
   if (!label) { toast('נא להזין שם לפרס', 'error'); return false; }
   const cost = toInt(fd.get('cost'), 1, 9999, 0);
   if (!cost) { toast('נא להזין מחיר (1–9999)', 'error'); return false; }
-  const icon = cleanText(fd.get('icon'), 8) || '🎁';
-  state.rewards.push({ id: state.nextId++, label, icon, cost });
+  state.rewards.push({ id: state.nextId++, label, cost });
   save(); render();
   toast(`הפרס "${esc(label)}" נוסף לחנות`, 'success');
   return true;
@@ -833,11 +1034,10 @@ function deleteItem(kind, id) {
   const item = getList().find(x => x.id === id);
   if (!item) return;
   const name = item.name || item.label;
-  const icon = item.emoji || item.icon;
   const extra = kind === 'student' ? '<br>גם ההיסטוריה וההזמנות של התלמיד/ה יימחקו.' : '';
   openModal({
-    icon: '🗑️', title: 'למחוק?', danger: true,
-    body: `<b>${esc(icon)} ${esc(name)}</b> יימחק לצמיתות.${extra}`,
+    iconHtml: ic('trash'), danger: true, title: 'למחוק?',
+    body: `<b>${esc(name)}</b> יימחק לצמיתות.${extra}`,
     okText: 'מחיקה',
     onOk: () => {
       const list = getList(), i = list.findIndex(x => x.id === id);
@@ -853,18 +1053,36 @@ function deleteItem(kind, id) {
     }
   });
 }
+function resetPassword(id) {
+  const s = studentById(id);
+  if (!s || !s.pin) return;
+  openModal({
+    iconHtml: ic('key'), title: 'לאפס סיסמה?',
+    body: `הסיסמה של <b>${esc(s.name)}</b> תימחק.<br>בכניסה הבאה תתבקש בחירת סיסמה חדשה.`,
+    okText: 'איפוס סיסמה',
+    onOk: () => {
+      const cur = studentById(id);
+      if (!cur) return;
+      cur.pin = '';
+      save(); render();
+      toast(`הסיסמה של ${esc(cur.name)} אופסה`, 'success');
+    }
+  });
+}
 function setLeaderboard(on) {
   state.settings.leaderboard = !!on;
   save(); render();
-  toast(on ? '🏆 טבלת המובילים מוצגת לתלמידים' : 'טבלת המובילים הוסתרה', 'info');
+  toast(on ? 'לוח המובילים מוצג לתלמידים' : 'לוח המובילים הוסתר', 'info');
 }
 function resetAll() {
   openModal({
-    icon: '⚠️', title: 'לאפס את כל הנתונים?', danger: true,
-    body: 'כל התלמידים, ההיסטוריה, ההזמנות וההגדרות יימחקו, והמערכת תחזור <b>לנתוני ההדגמה ההתחלתיים</b>. אי אפשר לבטל.',
+    iconHtml: ic('alert'), danger: true, title: 'לאפס את כל הנתונים?',
+    body: 'כל התלמידים, הסיסמאות, ההיסטוריה, ההזמנות וההגדרות יימחקו, והמערכת תחזור <b>לנתוני ההדגמה ההתחלתיים</b>. אי אפשר לבטל.',
     okText: 'כן, לאפס הכל',
     onOk: () => {
       state = createSeed();
+      seenLevelsMem = {};
+      lsSet(SEEN_LEVEL_KEY, '{}');
       ui.selected.clear(); ui.note = '';
       save();
       ui.built = '';
@@ -880,9 +1098,9 @@ function resetAll() {
 function toast(html, type = 'info', ms = 2800) {
   const box = $('#toasts');
   const el = document.createElement('div');
-  const icon = { success: '✅', error: '⚠️', warn: '📉', info: '💡' }[type] || '💡';
+  const icon = { success: 'check-circle', error: 'alert', warn: 'trend-down', info: 'info' }[type] || 'info';
   el.className = `toast ${type}`;
-  el.innerHTML = `<span class="t-ico" aria-hidden="true">${icon}</span><span>${html}</span>`;
+  el.innerHTML = `${ic(icon, 't-ico')}<span>${html}</span>`;
   box.appendChild(el);
   while (box.children.length > 4) box.firstElementChild.remove();
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
@@ -897,18 +1115,18 @@ function shake(el) {
 
 // --- Modal (always a <form>: Enter confirms, Esc / backdrop / cancel closes) ---
 let modal = null;
-function openModal({ icon = '', title, body = '', okText = 'אישור', cancelText = 'ביטול', danger = false, onOk, onOpen }) {
+function openModal({ iconHtml = '', title, body = '', okText = 'אישור', okClass = '', cancelText = 'ביטול', danger = false, onOk }) {
   closeModal(true);
   const opener = document.activeElement;
   const back = document.createElement('div');
   back.className = 'modal-back';
   back.innerHTML = `
     <form class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title" novalidate>
-      ${icon ? `<div class="m-icon" aria-hidden="true">${esc(icon)}</div>` : ''}
+      ${iconHtml ? `<div class="m-icon ${danger ? 'danger' : ''}">${iconHtml}</div>` : ''}
       <h2 id="m-title">${esc(title)}</h2>
       <div class="m-body">${body}</div>
       <div class="m-actions">
-        <button type="submit" class="btn ${danger ? 'btn-red' : 'btn-gold'}" data-m="ok">${esc(okText)}</button>
+        <button type="submit" class="btn ${danger ? 'btn-bad' : okClass}" data-m="ok">${esc(okText)}</button>
         <button type="button" class="btn btn-ghost" data-m="cancel">${esc(cancelText)}</button>
       </div>
     </form>`;
@@ -924,8 +1142,8 @@ function openModal({ icon = '', title, body = '', okText = 'אישור', cancelT
   });
   requestAnimationFrame(() => back.classList.add('open'));
   const first = $('input', form) || $('[data-m="ok"]', form);
-  setTimeout(() => first && first.focus(), 30);
-  if (onOpen) onOpen(form);
+  // Autofocus only if the user hasn't already moved into the modal (never steal focus).
+  setTimeout(() => { if (first && modal && modal.back === back && !back.contains(document.activeElement)) first.focus(); }, 30);
 }
 function closeModal(instant) {
   if (!modal) return;
@@ -974,11 +1192,11 @@ function play(name) {
   const ctx = audioCtx();
   if (!ctx) return;
   try {
-    if (name === 'coin') { tone(ctx, 988, 0, 0.09, 'square', 0.06); tone(ctx, 1319, 0.08, 0.28, 'square', 0.06); }
-    else if (name === 'buy') { [784, 988, 1175, 1568].forEach((f, i) => tone(ctx, f, i * 0.07, 0.2, 'triangle', 0.12)); }
-    else if (name === 'level') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(ctx, f, i * 0.09, 0.3, 'triangle', 0.12)); }
-    else if (name === 'down') { tone(ctx, 440, 0, 0.25, 'triangle', 0.1, 220); }
-    else if (name === 'error') { tone(ctx, 200, 0, 0.16, 'sawtooth', 0.05); tone(ctx, 150, 0.14, 0.22, 'sawtooth', 0.05); }
+    if (name === 'coin') { tone(ctx, 988, 0, 0.09, 'triangle', 0.1); tone(ctx, 1319, 0.08, 0.28, 'triangle', 0.1); }
+    else if (name === 'buy') { [784, 988, 1175, 1568].forEach((f, i) => tone(ctx, f, i * 0.07, 0.2, 'triangle', 0.11)); }
+    else if (name === 'level') { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(ctx, f, i * 0.1, i === 6 ? 0.6 : 0.22, 'triangle', 0.12)); }
+    else if (name === 'down') { tone(ctx, 220, 0, 0.2, 'sine', 0.14, 140); }
+    else if (name === 'error') { tone(ctx, 200, 0, 0.14, 'sawtooth', 0.04); tone(ctx, 150, 0.12, 0.2, 'sawtooth', 0.04); }
   } catch (e) { /* audio is optional */ }
 }
 function toggleSound() {
@@ -986,14 +1204,14 @@ function toggleSound() {
   lsSet(SOUND_KEY, sound.on ? '1' : '0');
   updateSoundButtons();
   if (sound.on) { audioCtx(); play('coin'); }
-  toast(sound.on ? '🔊 הצלילים הופעלו' : '🔇 הצלילים כובו', 'info', 1800);
+  toast(sound.on ? 'הצלילים הופעלו' : 'הצלילים כובו', 'info', 1800);
 }
 function soundBtn() {
   return `<button type="button" class="icon-btn sound-btn" data-action="sound"></button>`;
 }
 function updateSoundButtons() {
   $$('.sound-btn').forEach(b => {
-    b.textContent = sound.on ? '🔊' : '🔇';
+    b.innerHTML = ic(sound.on ? 'sound-on' : 'sound-off');
     b.setAttribute('aria-pressed', String(sound.on));
     b.setAttribute('aria-label', sound.on ? 'כיבוי צלילים' : 'הפעלת צלילים');
     b.title = sound.on ? 'צלילים פועלים' : 'צלילים כבויים';
@@ -1002,7 +1220,7 @@ function updateSoundButtons() {
 
 // --- Confetti (single canvas, stops itself when idle) ---
 const fx = { cv: null, ctx: null, parts: [], raf: 0, w: 0, h: 0 };
-const CONFETTI_COLORS = ['#ffc83d', '#ff9f1c', '#9b6bff', '#ff5fa2', '#2fd98a', '#4fd8ff', '#ffffff'];
+const CONFETTI_COLORS = ['#ffc83d', '#ff9f1c', '#7c5cff', '#a78bff', '#37e3a0', '#ff5d7a', '#ffffff'];
 function sizeConfetti() {
   if (!fx.cv) return;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1060,7 +1278,13 @@ function countUp(el, from, to, dur = 900) {
   el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
 }
 
-// --- Level-up celebration ---
+// --- Level-up celebration (shown once per new level, remembered per student) ---
+function checkLevelUp(s) {
+  const li = levelIndex(s.totalEarned), seen = seenLevels()[s.id];
+  if (typeof seen !== 'number') { setSeenLevel(s.id, li); return; }
+  if (li > seen) { setSeenLevel(s.id, li); celebrateLevel(li); }
+  else if (li < seen) setSeenLevel(s.id, li);
+}
 function celebrateLevel(idx) {
   const old = $('.levelup');
   if (old) old.remove();
@@ -1068,9 +1292,8 @@ function celebrateLevel(idx) {
   el.className = 'levelup';
   el.setAttribute('role', 'alert');
   el.innerHTML = `<div class="lu-card"><div class="lu-burst" aria-hidden="true"></div>
-    <div class="lu-icon" aria-hidden="true">${LEVEL_ICONS[idx]}</div>
-    <div class="lu-title">עלית רמה!</div>
-    <div class="lu-name">רמה ${idx + 1} · ${LEVELS[idx]}</div>
+    ${hexBadge(idx + 1)}
+    <div class="lu-title">עלית לרמה ${idx + 1}: ${LEVELS[idx]}</div>
     <div class="lu-hint">לחיצה בכל מקום לסגירה</div></div>`;
   document.body.appendChild(el);
   confetti(220);
@@ -1096,7 +1319,8 @@ function floatDelta(studentId, n) {
 }
 
 /* ==========================================================
-   7. Charts (hand-drawn inline SVG)
+   7. Charts (hand-drawn inline SVG, mirrored for RTL:
+      time runs from right (oldest) to left (today), values axis on the right)
    ========================================================== */
 function niceScale(v, ticks = 4) {
   v = Math.max(v, 4);
@@ -1104,8 +1328,8 @@ function niceScale(v, ticks = 4) {
   const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
   return { max: Math.ceil(v / step) * step, step };
 }
-function chartEmpty(msg) {
-  return `<div class="chart-empty"><div><span class="big" aria-hidden="true">📭</span>${esc(msg)}</div></div>`;
+function chartEmpty(icon, title, msg) {
+  return `<div class="chart-empty"><div>${ic(icon)}<b>${esc(title)}</b>${esc(msg)}</div></div>`;
 }
 function studentLog(id) { return state.log.filter(e => e.studentId === id).sort((a, b) => a.t - b.t); }
 
@@ -1133,17 +1357,18 @@ function attachHover(el, svg, count, getX, show, hide) {
   svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') off(); });
   svg.addEventListener('blur', off);
   svg.addEventListener('keydown', e => {
+    // RTL: later items are further left, so ArrowLeft moves forward in time.
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
       e.preventDefault();
-      const d = e.key === 'ArrowRight' ? 1 : -1;
+      const d = e.key === 'ArrowLeft' ? 1 : -1;
       set(idx < 0 ? (d > 0 ? 0 : count - 1) : Math.max(0, Math.min(count - 1, idx + d)));
     } else if (e.key === 'Escape') off();
   });
   el._hideTip = off;
 }
 
-function drawBalanceChart(el, s) {
-  const days = lastDays(CHART_DAYS), from = days[0], now = Date.now();
+function drawBalanceChart(el, s, animate) {
+  const days = lastDays(BALANCE_DAYS), from = days[0], now = Date.now();
   const entries = studentLog(s.id);
   let bal = s.coins - entries.reduce((a, e) => a + e.delta, 0); // baseline (0 when history is complete)
   let startBal = Math.max(0, bal);
@@ -1153,41 +1378,45 @@ function drawBalanceChart(el, s) {
     if (e.t < from) startBal = Math.max(0, bal);
     else pts.push({ t: e.t, bal: Math.max(0, bal), e });
   }
-  if (!pts.length) { el.innerHTML = chartEmpty('עדיין אין אירועים ב-14 הימים האחרונים'); return; }
+  if (!pts.length) { el.innerHTML = chartEmpty('chart', 'עדיין אין נתונים', 'כשתקבלו מטבעות, הגרף יתחיל לצמוח כאן'); return; }
 
-  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 210 : 250;
-  const P = { l: 38, r: 14, t: 18, b: 30 };
+  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 210 : 240;
+  const P = { s: 40, e: 30, t: 26, b: 30 };   // s = values-axis side (right), e = far end (left)
+  const plotR = W - P.s, plotL = P.e;
   const endBal = pts[pts.length - 1].bal;
-  const { max, step } = niceScale(Math.max(startBal, ...pts.map(p => p.bal)) * 1.12);
-  const X = t => P.l + (t - from) / (now - from) * (W - P.l - P.r);
+  const { max, step } = niceScale(Math.max(startBal, ...pts.map(p => p.bal)) * 1.15);
+  const X = t => plotR - (t - from) / (now - from) * (plotR - plotL);
   const Y = v => P.t + (1 - v / max) * (H - P.t - P.b);
   const line = [[from, startBal], ...pts.map(p => [p.t, p.bal]), [now, endBal]];
   const d = line.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join('');
   const area = `${d}L${X(now).toFixed(1)},${Y(0)}L${X(from).toFixed(1)},${Y(0)}Z`;
 
-  let grid = '';
+  let grid = `<text class="cap" x="${W - 2}" y="12" text-anchor="end">מטבעות</text>`;
   for (let v = 0; v <= max + 1e-9; v += step) {
-    grid += `<line class="gridl" x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${P.l - 7}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+    grid += `<line class="gridl" x1="${plotL}" x2="${plotR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${plotR + 8}" y="${Y(v) + 4}" text-anchor="start">${v}</text>`;
   }
-  const every = Math.max(1, Math.ceil(52 / ((W - P.l - P.r) / CHART_DAYS)));
+  const every = Math.max(1, Math.ceil(52 / ((plotR - plotL) / BALANCE_DAYS)));
   let xl = '';
   for (let i = days.length - 1; i >= 0; i -= every) {
     const x = X(days[i]);
     xl += `<line class="gridl" x1="${x}" x2="${x}" y1="${H - P.b}" y2="${H - P.b + 5}"/><text x="${x}" y="${H - P.b + 18}" text-anchor="middle">${i === days.length - 1 ? 'היום' : dayLabel(days[i])}</text>`;
   }
   const dots = pts.length <= 80 ? pts.map(p => `<circle class="bal-dot" cx="${X(p.t).toFixed(1)}" cy="${Y(p.bal).toFixed(1)}" r="3.2"/>`).join('') : '';
+  const lx = X(now), ly = Y(endBal);
 
   el.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
+    <svg class="${animate ? 'enter' : ''}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
       aria-label="גרף יתרה ב-14 הימים האחרונים: מ-${startBal} ל-${endBal} מטבעות. אפשר לעבור בין נקודות עם החצים.">
       <defs><linearGradient id="gBal" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#ffc83d" stop-opacity=".55"/><stop offset="1" stop-color="#9b6bff" stop-opacity=".04"/>
+        <stop offset="0" stop-color="#ffc83d" stop-opacity=".5"/><stop offset="1" stop-color="#7c5cff" stop-opacity=".04"/>
       </linearGradient></defs>
       <g class="ax">${grid}${xl}</g>
-      <line class="axis-base" x1="${P.l}" x2="${W - P.r}" y1="${Y(0)}" y2="${Y(0)}"/>
-      <path d="${area}" fill="url(#gBal)"/>
-      <path class="bal-line" d="${d}"/>
+      <line class="axis-base" x1="${plotL}" x2="${plotR}" y1="${Y(0)}" y2="${Y(0)}"/>
+      <path class="bal-area" d="${area}" fill="url(#gBal)"/>
+      <path class="bal-line" d="${d}" pathLength="1"/>
       ${dots}
+      <g class="last-g"><circle class="last-ring" cx="${lx}" cy="${ly}" r="12"/><circle class="last-dot" cx="${lx}" cy="${ly}" r="6"/>
+        <text class="last-val" x="${lx}" y="${ly - 17}" text-anchor="middle">${endBal}</text></g>
       <g class="hov" style="display:none"><line class="cross" y1="${P.t}" y2="${H - P.b}"/><circle class="hl" r="6"/></g>
     </svg><div class="tt" aria-hidden="true"></div>`;
   const svg = $('svg', el), hov = $('.hov', svg), cross = $('.cross', hov), hl = $('.hl', hov);
@@ -1201,8 +1430,8 @@ function drawBalanceChart(el, s) {
   }, () => { hov.style.display = 'none'; });
 }
 
-function drawBarChart(el, s) {
-  const days = lastDays(CHART_DAYS);
+function drawBarChart(el, s, animate) {
+  const days = lastDays(BAR_DAYS);
   const index = new Map(days.map((d, i) => [d, i]));
   const agg = days.map(d => ({ d, earned: 0, lost: 0, spent: 0 }));
   let any = false;
@@ -1215,43 +1444,46 @@ function drawBarChart(el, s) {
     else if (e.kind === 'buy') agg[i].spent -= e.delta;
     else agg[i].lost -= e.delta;
   }
-  if (!any) { el.innerHTML = chartEmpty('עדיין אין נתונים יומיים להצגה'); return; }
+  if (!any) { el.innerHTML = chartEmpty('bars', 'שבוע ריק בינתיים', 'כאן יופיעו המטבעות שקיבלתם ואיבדתם בכל יום'); return; }
 
-  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 200 : 230;
-  const P = { l: 34, r: 10, t: 14, b: 30 };
+  const W = Math.max(280, Math.round(el.clientWidth || 600)), H = W < 520 ? 210 : 240;
+  const P = { s: 34, e: 10, t: 22, b: 42 };
+  const plotR = W - P.s, plotL = P.e;
   const { max, step } = niceScale(Math.max(...agg.map(a => Math.max(a.earned, a.lost))) * 1.1);
-  const gw = (W - P.l - P.r) / CHART_DAYS;
-  const bw = Math.max(4, Math.min(16, gw * 0.32));
+  const gw = (plotR - plotL) / BAR_DAYS;
+  const bw = Math.max(6, Math.min(22, gw * 0.3));
   const Y = v => P.t + (1 - v / max) * (H - P.t - P.b);
-  const cx = i => P.l + gw * (i + 0.5);
-  let grid = '';
+  const cx = i => plotR - gw * (i + 0.5);
+  let grid = `<text class="cap" x="${W - 2}" y="10" text-anchor="end">מטבעות</text>`;
   for (let v = 0; v <= max + 1e-9; v += step) {
-    grid += `<line class="gridl" x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${P.l - 7}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+    grid += `<line class="gridl" x1="${plotL}" x2="${plotR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${plotR + 7}" y="${Y(v) + 4}" text-anchor="start">${v}</text>`;
   }
-  const every = Math.max(1, Math.ceil(52 / gw));
   let xl = '', bars = '';
   agg.forEach((a, i) => {
-    if ((days.length - 1 - i) % every === 0) xl += `<text x="${cx(i)}" y="${H - P.b + 18}" text-anchor="middle">${i === days.length - 1 ? 'היום' : dayLabel(a.d)}</text>`;
+    const isToday = i === days.length - 1;
+    xl += `<text x="${cx(i)}" y="${H - P.b + 17}" text-anchor="middle">${isToday ? 'היום' : 'יום ' + WEEKDAYS[new Date(a.d).getDay()]}</text>`
+        + `<text x="${cx(i)}" y="${H - P.b + 31}" text-anchor="middle" style="font-size:10px;opacity:.75">${dayLabel(a.d)}</text>`;
     const base = Y(0);
-    if (a.earned) bars += `<rect class="bar-pos" x="${(cx(i) - bw - 1).toFixed(1)}" y="${Y(a.earned).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.earned)).toFixed(1)}" rx="3"/>`;
-    if (a.lost) bars += `<rect class="bar-neg" x="${(cx(i) + 1).toFixed(1)}" y="${Y(a.lost).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.lost)).toFixed(1)}" rx="3"/>`;
+    // RTL: "earned" sits on the right of each pair, "lost" on the left (same order as the legend).
+    if (a.earned) bars += `<rect class="bar bar-pos" style="--i:${i}" x="${(cx(i) + 1).toFixed(1)}" y="${Y(a.earned).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.earned)).toFixed(1)}" rx="4"/>`;
+    if (a.lost) bars += `<rect class="bar bar-neg" style="--i:${i}" x="${(cx(i) - bw - 1).toFixed(1)}" y="${Y(a.lost).toFixed(1)}" width="${bw.toFixed(1)}" height="${(base - Y(a.lost)).toFixed(1)}" rx="4"/>`;
   });
   const totE = agg.reduce((x, a) => x + a.earned, 0), totL = agg.reduce((x, a) => x + a.lost, 0);
   el.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
-      aria-label="גרף עמודות יומי: ${totE} מטבעות נצברו ו-${totL} ירדו ב-14 הימים האחרונים. אפשר לעבור בין ימים עם החצים.">
-      <rect class="bar-hover" x="0" y="${P.t}" width="${gw.toFixed(1)}" height="${H - P.t - P.b}" rx="6" style="display:none"/>
+    <svg class="${animate ? 'enter' : ''}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img"
+      aria-label="גרף עמודות לשבוע האחרון: ${totE} מטבעות נצברו ו-${totL} ירדו. אפשר לעבור בין ימים עם החצים.">
+      <rect class="bar-hover" x="0" y="${P.t}" width="${gw.toFixed(1)}" height="${H - P.t - P.b}" rx="8" style="display:none"/>
       <g class="ax">${grid}${xl}</g>
-      <line class="axis-base" x1="${P.l}" x2="${W - P.r}" y1="${Y(0)}" y2="${Y(0)}"/>
+      <line class="axis-base" x1="${plotL}" x2="${plotR}" y1="${Y(0)}" y2="${Y(0)}"/>
       ${bars}
     </svg><div class="tt" aria-hidden="true"></div>`;
   const svg = $('svg', el), hb = $('.bar-hover', svg);
-  attachHover(el, svg, CHART_DAYS, cx, i => {
+  attachHover(el, svg, BAR_DAYS, cx, i => {
     const a = agg[i];
-    hb.style.display = ''; hb.setAttribute('x', (P.l + gw * i).toFixed(1));
+    hb.style.display = ''; hb.setAttribute('x', (plotR - gw * (i + 1)).toFixed(1));
     const html = `<strong>${esc(fmtDay(a.d))}</strong>`
-      + `<div>נצברו: <span class="num tp">${signed(a.earned)}</span></div>`
-      + `<div>ירדו: <span class="num tn">${signed(-a.lost)}</span></div>`
+      + `<div>קיבלתי: <span class="num tp">${signed(a.earned)}</span></div>`
+      + `<div>איבדתי: <span class="num tn">${signed(-a.lost)}</span></div>`
       + (a.spent ? `<div>קניות בחנות: <span class="tg">${a.spent}</span></div>` : '');
     return { x: cx(i), y: Y(Math.max(a.earned, a.lost)), html };
   }, () => { hb.style.display = 'none'; });
@@ -1269,12 +1501,14 @@ function render() {
   if (a && a !== document.body && app.contains(a)) {
     if (a.id) focusSel = '#' + a.id;
     else if (a.dataset && a.dataset.action) {
-      focusSel = `[data-action="${a.dataset.action}"]` + (a.dataset.id ? `[data-id="${a.dataset.id}"]` : '') + (a.dataset.tab ? `[data-tab="${a.dataset.tab}"]` : '');
+      focusSel = `[data-action="${a.dataset.action}"]` + (a.dataset.id ? `[data-id="${a.dataset.id}"]` : '')
+        + (a.dataset.tab ? `[data-tab="${a.dataset.tab}"]` : '') + (a.dataset.filter ? `[data-filter="${a.dataset.filter}"]` : '');
     }
   }
-  if (ui.screen === 'student' && !studentById(ui.studentId)) ui.screen = 'login';
+  if ((ui.screen === 'student' || ui.screen === 'activity') && !studentById(ui.studentId)) ui.screen = 'login';
   if (ui.screen === 'login') renderLogin();
   else if (ui.screen === 'student') renderStudent();
+  else if (ui.screen === 'activity') renderActivity();
   else renderTeacher();
   updateSoundButtons();
   if (focusSel && !a.isConnected) {
@@ -1289,47 +1523,108 @@ function go(screen, extra = {}) {
   window.scrollTo(0, 0);
 }
 
-// ---------- 8a. Login ----------
+// ---------- 8a. Login & passwords ----------
 function renderLogin() {
   ui.built = 'login';
   const list = state.students.length
     ? `<div class="student-grid">${state.students.map((s, i) => `
         <button type="button" class="stu-btn" style="--i:${i}" data-action="login" data-id="${s.id}">
-          <span class="emo" aria-hidden="true">${esc(s.emoji)}</span><span class="nm">${esc(s.name)}</span>
+          ${avatar(s)}<span class="nm">${esc(s.name)}</span><span class="hint">${s.pin ? '' : 'כניסה ראשונה'}</span>
         </button>`).join('')}</div>`
     : `<div class="empty-note">עדיין אין תלמידים בכיתה.<br>המורה יכול להוסיף תלמידים דרך כניסת המורה.</div>`;
   app.innerHTML = `
     <div class="screen login">
       <div class="login-top">${soundBtn()}</div>
-      <div class="logo-coin" aria-hidden="true"><b>★</b></div>
+      <div class="logo-coin" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#i-coin"/></svg></div>
       <h1>מטבעות כיתה</h1>
-      <p class="lead">מי את/ה? בחרו את השם שלכם כדי להיכנס 👇</p>
+      <p class="lead">מי את/ה? בחרו את השם שלכם כדי להיכנס</p>
       ${list}
-      <div class="login-foot"><button type="button" class="link-btn" data-action="teacher-login">🧑‍🏫 כניסת מורה מחליף</button></div>
+      <div class="login-foot"><button type="button" class="link-btn" data-action="teacher-login">${ic('lock')} כניסת מורה מחליף</button></div>
     </div>`;
 }
-function openPinModal() {
+function enterStudent(id) {
+  go('student', { studentId: id, shownBalance: 0, feedSeen: 0, filter: 'all', chartsAnimate: true });
+}
+function startStudentLogin(id) {
+  const s = studentById(id);
+  if (!s) return;
+  if (!s.pin) openCreatePassword(s); else openEnterPassword(s);
+}
+function openCreatePassword(s) {
+  const id = s.id;
   openModal({
-    icon: '🔐', title: 'כניסת מורה מחליף',
-    body: `<label for="pin" class="sr-only">קוד כניסה</label>
-      <div>הזינו את קוד המורה</div>
-      <input id="pin" name="pin" class="pin-input" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="••••">`,
-    okText: 'כניסה',
+    iconHtml: avatar(s, 'xl'),
+    title: `שלום ${s.name}! יצירת סיסמה`,
+    body: `<p>זו הכניסה הראשונה שלך. בחרו סיסמה של ${MIN_PASSWORD} תווים לפחות – רק מי שיודע אותה יוכל להיכנס לחשבון.</p>
+      <label class="m-field" for="pw1">סיסמה חדשה<input id="pw1" name="pw1" class="pin-input" type="password" maxlength="32" autocomplete="new-password"></label>
+      <label class="m-field" for="pw2">הקלידו שוב את הסיסמה<input id="pw2" name="pw2" class="pin-input" type="password" maxlength="32" autocomplete="new-password"></label>`,
+    okText: 'שמירה וכניסה', okClass: 'btn-gold',
     onOk: (fd, form) => {
-      if (String(fd.get('pin') || '').trim() === TEACHER_PIN) {
+      const cur = studentById(id);
+      if (!cur) return true;
+      const p1 = String(fd.get('pw1') || ''), p2 = String(fd.get('pw2') || '');
+      const fail = (msg, field) => { toast(msg, 'error'); play('error'); shake(form); if (field) field.focus(); return false; };
+      if (p1.length < MIN_PASSWORD) return fail(`הסיסמה צריכה להכיל לפחות ${MIN_PASSWORD} תווים`, $('#pw1', form));
+      if (!p2) { $('#pw2', form).focus(); return false; }   // Enter in the first field moves on
+      if (p1 !== p2) { $('#pw2', form).value = ''; return fail('הסיסמאות לא תואמות, נסו שוב', $('#pw2', form)); }
+      cur.pin = hashPin(cur.id, p1);
+      save();
+      toast('הסיסמה נשמרה. ברוכים הבאים!', 'success');
+      setTimeout(() => enterStudent(id), 0);
+      return true;
+    }
+  });
+}
+function openEnterPassword(s) {
+  const id = s.id;
+  openModal({
+    iconHtml: avatar(s, 'xl'),
+    title: `שלום ${s.name}`,
+    body: `<label class="m-field" for="pw">הזינו את הסיסמה שלכם<input id="pw" name="pw" class="pin-input" type="password" maxlength="32" autocomplete="current-password"></label>
+      <div class="m-hint">שכחתם את הסיסמה? המורה יכול לאפס אותה.</div>`,
+    okText: 'כניסה', okClass: 'btn-gold',
+    onOk: (fd, form) => {
+      const cur = studentById(id);
+      if (!cur) return true;
+      if (!cur.pin) { setTimeout(() => openCreatePassword(cur), 0); return true; } // reset while the modal was open
+      if (hashPin(cur.id, String(fd.get('pw') || '')) === cur.pin) {
+        setTimeout(() => enterStudent(id), 0);
+        return true;
+      }
+      toast('סיסמה שגויה, נסו שוב', 'error');
+      play('error');
+      shake(form);
+      const inp = $('#pw', form); inp.value = ''; inp.focus();
+      return false;
+    }
+  });
+}
+function openTeacherLogin() {
+  openModal({
+    iconHtml: ic('lock'), title: 'כניסת מורה מחליף',
+    body: `<label class="m-field" for="tcode">קוד מורה<input id="tcode" name="code" class="pin-input" type="password" maxlength="20" autocomplete="off"></label>`,
+    okText: 'כניסה', okClass: 'btn-gold',
+    onOk: (fd, form) => {
+      if (String(fd.get('code') || '').trim().toLowerCase() === TEACHER_CODE) {
         setTimeout(() => go('teacher', { tab: 'actions' }), 0);
         return true;
       }
       toast('קוד שגוי, נסו שוב', 'error');
       play('error');
       shake(form);
-      const inp = $('#pin', form); inp.value = ''; inp.focus();
+      const inp = $('#tcode', form); inp.value = ''; inp.focus();
       return false;
     }
   });
 }
 
 // ---------- 8b. Student dashboard ----------
+function studentTopbar(s, title, subtitle, button) {
+  return `<header class="topbar">
+    <div class="hello">${avatar(s, 'lg')}<div><h1>${title}</h1><p>${subtitle}</p></div></div>
+    <div class="top-actions">${soundBtn()}${button}</div>
+  </header>`;
+}
 function renderStudent() {
   const s = studentById(ui.studentId);
   const key = 'student:' + s.id;
@@ -1337,53 +1632,53 @@ function renderStudent() {
     ui.built = key;
     app.innerHTML = `
       <div class="screen">
-        <header class="topbar">
-          <div class="hello"><span class="avatar" aria-hidden="true">${esc(s.emoji)}</span>
-            <div><h1>שלום ${esc(s.name)}!</h1><p>כאן רואים את המטבעות, הרמה והפרסים שלך</p></div></div>
-          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">🔄 החלפת תלמיד</button></div>
-        </header>
+        ${studentTopbar(s, `שלום ${esc(s.name)}!`, 'כאן רואים את המטבעות, הרמה והפרסים שלך',
+          `<button type="button" class="btn btn-ghost" data-action="logout">${ic('swap')} החלפת תלמיד</button>`)}
         <div class="dash">
-          <div class="col">
-            <section class="card hero o-hero" aria-label="היתרה והרמה שלי">
-              <div class="hero-grid">
-                <div class="balance-wrap">
-                  <div class="balance-label">המטבעות שלי</div>
-                  <div class="balance"><span class="coin" aria-hidden="true">★</span><span class="balance-num" id="bal">0</span></div>
-                </div>
-                <div class="level-box">
-                  <div class="level-badge" id="lvl-badge"></div>
+          <section class="card hud" aria-label="היתרה והרמה שלי">
+            <svg class="hud-bgcoin" viewBox="0 0 48 48" aria-hidden="true"><use href="#i-coin"/></svg>
+            <div class="hud-inner">
+              <div class="balance-label">המטבעות שלי</div>
+              <div class="balance">${coinIc('coin-big')}<span class="balance-num" id="bal">0</span></div>
+              <div class="level-row">
+                <span id="lvl-hex"></span>
+                <div class="level-info">
+                  <div class="level-name" id="lvl-name"></div>
                   <div class="xp" role="progressbar" aria-label="התקדמות לרמה הבאה" aria-valuemin="0" aria-valuemax="100" id="xp"><i></i></div>
                   <div class="xp-text" id="xp-text"></div>
-                  <div class="stats" id="stats"></div>
                 </div>
               </div>
+              <div class="stats" id="stats"></div>
+            </div>
+          </section>
+          <div class="charts-row">
+            <section class="card" aria-labelledby="c1-h">
+              <div class="card-title"><h2 id="c1-h">${ic('chart')} היתרה שלי לאורך זמן</h2><span class="sub">14 הימים האחרונים</span></div>
+              <div class="chart" id="chart-bal"></div>
             </section>
-            <section class="card o-shop" aria-labelledby="shop-h">
-              <div class="card-title"><h2 id="shop-h">🛍️ חנות הפרסים</h2><span class="sub">אוספים מטבעות וקונים פרסים</span></div>
-              <div class="shop-grid" id="shop"></div>
-            </section>
-            <section class="card o-charts" aria-labelledby="charts-h">
-              <div class="card-title"><h2 id="charts-h">📈 ההתקדמות שלי</h2><span class="sub">14 הימים האחרונים</span></div>
-              <div class="chart-block">
-                <div class="chart-head"><h3>היתרה שלי לאורך זמן</h3></div>
-                <div class="chart" id="chart-bal"></div>
-              </div>
-              <div class="chart-block">
-                <div class="chart-head"><h3>מטבעות שנצברו וירדו בכל יום</h3>
-                  <div class="legend"><span><i style="background:var(--green)"></i>נצברו</span><span><i style="background:var(--red)"></i>ירדו</span></div></div>
-                <div class="chart" id="chart-bars"></div>
-              </div>
+            <section class="card" aria-labelledby="c2-h">
+              <div class="card-title"><h2 id="c2-h">${ic('bars')} קיבלתי ואיבדתי השבוע</h2>
+                <div class="legend"><span><i style="background:var(--good)"></i>קיבלתי</span><span><i style="background:var(--bad)"></i>איבדתי</span></div></div>
+              <div class="chart" id="chart-bars"></div>
             </section>
           </div>
-          <div class="col">
-            <section class="card o-feed" aria-labelledby="feed-h">
-              <div class="card-title"><h2 id="feed-h">🧾 על מה קיבלתי מטבעות</h2></div>
-              <div id="feed-wrap"></div>
-            </section>
-            <section class="card o-board" id="board-card" aria-labelledby="board-h" hidden>
-              <div class="card-title"><h2 id="board-h">🏆 טבלת המובילים</h2><span class="sub">לפי מטבעות שנצברו</span></div>
-              <ol class="board" id="board"></ol>
-            </section>
+          <div class="cols">
+            <div class="col">
+              <section class="card" aria-labelledby="shop-h">
+                <div class="card-title"><h2 id="shop-h">${ic('bag')} חנות הפרסים</h2><span class="sub">אוספים מטבעות וקונים פרסים</span></div>
+                <div class="shop-grid" id="shop"></div>
+              </section>
+              <section class="card" id="board-card" aria-labelledby="board-h" hidden>
+                <div class="card-title"><h2 id="board-h">${ic('trophy')} לוח המובילים</h2><span class="sub">לפי מטבעות שנצברו</span></div>
+                <ol class="board" id="board"></ol>
+              </section>
+            </div>
+            <div class="col">
+              <section class="card" aria-labelledby="feed-h">
+                <div class="card-title"><h2 id="feed-h">${ic('list')} על מה קיבלתי מטבעות</h2></div>
+                <div id="feed-wrap"></div>
+              </section>
+            </div>
           </div>
         </div>
       </div>`;
@@ -1393,6 +1688,7 @@ function renderStudent() {
   renderFeed(s);
   renderCharts(s);
   renderBoard(s);
+  checkLevelUp(s);
 }
 
 function renderHero(s) {
@@ -1404,29 +1700,27 @@ function renderHero(s) {
   const maxed = li === LEVELS.length - 1;
   const into = s.totalEarned - li * COINS_PER_LEVEL;
   const pct = maxed ? 100 : Math.round(into / COINS_PER_LEVEL * 100);
-  $('#lvl-badge').innerHTML = `<span class="li" aria-hidden="true">${LEVEL_ICONS[li]}</span> רמה ${li + 1} · ${LEVELS[li]}`;
+  $('#lvl-hex').innerHTML = hexBadge(li + 1, 56);
+  $('#lvl-name').textContent = `רמה ${li + 1} · ${LEVELS[li]}`;
   const xp = $('#xp');
   xp.setAttribute('aria-valuenow', pct);
   $('i', xp).style.width = pct + '%';
   $('#xp-text').textContent = maxed
-    ? 'הגעת לרמה הגבוהה ביותר! 👑'
+    ? 'הגעת לרמה הגבוהה ביותר!'
     : `עוד ${COINS_PER_LEVEL - into} מטבעות לרמה ${li + 2} · ${LEVELS[li + 1]}`;
   const bought = state.orders.filter(o => o.studentId === s.id).length;
   $('#stats').innerHTML = `<span class="stat">נצברו בסך הכל: <b>${s.totalEarned}</b></span><span class="stat">פרסים שקניתי: <b>${bought}</b></span>`;
-
-  if (ui.shownLevel !== null && li > ui.shownLevel) celebrateLevel(li);
-  ui.shownLevel = li;
 }
 
 function renderShop(s) {
   const el = $('#shop');
-  if (!state.rewards.length) { el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="big">🎁</span>אין עדיין פרסים בחנות</div>`; return; }
+  if (!state.rewards.length) { el.innerHTML = `<div class="empty" style="grid-column:1/-1">${ic('bag')}אין עדיין פרסים בחנות</div>`; return; }
   el.innerHTML = state.rewards.map(r => {
     const can = s.coins >= r.cost, pct = Math.min(100, Math.round(s.coins / r.cost * 100));
     return `<article class="reward ${can ? 'can' : ''}">
-      <div class="r-icon" aria-hidden="true">${esc(r.icon)}</div>
+      ${giftIc()}
       <div class="r-name">${esc(r.label)}</div>
-      <div class="r-cost"><span class="coin sm" aria-hidden="true">★</span><span>${r.cost}</span><span class="sr-only">מטבעות</span></div>
+      <div class="r-cost">${coinIc()}<span>${r.cost}</span><span class="sr-only">מטבעות</span></div>
       <div class="r-bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
       <button type="button" class="btn ${can ? 'btn-gold' : 'btn-ghost'}" data-action="buy" data-id="${r.id}" ${can ? '' : 'disabled'}
         aria-label="${can ? `קנה ${esc(r.label)} ב-${r.cost} מטבעות` : `חסרים עוד ${r.cost - s.coins} מטבעות ל${esc(r.label)}`}">
@@ -1435,64 +1729,113 @@ function renderShop(s) {
   }).join('');
 }
 
+function feedItem(e, i, anim, timeOnly) {
+  const cls = e.kind === 'buy' ? 'buy' : e.delta > 0 ? 'pos' : e.delta < 0 ? 'neg' : 'zero';
+  return `<li class="feed-item ${cls}${anim ? ' anim' : ''}" style="--i:${Math.min(i, 12)}">
+    <div class="f-main"><div class="f-text">${esc(e.text)}</div>
+      ${e.note ? `<div class="f-note">${ic('note')}<span>${esc(e.note)}</span></div>` : ''}
+      <time class="f-time" datetime="${new Date(e.t).toISOString()}">${esc(timeOnly ? hhmm(e.t) : fmtWhen(e.t))}</time></div>
+    <div class="f-amt num">${signed(e.delta)}</div></li>`;
+}
+
 function renderFeed(s) {
   const wrap = $('#feed-wrap');
   const items = state.log.filter(e => e.studentId === s.id).sort((a, b) => b.t - a.t);
-  if (!items.length) { wrap.innerHTML = `<div class="empty"><span class="big">🌱</span>עדיין אין אירועים. כל התנהגות טובה מביאה מטבעות!</div>`; ui.feedSeen = 0; return; }
+  if (!items.length) { wrap.innerHTML = `<div class="empty">${ic('sprout')}עדיין אין אירועים. כל התנהגות טובה מביאה מטבעות!</div>`; ui.feedSeen = 0; return; }
   const fresh = Math.max(0, items.length - ui.feedSeen); // newest N haven't been animated yet
   const firstRender = ui.feedSeen === 0;
-  const shown = items.slice(0, ui.feedLimit);
-  wrap.innerHTML = `<ol class="feed" aria-label="היסטוריית מטבעות">${shown.map((e, i) => {
-    const cls = e.kind === 'buy' ? 'buy' : e.delta > 0 ? 'pos' : e.delta < 0 ? 'neg' : 'zero';
-    const anim = (firstRender ? i < 12 : i < fresh) ? ' anim' : '';
-    return `<li class="feed-item ${cls}${anim}" style="--i:${Math.min(i, 12)}">
-      <div class="f-main"><div class="f-text">${esc(e.text)}</div>
-        ${e.note ? `<div class="f-note">💬 ${esc(e.note)}</div>` : ''}
-        <time class="f-time" datetime="${new Date(e.t).toISOString()}">${esc(fmtWhen(e.t))}</time></div>
-      <div class="f-amt num">${signed(e.delta)}</div></li>`;
-  }).join('')}</ol>${items.length > shown.length ? `<button type="button" class="btn btn-ghost more-btn" data-action="feed-more">הצגת עוד (${items.length - shown.length})</button>` : ''}`;
+  const shown = items.slice(0, FEED_PREVIEW);
+  wrap.innerHTML = `<ol class="feed" aria-label="פעילות אחרונה">${shown.map((e, i) => feedItem(e, i, firstRender ? i < 12 : i < fresh)).join('')}</ol>
+    <button type="button" class="btn btn-ghost more-btn" data-action="open-activity">${ic('list')} לכל הפעילות (${items.length})</button>`;
   ui.feedSeen = items.length;
 }
 
 function renderCharts(s) {
-  drawBalanceChart($('#chart-bal'), s);
-  drawBarChart($('#chart-bars'), s);
+  drawBalanceChart($('#chart-bal'), s, ui.chartsAnimate);
+  drawBarChart($('#chart-bars'), s, ui.chartsAnimate);
+  ui.chartsAnimate = false;
 }
 
 function renderBoard(s) {
   const card = $('#board-card');
   card.hidden = !state.settings.leaderboard;
   if (card.hidden) return;
-  const medals = ['🥇', '🥈', '🥉', '4', '5'];
   const top = [...state.students].sort((a, b) => b.totalEarned - a.totalEarned || a.name.localeCompare(b.name, 'he')).slice(0, 5);
   $('#board').innerHTML = top.map((x, i) => `<li class="${x.id === s.id ? 'me' : ''}">
-    <span class="rk">${medals[i]}</span><span class="be" aria-hidden="true">${esc(x.emoji)}</span>
-    <span class="bn">${esc(x.name)}${x.id === s.id ? ' (אני)' : ''}</span><span class="bv">${x.totalEarned}</span></li>`).join('');
+    <span class="rk r${i + 1}">${i + 1}</span>${avatar(x, 'sm')}
+    <span class="bn">${esc(firstName(x.name))}${x.id === s.id ? ' (אני)' : ''}</span><span class="bv">${x.totalEarned}${coinIc()}</span></li>`).join('');
 }
 
-// ---------- 8c. Teacher panel ----------
+// ---------- 8c. Full activity view ("על מה קיבלתי מטבעות") ----------
+function renderActivity() {
+  const s = studentById(ui.studentId);
+  const key = 'activity:' + s.id;
+  if (ui.built !== key) {
+    ui.built = key;
+    app.innerHTML = `
+      <div class="screen">
+        ${studentTopbar(s, 'על מה קיבלתי מטבעות', `כל הפעילות של ${esc(s.name)}`,
+          `<button type="button" class="btn btn-ghost" data-action="back-dash">${ic('back')} חזרה ללוח שלי</button>`)}
+        <section class="card" aria-label="כל הפעילות">
+          <div class="act-summary" id="act-summary"></div>
+          <div class="chips" role="group" aria-label="סינון פעילות" id="chips"></div>
+          <div id="act-list"></div>
+        </section>
+      </div>`;
+  }
+  const all = state.log.filter(e => e.studentId === s.id).sort((a, b) => b.t - a.t);
+  const gain = all.filter(e => e.delta > 0), loss = all.filter(e => e.delta < 0);
+  const sum = arr => arr.reduce((x, e) => x + e.delta, 0);
+  $('#act-summary').innerHTML = `<span class="stat">אירועים: <b>${all.length}</b></span>
+    <span class="stat">קיבלתי: <b class="num" style="color:var(--goodTxt)">${signed(sum(gain))}</b></span>
+    <span class="stat">איבדתי: <b class="num" style="color:var(--badTxt)">${signed(sum(loss))}</b></span>`;
+  const chip = (f, label, n) => `<button type="button" class="chip" data-action="filter" data-filter="${f}" aria-pressed="${ui.filter === f}">${label}<span class="n">(${n})</span></button>`;
+  $('#chips').innerHTML = chip('all', 'הכול', all.length) + chip('gain', 'קיבלתי', gain.length) + chip('loss', 'איבדתי', loss.length);
+
+  const list = ui.filter === 'gain' ? gain : ui.filter === 'loss' ? loss : all;
+  const wrap = $('#act-list');
+  if (!list.length) {
+    const msg = ui.filter === 'gain' ? 'עדיין אין מטבעות שהתקבלו' : ui.filter === 'loss' ? 'לא איבדת מטבעות – כל הכבוד!' : 'עדיין אין אירועים';
+    wrap.innerHTML = `<div class="empty">${ic('sprout')}${msg}</div>`;
+  } else {
+    const groups = [];
+    for (const e of list) {
+      const ds = dayStart(e.t);
+      if (!groups.length || groups[groups.length - 1].ds !== ds) groups.push({ ds, items: [] });
+      groups[groups.length - 1].items.push(e);
+    }
+    let n = 0;
+    wrap.innerHTML = groups.map(g => `<section class="day-group">
+      <h3 class="day-h">${esc(fmtDay(g.ds))} <span class="cnt">${g.items.length === 1 ? 'אירוע אחד' : g.items.length + ' אירועים'}</span></h3>
+      <ol class="feed">${g.items.map(e => { const i = n++; return feedItem(e, i, i < 12, true); }).join('')}</ol></section>`).join('');
+  }
+  checkLevelUp(s);
+}
+
+// ---------- 8d. Teacher panel ----------
 function renderTeacher() {
   const key = 'teacher:' + ui.tab;
   if (ui.built !== key) {
     ui.built = key;
-    const tab = (id, label) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="t-panel" aria-selected="${ui.tab === id}" data-action="tab" data-tab="${id}">${label}</button>`;
+    const tab = (id, icon, label) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="t-panel" aria-selected="${ui.tab === id}" data-action="tab" data-tab="${id}">${ic(icon)}${label}</button>`;
     app.innerHTML = `
       <div class="screen">
         <header class="topbar">
-          <div class="hello"><span class="avatar" aria-hidden="true">🧑‍🏫</span>
+          <div class="hello"><span class="av lg" style="--h:255" aria-hidden="true">מ</span>
             <div><h1>פאנל מורה מחליף</h1><p>בוחרים תלמידים ולוחצים על התנהגות</p></div></div>
-          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">🚪 יציאה</button></div>
+          <div class="top-actions">${soundBtn()}<button type="button" class="btn btn-ghost" data-action="logout">${ic('logout')} יציאה</button></div>
         </header>
         <nav class="tabs" role="tablist" aria-label="אזורי פאנל המורה">
-          ${tab('actions', '🎯 פעולות')}${tab('orders', '🎁 פרסים שנרכשו <span class="badge" id="orders-badge" hidden></span>')}${tab('edit', '✏️ עריכה')}
+          ${tab('actions', 'target', 'פעולות')}${tab('orders', 'bag', 'פרסים שנרכשו <span class="badge" id="orders-badge" hidden></span>')}${tab('edit', 'pencil', 'עריכה')}
         </nav>
         <div id="t-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}">${teacherSkeleton(ui.tab)}</div>
       </div>`;
   }
+  for (const id of ui.selected) if (!studentById(id)) ui.selected.delete(id);
   const pending = state.orders.filter(o => !o.done).length;
   const badge = $('#orders-badge');
   badge.hidden = !pending; badge.textContent = pending;
-  if (ui.tab === 'actions') { renderRoster(); renderBehaviors(); }
+  if (ui.tab === 'actions') { renderRoster(); renderBehaviors(); renderRecent(); }
   else if (ui.tab === 'orders') renderOrders();
   else renderEditLists();
 }
@@ -1501,82 +1844,87 @@ function teacherSkeleton(tab) {
   if (tab === 'actions') return `
     <div class="t-actions">
       <section class="card roster" aria-labelledby="roster-h">
-        <div class="card-title"><h2 id="roster-h">👥 תלמידים</h2><button type="button" class="btn btn-ghost btn-small" data-action="select-all" id="sel-all"></button></div>
+        <div class="card-title"><h2 id="roster-h">${ic('users')} תלמידים</h2><button type="button" class="btn btn-ghost btn-small" data-action="select-all" id="sel-all"></button></div>
         <p class="sel-info" id="sel-info" aria-live="polite"></p>
         <ul class="roster-list" id="roster"></ul>
       </section>
-      <section class="card" aria-label="התנהגויות">
-        <label class="note-field"><span>📝 הערה לפעולה הבאה (לא חובה – תוצג לתלמיד)</span>
-          <input id="note" maxlength="120" autocomplete="off" placeholder="למשל: עזרת לחבר בתרגיל 4" value="${esc(ui.note)}" class="${ui.note ? 'has' : ''}"></label>
-        <h2 class="grp pos">👍 התנהגות חיובית</h2><div class="beh-grid" id="beh-pos"></div>
-        <h2 class="grp neg">👎 התנהגות שלילית</h2><div class="beh-grid" id="beh-neg"></div>
-      </section>
+      <div class="col">
+        <section class="card" aria-label="התנהגויות">
+          <label class="note-field"><span>${ic('note')} הערה לתלמיד (לא חובה – תוצג לו בפעילות)</span>
+            <input id="note" maxlength="120" autocomplete="off" placeholder="למשל: עזרת לחבר בתרגיל 4" value="${esc(ui.note)}" class="${ui.note ? 'has' : ''}"></label>
+          <h2 class="grp pos">${ic('up')} התנהגות חיובית</h2><div class="beh-grid" id="beh-pos"></div>
+          <h2 class="grp neg">${ic('down')} התנהגות שלילית</h2><div class="beh-grid" id="beh-neg"></div>
+        </section>
+        <section class="card" aria-labelledby="recent-h">
+          <div class="card-title"><h2 id="recent-h">${ic('list')} 5 הפעולות האחרונות</h2>
+            <button type="button" class="btn btn-ghost btn-small" data-action="undo" id="undo-btn">${ic('undo')} ביטול הפעולה האחרונה</button></div>
+          <ol class="recent-list" id="recent"></ol>
+        </section>
+      </div>
     </div>`;
   if (tab === 'orders') return `
     <section class="card" aria-labelledby="orders-h">
-      <div class="card-title"><h2 id="orders-h">🎁 פרסים שנרכשו</h2><span class="sub" id="orders-sub"></span></div>
+      <div class="card-title"><h2 id="orders-h">${ic('bag')} פרסים שנרכשו</h2><span class="sub" id="orders-sub"></span></div>
       <div id="orders-wrap"></div>
     </section>`;
-  const emojiPick = STUDENT_EMOJIS.map(e => `<button type="button" data-action="pick-emoji" data-emoji="${esc(e)}" aria-label="בחירת ${esc(e)}">${esc(e)}</button>`).join('');
   return `
     <div class="edit-grid">
       <section class="card" aria-labelledby="ed-s-h">
-        <div class="card-title"><h2 id="ed-s-h">👥 תלמידים</h2></div>
+        <div class="card-title"><h2 id="ed-s-h">${ic('users')} תלמידים</h2></div>
         <form class="add-form" data-form="student" autocomplete="off">
           <div class="field-row">
             <label class="field"><span>שם</span><input name="name" required maxlength="20" placeholder="שם התלמיד/ה"></label>
-            <label class="field"><span>אימוג׳י</span><input name="emoji" maxlength="8" value="⭐"></label>
             <label class="field"><span>מטבעות פתיחה</span><input name="coins" type="number" inputmode="numeric" min="0" max="999" value="0"></label>
           </div>
-          <div class="emoji-pick" role="group" aria-label="בחירה מהירה של אימוג׳י">${emojiPick}</div>
-          <button type="submit" class="btn btn-gold">➕ הוספת תלמיד</button>
+          <button type="submit" class="btn btn-gold">${ic('plus')} הוספת תלמיד</button>
         </form>
         <ul class="ed-list" id="ed-students"></ul>
       </section>
       <section class="card" aria-labelledby="ed-b-h">
-        <div class="card-title"><h2 id="ed-b-h">🎯 התנהגויות</h2></div>
+        <div class="card-title"><h2 id="ed-b-h">${ic('target')} התנהגויות</h2></div>
         <form class="add-form" data-form="behavior" autocomplete="off">
-          <div class="field-row r3b">
+          <div class="field-row r3">
             <label class="field"><span>תיאור</span><input name="label" required maxlength="30" placeholder="למשל: סידור הכיתה"></label>
-            <label class="field"><span>אייקון</span><input name="icon" maxlength="8" placeholder="🧹"></label>
-            <label class="field"><span>סוג</span><select name="sign"><option value="pos">➕ חיובי</option><option value="neg">➖ שלילי</option></select></label>
+            <label class="field"><span>סוג</span><select name="sign"><option value="pos">חיובי (+)</option><option value="neg">שלילי (−)</option></select></label>
             <label class="field"><span>מטבעות</span><input name="amount" type="number" inputmode="numeric" min="1" max="100" value="5" required></label>
           </div>
-          <button type="submit" class="btn btn-gold">➕ הוספת התנהגות</button>
+          <button type="submit" class="btn btn-gold">${ic('plus')} הוספת התנהגות</button>
         </form>
         <ul class="ed-list" id="ed-behaviors"></ul>
       </section>
       <section class="card" aria-labelledby="ed-r-h">
-        <div class="card-title"><h2 id="ed-r-h">🛍️ פרסים</h2></div>
+        <div class="card-title"><h2 id="ed-r-h">${ic('bag')} פרסים</h2></div>
         <form class="add-form" data-form="reward" autocomplete="off">
           <div class="field-row">
             <label class="field"><span>שם הפרס</span><input name="label" required maxlength="30" placeholder="למשל: 10 דקות משחק"></label>
-            <label class="field"><span>אייקון</span><input name="icon" maxlength="8" placeholder="🎮"></label>
             <label class="field"><span>מחיר</span><input name="cost" type="number" inputmode="numeric" min="1" max="9999" value="25" required></label>
           </div>
-          <button type="submit" class="btn btn-gold">➕ הוספת פרס</button>
+          <button type="submit" class="btn btn-gold">${ic('plus')} הוספת פרס</button>
         </form>
         <ul class="ed-list" id="ed-rewards"></ul>
       </section>
       <section class="card" aria-labelledby="ed-set-h">
-        <div class="card-title"><h2 id="ed-set-h">⚙️ הגדרות</h2></div>
+        <div class="card-title"><h2 id="ed-set-h">${ic('gear')} הגדרות</h2></div>
         <label class="switch-row"><input type="checkbox" id="set-board"><span class="switch" aria-hidden="true"></span>
-          <span>הצגת טבלת מובילים (5 הראשונים) במסך התלמיד</span></label>
+          <span>הצג לוח מובילים</span></label>
+        <div class="tool-box" id="demo-box">
+          <h3>${ic('spark')} עזר להצגה</h3>
+          <p id="demo-info"></p>
+          <button type="button" class="btn" data-action="random-event">${ic('spark')} אירוע אקראי</button>
+        </div>
         <div class="danger">
-          <h3>⚠️ איפוס נתונים</h3>
+          <h3>${ic('alert')} איפוס נתונים</h3>
           <p>מחיקת כל הנתונים וחזרה לנתוני ההדגמה ההתחלתיים.</p>
-          <button type="button" class="btn btn-red" data-action="reset">🗑️ איפוס כל הנתונים</button>
+          <button type="button" class="btn btn-bad" data-action="reset">${ic('trash')} איפוס כל הנתונים</button>
         </div>
       </section>
     </div>`;
 }
 
 function renderRoster() {
-  // Drop selections of students that no longer exist.
-  for (const id of ui.selected) if (!studentById(id)) ui.selected.delete(id);
   const all = state.students.length > 0 && ui.selected.size === state.students.length;
   const selAll = $('#sel-all');
-  selAll.textContent = all ? '✖ ניקוי בחירה' : '✔ בחר הכל';
+  selAll.innerHTML = all ? `${ic('check')} ניקוי בחירה` : `${ic('check')} בחר הכל`;
   selAll.setAttribute('aria-pressed', String(all));
   selAll.disabled = !state.students.length;
   $('#sel-info').textContent = state.students.length
@@ -1585,19 +1933,30 @@ function renderRoster() {
   $('#roster').innerHTML = state.students.map(s => {
     const on = ui.selected.has(s.id);
     return `<li><button type="button" class="stu-row" data-action="toggle" data-id="${s.id}" aria-pressed="${on}">
-      <span class="ck" aria-hidden="true">✓</span><span class="emo" aria-hidden="true">${esc(s.emoji)}</span>
-      <span class="nm">${esc(s.name)}</span><span class="cn"><span class="coin sm" aria-hidden="true">★</span>${s.coins}</span></button></li>`;
+      <span class="ck" aria-hidden="true">${ic('check')}</span>${avatar(s, 'sm')}
+      <span class="nm">${esc(s.name)}</span><span class="cn">${coinIc()}${s.coins}</span></button></li>`;
   }).join('');
 }
 
 function renderBehaviors() {
   const btn = b => `<button type="button" class="beh ${b.coins > 0 ? 'p' : 'n'}" data-action="behavior" data-id="${b.id}"
       aria-label="${esc(b.label)}, ${b.coins > 0 ? 'פלוס' : 'מינוס'} ${Math.abs(b.coins)} מטבעות">
-      <span class="bi" aria-hidden="true">${esc(b.icon)}</span><span class="bl">${esc(b.label)}</span><span class="bc num">${signed(b.coins)}</span></button>`;
+      <span class="bc num">${signed(b.coins)}</span><span class="bl">${esc(b.label)}</span></button>`;
   const pos = state.behaviors.filter(b => b.coins > 0), neg = state.behaviors.filter(b => b.coins < 0);
   const none = `<div class="empty" style="grid-column:1/-1">אין התנהגויות – אפשר להוסיף בלשונית עריכה</div>`;
   $('#beh-pos').innerHTML = pos.length ? pos.map(btn).join('') : none;
   $('#beh-neg').innerHTML = neg.length ? neg.map(btn).join('') : none;
+}
+
+function renderRecent() {
+  const last = state.actions.slice(-5).reverse();
+  $('#undo-btn').disabled = !last.length;
+  $('#recent').innerHTML = last.length ? last.map(a => {
+    const names = a.items.map(it => studentById(it.studentId)).filter(Boolean).map(s => s.name);
+    const who = names.length <= 2 ? names.join(', ') : `${names.slice(0, 2).join(', ')} ועוד ${names.length - 2}`;
+    return `<li><span class="ra num ${a.coins > 0 ? 'p' : 'n'}">${signed(a.coins)}</span><span class="rl">${esc(a.label)}${a.random ? ' (אקראי)' : ''}</span>
+      <span class="rw">${esc(who || 'תלמידים שנמחקו')}${a.note ? ' · עם הערה' : ''}</span><time>${esc(hhmm(a.t))}</time></li>`;
+  }).join('') : '<li class="muted" style="justify-content:center">עדיין לא בוצעו פעולות</li>';
 }
 
 function renderOrders() {
@@ -1607,25 +1966,36 @@ function renderOrders() {
   const row = o => {
     const s = studentById(o.studentId);
     return `<li class="order ${o.done ? 'done' : 'pending'}">
-      <span class="oi" aria-hidden="true">${esc(o.icon)}</span>
+      ${giftIc('og')}
       <div class="om"><div class="ot">${esc(o.reward)}</div>
-        <div class="os">${s ? `${esc(s.emoji)} ${esc(s.name)}` : 'תלמיד שנמחק'} · ${esc(fmtWhen(o.t))}</div></div>
-      ${o.done ? '<span class="done-tag">✅ נמסר</span>'
-        : `<button type="button" class="btn btn-green btn-small" data-action="deliver" data-id="${o.id}">✔ סימון כנמסר</button>`}</li>`;
+        <div class="os">${s ? esc(s.name) : 'תלמיד שנמחק'} · ${esc(fmtWhen(o.t))}</div></div>
+      ${o.done ? `<span class="done-tag">${ic('check-circle')} נמסר</span>`
+        : `<button type="button" class="btn btn-good btn-small" data-action="deliver" data-id="${o.id}">${ic('check')} סימון כנמסר</button>`}</li>`;
   };
   $('#orders-wrap').innerHTML = state.orders.length
     ? `<ul class="orders">${pending.map(row).join('')}${done.map(row).join('')}</ul>`
-    : `<div class="empty"><span class="big">🎁</span>עדיין לא נרכשו פרסים</div>`;
+    : `<div class="empty">${ic('bag')}עדיין לא נרכשו פרסים</div>`;
 }
 
 function renderEditLists() {
-  const item = (kind, id, icon, name, val, cls) => `<li><span class="ei" aria-hidden="true">${esc(icon)}</span><span class="en">${esc(name)}</span>
-    <span class="ev num ${cls}">${val}</span><button type="button" class="del" data-action="delete" data-kind="${kind}" data-id="${id}" aria-label="מחיקת ${esc(name)}">🗑️</button></li>`;
+  const del = (kind, id, name) => `<button type="button" class="del" data-action="delete" data-kind="${kind}" data-id="${id}" aria-label="מחיקת ${esc(name)}">${ic('trash')}</button>`;
   const empty = '<li class="muted" style="justify-content:center">הרשימה ריקה</li>';
-  $('#ed-students').innerHTML = state.students.map(s => item('student', s.id, s.emoji, s.name, `${s.coins} 🪙`, 'g')).join('') || empty;
-  $('#ed-behaviors').innerHTML = state.behaviors.map(b => item('behavior', b.id, b.icon, b.label, signed(b.coins), b.coins > 0 ? 'p' : 'n')).join('') || empty;
-  $('#ed-rewards').innerHTML = state.rewards.map(r => item('reward', r.id, r.icon, r.label, `${r.cost} 🪙`, 'g')).join('') || empty;
+  $('#ed-students').innerHTML = state.students.map(s => `<li>${avatar(s, 'sm')}<span class="en">${esc(s.name)}</span>
+      <span class="ev num g">${s.coins}${coinIc()}</span>${del('student', s.id, s.name)}
+      <div class="ed-sub">
+        <span class="pw-tag ${s.pin ? 'set' : 'unset'}">${ic(s.pin ? 'lock' : 'key')}${s.pin ? 'סיסמה מוגדרת' : 'ללא סיסמה'}</span>
+        <button type="button" class="btn btn-ghost btn-small" data-action="reset-pin" data-id="${s.id}" ${s.pin ? '' : 'disabled'}
+          aria-label="איפוס הסיסמה של ${esc(s.name)}">${ic('key')} אפס סיסמה</button>
+      </div></li>`).join('') || empty;
+  $('#ed-behaviors').innerHTML = state.behaviors.map(b => `<li><span class="en">${esc(b.label)}</span>
+      <span class="ev num ${b.coins > 0 ? 'p' : 'n'}">${signed(b.coins)}</span>${del('behavior', b.id, b.label)}</li>`).join('') || empty;
+  $('#ed-rewards').innerHTML = state.rewards.map(r => `<li>${giftIc('coin-ic')}<span class="en">${esc(r.label)}</span>
+      <span class="ev num g">${r.cost}${coinIc()}</span>${del('reward', r.id, r.label)}</li>`).join('') || empty;
   $('#set-board').checked = !!state.settings.leaderboard;
+  const n = ui.selected.size;
+  $('#demo-info').textContent = n
+    ? `כל לחיצה מוסיפה אירוע חיובי אקראי ל-${n} התלמידים שנבחרו בלשונית פעולות.`
+    : 'בחרו קודם תלמידים בלשונית פעולות. כל לחיצה תוסיף להם אירוע חיובי אקראי – מצוין להדגמה חיה.';
 }
 
 /* ==========================================================
@@ -1636,12 +2006,14 @@ document.addEventListener('click', e => {
   if (!el || el.disabled) return;
   const id = Number(el.dataset.id);
   switch (el.dataset.action) {
-    case 'login': go('student', { studentId: id, shownBalance: 0, shownLevel: null, feedSeen: 0, feedLimit: 20 }); break;
+    case 'login': startStudentLogin(id); break;
     case 'logout': go('login'); break;
-    case 'teacher-login': openPinModal(); break;
+    case 'teacher-login': openTeacherLogin(); break;
     case 'sound': toggleSound(); break;
     case 'buy': buyReward(id); break;
-    case 'feed-more': ui.feedLimit += 20; renderFeed(studentById(ui.studentId)); break;
+    case 'open-activity': go('activity', { filter: 'all' }); break;
+    case 'back-dash': go('student', { feedSeen: 0 }); break;
+    case 'filter': ui.filter = el.dataset.filter; render(); break;
     case 'tab': if (ui.tab !== el.dataset.tab) { ui.tab = el.dataset.tab; render(); $(`#tab-${ui.tab}`).focus(); } break;
     case 'toggle': ui.selected.has(id) ? ui.selected.delete(id) : ui.selected.add(id); render(); break;
     case 'select-all':
@@ -1649,13 +2021,12 @@ document.addEventListener('click', e => {
       else state.students.forEach(s => ui.selected.add(s.id));
       render(); break;
     case 'behavior': awardBehavior(id); break;
+    case 'undo': undoLast(); break;
+    case 'random-event': randomEvent(); break;
     case 'deliver': markDelivered(id); break;
     case 'delete': deleteItem(el.dataset.kind, id); break;
+    case 'reset-pin': resetPassword(id); break;
     case 'reset': resetAll(); break;
-    case 'pick-emoji': {
-      const inp = el.closest('form').elements.emoji;
-      inp.value = el.dataset.emoji; inp.focus(); break;
-    }
   }
 });
 
@@ -1704,30 +2075,16 @@ window.addEventListener('resize', () => {
 // Keep a second open tab (e.g. teacher laptop + student screen) in sync.
 window.addEventListener('storage', e => {
   if (e.key === SOUND_KEY) { sound.on = e.newValue === '1'; updateSoundButtons(); return; }
+  if (e.key === SEEN_LEVEL_KEY) { seenLevelsMem = null; return; }
   if (e.key !== STORE_KEY || !e.newValue) return;
   try {
     const next = normalize(JSON.parse(e.newValue));
     if (!next) return;
     state = next;
-    if (ui.screen === 'student' && !studentById(ui.studentId)) { ui.screen = 'login'; toast('התלמיד/ה הוסר/ה מהכיתה', 'info'); }
+    if ((ui.screen === 'student' || ui.screen === 'activity') && !studentById(ui.studentId)) { ui.screen = 'login'; toast('התלמיד/ה הוסר/ה מהכיתה', 'info'); }
     render();
   } catch (err) { /* ignore malformed external writes */ }
 });
-
-// Decorative sky (skipped for reduced motion)
-(function makeSky() {
-  if (reduceMotion.matches) return;
-  const sky = $('.sky'), icons = ['✨', '⭐', '🪙', '💜', '✨', '⭐'];
-  for (let i = 0; i < 12; i++) {
-    const s = document.createElement('span');
-    s.textContent = icons[i % icons.length];
-    s.style.left = (i * 8.3 + Math.random() * 5) + '%';
-    s.style.animationDelay = (-Math.random() * 18) + 's';
-    s.style.animationDuration = (14 + Math.random() * 12) + 's';
-    s.style.fontSize = (14 + Math.random() * 16) + 'px';
-    sky.appendChild(s);
-  }
-})();
 
 render();
 </script>
