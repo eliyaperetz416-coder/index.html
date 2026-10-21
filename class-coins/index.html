@@ -680,7 +680,7 @@ function normClass(v) { return String(v == null ? '' : v).toLowerCase().replace(
 function classById(id) { return state.classes.find(c => c.id === id) || null; }
 function classStudents(id) { return state.students.filter(s => s.classId === id); }
 function classTotal(id) { return classStudents(id).reduce((a, s) => a + s.coins, 0); }
-function sortedClasses() { return [...state.classes].sort((a, b) => a.name.localeCompare(b.name, 'he', { numeric: true })); }
+function sortedClasses() { return [...state.classes].sort((a, b) => normClass(a.name).localeCompare(normClass(b.name), 'he', { numeric: true })); }
 function countText(n) { return n === 0 ? 'אין תלמידים' : n === 1 ? 'תלמיד אחד' : `${n} תלמידים`; }
 function classNameTaken(name, exceptId) {
   const n = normClass(name);
@@ -899,7 +899,22 @@ const SEED_REWARDS = [
 const SEED_CLASSES = [
   { name: "ז'1", students: ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'] },
   { name: "ז'2", students: ['אורי', 'גל', 'רוני', 'ענבר', 'טל', 'אלון'] },
-  { name: "ז'3", students: ['ניר', 'לינוי', 'אופיר', 'הילה', 'רועי', 'מאי'] }
+  { name: "ז'3", students: ['ניר', 'לינוי', 'אופיר', 'הילה', 'רועי', 'מאי'] },
+  { name: "ח'1", students: ['אדם', 'נועה', 'עידו', 'שקד', 'יונתן', 'מורן'] },
+  { name: "ח'2", students: ['אריאל', 'דנה', 'בן', 'אגם', 'גיא', 'רותם'] },
+  { name: "ח'3", students: ['יהונתן', 'קורל', 'אסף', 'ים', 'שי', 'נוי'] },
+  { name: "ט'1", students: ['איתן', 'מיקה', 'עומר', 'ספיר', 'דניאל', 'אביגיל'] },
+  { name: "ט'2", students: ['רן', 'יעל', 'אלה', 'תום', 'הדר', 'לירון'] },
+  { name: "ט'3", students: ['אמיר', 'מור', 'זיו', 'שחר', 'ליאור', 'דקל'] },
+  { name: "י'1", students: ['גונן', 'מיכל', 'אלמוג', 'עדי', 'נבו', 'רננה'] },
+  { name: "י'2", students: ['אביב', 'שני', 'אילן', 'יסמין', 'ארז', 'הלל'] },
+  { name: "י'3", students: ['אוראל', 'ליבי', 'נדב', 'סתיו', 'חן', 'רום'] },
+  { name: 'י״א 1', students: ['עילי', 'טליה', 'מתן', 'אלין', 'סער', 'קרן'] },
+  { name: 'י״א 2', students: ['יותם', 'מעיין', 'אוהד', 'ורד', 'בר', 'אלי'] },
+  { name: 'י״א 3', students: ['ירין', 'שלומי', 'אנה', 'מאור', 'שרון', 'כפיר'] },
+  { name: 'י״ב 1', students: ['אביעד', 'נטע', 'עמרי', 'סיוון', 'דורון', 'מירב'] },
+  { name: 'י״ב 2', students: ['ישי', 'אורטל', 'שגיא', 'אדר', 'חגי', 'ענבל'] },
+  { name: 'י״ב 3', students: ['לידור', 'שלי', 'יואב', 'טוהר', 'איילת', 'בועז'] }
 ];
 const POS_NOTES = ['כל הכבוד, ככה ממשיכים!', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
 const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש', 'נא להגיע בזמן לשיעור'];
@@ -959,11 +974,11 @@ function createSeed() {
     let best = null, bestScore = Infinity;
     for (let attempt = 0; attempt < 400; attempt++) {
       const sim = simulate();
-      const score = (sim.coins < 10 ? 10 - sim.coins : sim.coins > 40 ? sim.coins - 40 : 0) + (used.has(sim.coins) ? 5 : 0) + (sim.events.length < 6 ? 5 : 0);
+      const score = (sim.coins < 10 ? 10 - sim.coins : sim.coins > 40 ? sim.coins - 40 : 0) + (used.has(classId + ':' + sim.coins) ? 5 : 0) + (sim.events.length < 6 ? 5 : 0);
       if (score < bestScore) { best = sim; bestScore = score; }
       if (score === 0) break;
     }
-    used.add(best.coins);
+    used.add(classId + ':' + best.coins);
     const sid = id++;
     students.push({ id: sid, name, classId, pin: '', coins: best.coins, totalEarned: best.earned });
     best.events.forEach(e => log.push({ ...e, studentId: sid }));
@@ -1774,7 +1789,7 @@ function updateClassGrid() {
   }
   grid.innerHTML = list.map((c, i) => {
     const n = classStudents(c.id).length, total = classTotal(c.id);
-    return `<button type="button" class="class-card" style="--i:${i}" data-action="pick-class" data-id="${c.id}"
+    return `<button type="button" class="class-card" style="--i:${Math.min(i, 8)}" data-action="pick-class" data-id="${c.id}"
         aria-label="${esc(c.name)}, ${countText(n)}, סה״כ ${total} מטבעות">
       ${c.id === last ? '<span class="last">נבחרה לאחרונה</span>' : ''}
       <span class="cname">${esc(c.name)}</span>
