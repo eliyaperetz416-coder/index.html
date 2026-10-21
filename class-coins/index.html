@@ -177,7 +177,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 .search input{width:100%;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px;padding:15px 18px;padding-inline-start:50px;font-size:18px;color:var(--ink);transition:border-color .15s,background .15s,box-shadow .15s}
 .search input::placeholder{color:#8a81c4}
 .search input:focus{outline:none;border-color:var(--gold);background:rgba(0,0,0,.4);box-shadow:0 0 0 4px rgba(255,200,61,.16)}
-.class-actions{display:flex;justify-content:center;margin:0 0 22px}
+.class-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 22px}
 .class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;text-align:start}
 .class-card{
   position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:14px;text-align:start;padding:20px 18px 18px;border-radius:22px;
@@ -1255,6 +1255,36 @@ function moveStudent(id, classId) {
   toast(`${esc(s.name)} הועבר/ה לכיתה ${esc(c.name)}`, 'success');
 }
 
+/** Demo classes (from the seed) that this installation does not have yet. */
+function missingDemoClasses() {
+  return SEED_CLASSES.filter(c => !state.classes.some(x => normClass(x.name) === normClass(c.name)));
+}
+/** Adds the missing demo classes with their sample students and history. Nothing that exists is changed or removed. */
+function addDemoClasses() {
+  const missing = missingDemoClasses();
+  if (!missing.length) { toast('כל כיתות ההדגמה כבר קיימות', 'info'); return; }
+  const demo = createSeed();              // same generator as a fresh install; only the missing classes are copied
+  const wanted = new Set(missing.map(c => normClass(c.name)));
+  let classes = 0, students = 0;
+  for (const dc of demo.classes) {
+    if (!wanted.has(normClass(dc.name))) continue;
+    const cls = { id: state.nextId++, name: dc.name };
+    state.classes.push(cls); classes++;
+    for (const ds of demo.students.filter(x => x.classId === dc.id)) {
+      const sid = state.nextId++;
+      state.students.push({ ...ds, id: sid, classId: cls.id });
+      demo.log.filter(e => e.studentId === ds.id).forEach(e => state.log.push({ ...e, studentId: sid }));
+      demo.orders.filter(o => o.studentId === ds.id).forEach(o => state.orders.push({ ...o, id: state.nextId++, studentId: sid }));
+      students++;
+    }
+  }
+  ui.classQuery = '';
+  const box = $('#class-search'); if (box) box.value = '';
+  save(); render();
+  toast(`נוספו ${classes} כיתות עם ${students} תלמידים`, 'success', 3600);
+  play('coin');
+}
+
 function resetPassword(id) {
   const s = studentById(id);
   if (!s || !s.pin) return;
@@ -1755,7 +1785,8 @@ function renderClassPicker(mode) {
         <div class="class-page">
           <div class="class-head"><h2>באיזו כיתה אתה מלמד היום?</h2></div>
           ${search}
-          <div class="class-actions"><button type="button" class="btn btn-ghost btn-small" data-action="add-class">${ic('plus')} הוספת כיתה</button></div>
+          <div class="class-actions"><button type="button" class="btn btn-ghost btn-small" data-action="add-class">${ic('plus')} הוספת כיתה</button>
+            <button type="button" class="btn btn-ghost btn-small" id="demo-btn" data-action="add-demo" hidden></button></div>
           ${grid}
         </div>
       </div>` : `
@@ -1776,6 +1807,12 @@ function updateClassGrid() {
   if (!grid) return;
   const teacher = ui.screen === 'teacher-class';
   const status = $('#class-status');
+  const demoBtn = $('#demo-btn');
+  if (demoBtn) {
+    const n = missingDemoClasses().length;
+    demoBtn.hidden = !n;
+    demoBtn.innerHTML = `${ic('spark')} הוספת כיתות לדוגמה (${n})`;
+  }
   if (!state.classes.length) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${ic('users')}עדיין אין כיתות. ${teacher ? 'אפשר להוסיף כיתה עם הכפתור "הוספת כיתה".' : 'המורה צריך להוסיף כיתה.'}</div>`;
     if (status) status.textContent = 'אין כיתות';
@@ -2316,6 +2353,7 @@ document.addEventListener('click', e => {
     case 'pick-class': pickClass(id); break;
     case 'change-class': go(ui.screen === 'login-class' ? 'login' : 'teacher-class'); break;
     case 'add-class': openAddClass(); break;
+    case 'add-demo': addDemoClasses(); break;
     case 'rename-class': openRenameClass(id); break;
     case 'teacher-login': openTeacherLogin(); break;
     case 'sound': toggleSound(); break;
