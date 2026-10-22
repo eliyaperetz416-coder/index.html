@@ -507,7 +507,7 @@ h1,h2,h3{margin:0;line-height:1.2}
   .cols,.charts-row{grid-template-columns:1fr}
   .t-actions{grid-template-columns:1fr}
   .roster{position:static}
-  .roster-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-height:none}
+  .roster-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-height:340px}
 }
 @media (max-width:560px){
   .card{padding:16px;border-radius:18px}
@@ -633,7 +633,7 @@ const DAY = 86400000;
 const BALANCE_DAYS = 14;
 const BAR_DAYS = 7;
 const FEED_PREVIEW = 12;
-const MAX_LOG = 6000;
+const MAX_LOG = 30000;
 const MAX_ACTIONS = 20;
 const WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -896,26 +896,31 @@ const SEED_REWARDS = [
   { label: 'ללא שיעורי בית', cost: 40 },
   { label: 'שוקולד', cost: 15 }
 ];
-const SEED_CLASSES = [
-  { name: "ז'1", students: ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'] },
-  { name: "ז'2", students: ['אורי', 'גל', 'רוני', 'ענבר', 'טל', 'אלון'] },
-  { name: "ז'3", students: ['ניר', 'לינוי', 'אופיר', 'הילה', 'רועי', 'מאי'] },
-  { name: "ח'1", students: ['אדם', 'נועה', 'עידו', 'שקד', 'יונתן', 'מורן'] },
-  { name: "ח'2", students: ['אריאל', 'דנה', 'בן', 'אגם', 'גיא', 'רותם'] },
-  { name: "ח'3", students: ['יהונתן', 'קורל', 'אסף', 'ים', 'שי', 'נוי'] },
-  { name: "ט'1", students: ['איתן', 'מיקה', 'עומר', 'ספיר', 'דניאל', 'אביגיל'] },
-  { name: "ט'2", students: ['רן', 'יעל', 'אלה', 'תום', 'הדר', 'לירון'] },
-  { name: "ט'3", students: ['אמיר', 'מור', 'זיו', 'שחר', 'ליאור', 'דקל'] },
-  { name: "י'1", students: ['גונן', 'מיכל', 'אלמוג', 'עדי', 'נבו', 'רננה'] },
-  { name: "י'2", students: ['אביב', 'שני', 'אילן', 'יסמין', 'ארז', 'הלל'] },
-  { name: "י'3", students: ['אוראל', 'ליבי', 'נדב', 'סתיו', 'חן', 'רום'] },
-  { name: 'י״א 1', students: ['עילי', 'טליה', 'מתן', 'אלין', 'סער', 'קרן'] },
-  { name: 'י״א 2', students: ['יותם', 'מעיין', 'אוהד', 'ורד', 'בר', 'אלי'] },
-  { name: 'י״א 3', students: ['ירין', 'שלומי', 'אנה', 'מאור', 'שרון', 'כפיר'] },
-  { name: 'י״ב 1', students: ['אביעד', 'נטע', 'עמרי', 'סיוון', 'דורון', 'מירב'] },
-  { name: 'י״ב 2', students: ['ישי', 'אורטל', 'שגיא', 'אדר', 'חגי', 'ענבל'] },
-  { name: 'י״ב 3', students: ['לידור', 'שלי', 'יואב', 'טוהר', 'איילת', 'בועז'] }
+// Demo classes: every class has its own size, and names are drawn from a pool (always the same draw),
+// unique inside a class. The first names of ז'1-ז'3 are the original demo students.
+const SEED_CLASS_SPEC = [
+  { name: "ז'1", size: 27, first: ['נועם', 'מיה', 'יובל', 'תמר', 'איתי', 'שירה', 'דור', 'ליה'] },
+  { name: "ז'2", size: 24, first: ['אורי', 'גל', 'רוני', 'ענבר', 'טל', 'אלון'] },
+  { name: "ז'3", size: 26, first: ['ניר', 'לינוי', 'אופיר', 'הילה', 'רועי', 'מאי'] },
+  { name: "ח'1", size: 23 }, { name: "ח'2", size: 28 }, { name: "ח'3", size: 25 },
+  { name: "ט'1", size: 22 }, { name: "ט'2", size: 27 }, { name: "ט'3", size: 24 },
+  { name: "י'1", size: 21 }, { name: "י'2", size: 26 }, { name: "י'3", size: 23 },
+  { name: 'י״א 1', size: 25 }, { name: 'י״א 2', size: 22 }, { name: 'י״א 3', size: 20 },
+  { name: 'י״ב 1', size: 24 }, { name: 'י״ב 2', size: 19 }, { name: 'י״ב 3', size: 21 }
 ];
+const SEED_NAME_POOL = [...new Set(('נועם מיה יובל תמר איתי שירה דור ליה אורי גל רוני ענבר טל אלון ניר לינוי אופיר הילה רועי מאי '
+  + 'אדם נועה עידו שקד יונתן מורן אריאל דנה בן אגם גיא רותם יהונתן קורל אסף ים שי נוי איתן מיקה עומר ספיר דניאל אביגיל '
+  + 'רן יעל אלה תום הדר לירון אמיר מור זיו שחר ליאור דקל גונן מיכל אלמוג עדי נבו רננה אביב שני אילן יסמין ארז הלל '
+  + 'אוראל ליבי נדב סתיו חן רום עילי טליה מתן אלין סער קרן יותם מעיין אוהד ורד בר אלי ירין שלומי אנה מאור שרון כפיר '
+  + 'אביעד נטע עמרי סיוון דורון מירב ישי אורטל שגיא אדר חגי ענבל לידור שלי יואב טוהר איילת בועז '
+  + 'איתמר רז ליעד נתן אופק יאיר ברק מיטל קשת לימור עופרי תהל אושר אביה עלמה פז ינון נריה רומי').split(/\s+/).filter(Boolean))];
+const SEED_CLASSES = SEED_CLASS_SPEC.map((spec, ci) => {
+  const rnd = mulberry32(7000 + ci * 7919);
+  const first = spec.first || [];
+  const pool = SEED_NAME_POOL.filter(n => !first.includes(n));
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return { name: spec.name, students: first.concat(pool).slice(0, spec.size) };
+});
 const POS_NOTES = ['כל הכבוד, ככה ממשיכים!', 'עבודה מצוינת בקבוצה', 'עזרת לחבר בתרגיל בחשבון', 'שאלה מצוינת בשיעור מדעים', 'קריאה בקול רם ויפה מאוד', 'הובלת את הדיון על הסיפור', 'סידרת את הכיתה בלי שביקשו'];
 const NEG_NOTES = ['בפעם הבאה נא להביא מחברת', 'נא לשמור על שקט בזמן ההסבר', 'מחר מתחילים מחדש', 'נא להגיע בזמן לשיעור'];
 
@@ -972,7 +977,7 @@ function createSeed() {
   const roster = SEED_CLASSES.flatMap((cl, ci) => cl.students.map(name => ({ name, classId: classes[ci].id })));
   for (const { name, classId } of roster) {
     let best = null, bestScore = Infinity;
-    for (let attempt = 0; attempt < 400; attempt++) {
+    for (let attempt = 0; attempt < 150; attempt++) {
       const sim = simulate();
       const score = (sim.coins < 10 ? 10 - sim.coins : sim.coins > 40 ? sim.coins - 40 : 0) + (used.has(classId + ':' + sim.coins) ? 5 : 0) + (sim.events.length < 6 ? 5 : 0);
       if (score < bestScore) { best = sim; bestScore = score; }
@@ -1255,22 +1260,29 @@ function moveStudent(id, classId) {
   toast(`${esc(s.name)} הועבר/ה לכיתה ${esc(c.name)}`, 'success');
 }
 
-/** Demo classes (from the seed) that this installation does not have yet. */
-function missingDemoClasses() {
-  return SEED_CLASSES.filter(c => !state.classes.some(x => normClass(x.name) === normClass(c.name)));
+/** What a fresh install has and this one lacks: whole demo classes and sample students inside demo classes. */
+function demoGaps() {
+  const gaps = [];
+  for (const sc of SEED_CLASSES) {
+    const cls = state.classes.find(c => normClass(c.name) === normClass(sc.name)) || null;
+    const have = new Set(cls ? classStudents(cls.id).map(x => normClass(x.name)) : []);
+    const names = new Set(sc.students.filter(n => !have.has(normClass(n))).map(normClass));
+    if (names.size) gaps.push({ sc, cls, names });
+  }
+  return gaps;
 }
-/** Adds the missing demo classes with their sample students and history. Nothing that exists is changed or removed. */
+/** Adds the missing demo classes and sample students (with history). Nothing that exists is changed or removed. */
 function addDemoClasses() {
-  const missing = missingDemoClasses();
-  if (!missing.length) { toast('כל כיתות ההדגמה כבר קיימות', 'info'); return; }
-  const demo = createSeed();              // same generator as a fresh install; only the missing classes are copied
-  const wanted = new Set(missing.map(c => normClass(c.name)));
+  const gaps = demoGaps();
+  if (!gaps.length) { toast('כל כיתות ההדגמה כבר מלאות', 'info'); return; }
+  const demo = createSeed();              // same generator as a fresh install; only the missing parts are copied
   let classes = 0, students = 0;
-  for (const dc of demo.classes) {
-    if (!wanted.has(normClass(dc.name))) continue;
-    const cls = { id: state.nextId++, name: dc.name };
-    state.classes.push(cls); classes++;
-    for (const ds of demo.students.filter(x => x.classId === dc.id)) {
+  for (const g of gaps) {
+    const dc = demo.classes.find(c => normClass(c.name) === normClass(g.sc.name));
+    if (!dc) continue;
+    let cls = g.cls;
+    if (!cls) { cls = { id: state.nextId++, name: dc.name }; state.classes.push(cls); classes++; }
+    for (const ds of demo.students.filter(x => x.classId === dc.id && g.names.has(normClass(x.name)))) {
       const sid = state.nextId++;
       state.students.push({ ...ds, id: sid, classId: cls.id });
       demo.log.filter(e => e.studentId === ds.id).forEach(e => state.log.push({ ...e, studentId: sid }));
@@ -1281,7 +1293,7 @@ function addDemoClasses() {
   ui.classQuery = '';
   const box = $('#class-search'); if (box) box.value = '';
   save(); render();
-  toast(`נוספו ${classes} כיתות עם ${students} תלמידים`, 'success', 3600);
+  toast(classes ? `נוספו ${classes} כיתות ו-${students} תלמידים` : `נוספו ${students} תלמידים לכיתות`, 'success', 3600);
   play('coin');
 }
 
@@ -1809,9 +1821,9 @@ function updateClassGrid() {
   const status = $('#class-status');
   const demoBtn = $('#demo-btn');
   if (demoBtn) {
-    const n = missingDemoClasses().length;
+    const n = demoGaps().reduce((a, g) => a + g.names.size, 0);
     demoBtn.hidden = !n;
-    demoBtn.innerHTML = `${ic('spark')} הוספת כיתות לדוגמה (${n})`;
+    demoBtn.innerHTML = `${ic('spark')} הוספת כיתות ותלמידים לדוגמה (${n})`;
   }
   if (!state.classes.length) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${ic('users')}עדיין אין כיתות. ${teacher ? 'אפשר להוסיף כיתה עם הכפתור "הוספת כיתה".' : 'המורה צריך להוסיף כיתה.'}</div>`;
@@ -1849,7 +1861,7 @@ function renderLoginNames() {
   const students = classStudents(cl.id);
   const list = students.length
     ? `<div class="student-grid">${students.map((s, i) => `
-        <button type="button" class="stu-btn" style="--i:${i}" data-action="login" data-id="${s.id}">
+        <button type="button" class="stu-btn" style="--i:${Math.min(i, 10)}" data-action="login" data-id="${s.id}">
           ${avatar(s)}<span class="nm">${esc(s.name)}</span><span class="hint">${s.pin ? '' : 'כניסה ראשונה'}</span>
         </button>`).join('')}</div>`
     : `<div class="empty-note">עדיין אין תלמידים בכיתה הזו.<br>המורה יכול להוסיף תלמידים בלשונית עריכה.</div>`;
