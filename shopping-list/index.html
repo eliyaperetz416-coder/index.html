@@ -714,23 +714,73 @@
     padding: 0;
   }
 
+  /* First-run / load-failed screens (shown instead of the list when there is no active list) */
+  .welcome { display: none; text-align: center; padding: 28px 4px; }
+  .welcome h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .welcome-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 24px; line-height: 1.5; }
+  .welcome .setting-group { text-align: start; }
+  .app.no-list #welcomeScreen { display: block; }
+  .app.load-failed #loadErrorScreen { display: block; }
+  .app.no-list .screen, .app.no-list .bottom-nav,
+  .app.load-failed .screen, .app.load-failed .bottom-nav { display: none; }
+
+  .retry-btn {
+    height: 46px;
+    padding: 0 24px;
+    border-radius: 12px;
+    border: none;
+    background: var(--teal);
+    color: #1a1a2e;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* Short message at the bottom of the screen (save errors; undo comes later) */
+  .toast {
+    position: fixed;
+    inset-inline: 16px;
+    bottom: 84px;
+    max-width: 388px;
+    margin-inline: auto;
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 20;
+  }
+
+  .toast.show { opacity: 1; transform: none; }
+
 </style>
 </head>
 <body>
 
 <script>
-  // TEMP DEBUG: catch any JS error anywhere on the page and show it on screen,
-  // since there's no devtools access on a phone. Remove once things work.
-  window.addEventListener('error', function (e) {
-    var box = document.getElementById('debugErrorBox');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'debugErrorBox';
-      box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff3333;color:#fff;font-size:12px;padding:10px;z-index:99999;direction:ltr;text-align:left;word-break:break-word;';
-      document.body.appendChild(box);
-    }
-    box.textContent = 'JS ERROR: ' + e.message + ' (line ' + e.lineno + ')';
-  });
+  // Opt-in diagnostics for phones without devtools: open the app with ?debug=1
+  // and uncaught errors are shown on screen.
+  if (new URLSearchParams(location.search).get('debug') === '1') {
+    var showDebug = function (text) {
+      var box = document.getElementById('debugErrorBox');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'debugErrorBox';
+        box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff3333;color:#fff;font-size:12px;padding:10px;z-index:99999;direction:ltr;text-align:left;word-break:break-word;';
+        document.body.appendChild(box);
+      }
+      box.textContent = text;
+    };
+    window.addEventListener('error', function (e) { showDebug('JS ERROR: ' + e.message + ' (line ' + e.lineno + ')'); });
+    window.addEventListener('unhandledrejection', function (e) {
+      showDebug('PROMISE: ' + ((e.reason && (e.reason.code || e.reason.message)) || e.reason));
+    });
+  }
 </script>
 
 <div class="login-screen" id="loginScreen">
@@ -756,6 +806,36 @@
       <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">⚙️</button>
     </div>
   </header>
+
+  <div class="welcome" id="welcomeScreen">
+    <p class="login-emoji">🛒</p>
+    <h2 id="welcomeTitle">ברוכים הבאים 👋</h2>
+    <p class="welcome-sub" id="welcomeSubtitle"></p>
+
+    <div class="setting-group">
+      <label id="welcomeCreateLabel">רשימה חדשה</label>
+      <div class="inline-form-row">
+        <input type="text" id="welcomeNewListInput" maxlength="60" autocomplete="off" />
+        <button class="inline-form-btn" id="welcomeCreateBtn" aria-label="+">+</button>
+      </div>
+      <p class="form-error" id="welcomeCreateError" role="alert"></p>
+    </div>
+
+    <div class="setting-group">
+      <label id="welcomeJoinLabel">הצטרף עם קוד</label>
+      <div class="inline-form-row">
+        <input type="text" id="welcomeJoinInput" maxlength="12" autocapitalize="characters" autocomplete="off" />
+        <button class="inline-form-btn" id="welcomeJoinBtn" aria-label="↵">↵</button>
+      </div>
+      <p class="form-error" id="welcomeJoinError" role="alert"></p>
+    </div>
+  </div>
+
+  <div class="welcome" id="loadErrorScreen">
+    <p class="login-emoji">📡</p>
+    <p class="welcome-sub" id="loadErrorText"></p>
+    <button class="retry-btn" id="retryLoadBtn">נסו שוב</button>
+  </div>
 
   <div class="screen active" id="listScreen">
     <div class="add-row">
@@ -797,6 +877,8 @@
   </div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <div class="settings-overlay" id="listPickerOverlay">
   <div class="settings-panel">
     <h2 id="listPickerTitle">הרשימות שלי</h2>
@@ -806,16 +888,17 @@
     <div class="setting-group">
       <label id="createListLabel">רשימה חדשה</label>
       <div class="inline-form-row">
-        <input type="text" id="newListNameInput" />
-        <button class="inline-form-btn" id="createListBtn">+</button>
+        <input type="text" id="newListNameInput" maxlength="60" autocomplete="off" />
+        <button class="inline-form-btn" id="createListBtn" aria-label="+">+</button>
       </div>
+      <p class="form-error" id="createListError" role="alert"></p>
     </div>
 
     <div class="setting-group">
       <label id="joinListLabel">הצטרף עם קוד</label>
       <div class="inline-form-row">
-        <input type="text" id="joinCodeInput" />
-        <button class="inline-form-btn" id="joinListBtn">↵</button>
+        <input type="text" id="joinCodeInput" maxlength="12" autocapitalize="characters" autocomplete="off" />
+        <button class="inline-form-btn" id="joinListBtn" aria-label="↵">↵</button>
       </div>
       <p class="form-error" id="joinListError"></p>
     </div>
@@ -874,7 +957,7 @@
     getRedirectResult, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
   import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot,
+    getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot,
     collection, query, where, arrayUnion, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -913,7 +996,7 @@
 
   // Expose what the rest of the (non-module) app script needs, via a small bridge object.
   window.FB = {
-    auth, db, doc, setDoc, getDoc, updateDoc, onSnapshot,
+    auth, db, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot,
     collection, query, where, arrayUnion, serverTimestamp,
     signInWithGoogle,
     signOutUser: () => signOut(auth),
@@ -924,7 +1007,14 @@
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
-<script>
+<script type="module">
+  import { guessCategoryKey, CATEGORY_COLORS } from './js/category.js';
+  import { friendlyErrorKey } from './js/errors.js';
+  import { newId } from './js/ids.js';
+  import { toggleBought as toggleBoughtState } from './js/items.js';
+
+  const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+
   // ============================================================
   // TRANSLATIONS
   // ============================================================
@@ -937,40 +1027,13 @@
       itemPlaceholder: 'מה חסר?',
       emptyState: 'הרשימה ריקה. הוסיפו פריט ראשון 👆',
       boughtSectionTitle: 'נקנה ✓',
-      findStoreBtn: '📍 מצא לי סופר קרוב',
-      findingLocation: '📍 מאתר מיקום...',
-      searchingStores: '📍 מחפש סופרים...',
-      noGeoSupport: 'הדפדפן שלך לא תומך במיקום 😕',
-      noLocationPermission: 'לא הצלחנו לקבל את המיקום שלך. ודא/י שנתת הרשאת מיקום 📍',
-      noStoresFound: 'לא נמצאו סופרים בקרבת מקום 🤷',
-      searchError: 'משהו השתבש בחיפוש. נסה/י שוב בעוד רגע 🙏',
-      metersAway: (m) => `כ-${m} מטר ממך`,
-      navigate: 'ניווט ↗',
-      unnamedStore: 'סופרמרקט',
-      approxLocation: 'מיקום משוער',
       settingsTitle: 'הגדרות',
       langLabel: 'שפה',
       themeLabel: 'ערכת נושא',
       dark: 'כהה',
       light: 'בהיר',
-      sharedListSoon: '👥 רשימות משותפות — בקרוב',
-      navList: 'רשימה',
-      navMap: 'מפה',
-      mapRefresh: '🔄 חפש סופרים באזור',
-      mapSearching: '🔄 מחפש...',
-      mapResolvingCities: '🏙️ מזהה ערים...',
-      mapNoSearchResults: 'לא נמצאו תוצאות לחיפוש הזה 🔍',
-      mapSearchPlaceholder: '🔍 חפש לפי שם סופר או עיר...',
-      unknownCity: 'אזור לא מזוהה',
-      mapNoStores: 'לא נמצאו סופרים באזור 🤷',
-      mapSelectPrompt: 'בחר סופר מהרשימה או מהמפה',
       close: 'סגור',
-      categories: {
-        dairy: 'חלבי 🧀', bakery: 'מאפים 🍞', veg: 'ירקות 🥬',
-        fruit: 'פירות 🍎', meat: 'בשר 🍗', clean: 'ניקיון 🧼',
-        frozen: 'קפוא ❄️', snacks: 'חטיפים 🍫', drinks: 'משקאות 🥤', baking: 'אפייה 🧂',
-        other: 'שונות 🛍️',
-      },
+      categories: { dairy: 'חלבי 🧀', bakery: 'מאפים 🍞', veg: 'ירקות 🥬', fruit: 'פירות 🍎', meat: 'בשר 🍗', clean: 'ניקיון 🧼', frozen: 'קפוא ❄️', snacks: 'חטיפים 🍫', drinks: 'משקאות 🥤', baking: 'אפייה 🧂', other: 'שונות 🛍️' },
       urgencyLabels: { high: 'חייב', medium: 'כמעט נגמר', low: 'צריך' },
       navList: 'רשימה',
       navStats: 'סטטיסטיקה',
@@ -987,65 +1050,46 @@
       loginTitle: 'הרשימה שלי',
       loginSubtitle: 'התחבר כדי לראות ולשתף רשימות קניות',
       googleSignInLabel: 'התחבר עם Google',
+      welcomeTitle: 'ברוכים הבאים 👋',
+      welcomeSubtitle: 'צרו את הרשימה הראשונה שלכם, או הצטרפו לרשימה של מישהו אחר עם קוד',
       listPickerTitle: 'הרשימות שלי',
       createListLabel: 'רשימה חדשה',
       joinListLabel: 'הצטרף עם קוד',
       joinCodeLabel: 'קוד',
-      joinCodeNotFound: 'לא נמצאה רשימה עם הקוד הזה',
       noListsYet: 'עדיין אין לך רשימות. צור אחת או הצטרף עם קוד',
       signedInAsLabel: 'מחובר כ',
       signOutLabel: 'התנתק',
+      retryLabel: 'נסו שוב',
+      errNotFound: 'לא נמצאה רשימה עם הקוד הזה',
+      errPermission: 'אין לך הרשאה לפעולה הזו. נסו להתנתק ולהתחבר מחדש',
+      errNetwork: 'אין חיבור לאינטרנט. בדקו את הקליטה ונסו שוב',
+      errGeneric: 'משהו השתבש. נסו שוב בעוד רגע',
+      errPopupBlocked: 'הדפדפן חסם את חלון ההתחברות. אפשרו חלונות קופצים ונסו שוב',
+      errSaveFailed: 'השינוי לא נשמר',
     },
     en: {
       dir: 'ltr',
       pageTitle: 'My List',
       headerTitle: 'My List 🛒',
       statsFn: (total, bought) => `${total} items · ${bought} bought`,
-      itemPlaceholder: "What's missing?",
+      itemPlaceholder: 'What\'s missing?',
       emptyState: 'Your list is empty. Add your first item 👆',
       boughtSectionTitle: 'Bought ✓',
-      findStoreBtn: '📍 Find nearby store',
-      findingLocation: '📍 Finding location...',
-      searchingStores: '📍 Searching stores...',
-      noGeoSupport: "Your browser doesn't support location 😕",
-      noLocationPermission: "Couldn't get your location. Please allow location access 📍",
-      noStoresFound: 'No stores found nearby 🤷',
-      searchError: 'Something went wrong. Please try again 🙏',
-      metersAway: (m) => `~${m}m away`,
-      navigate: 'Navigate ↗',
-      unnamedStore: 'Supermarket',
-      approxLocation: 'Approximate location',
       settingsTitle: 'Settings',
       langLabel: 'Language',
       themeLabel: 'Theme',
       dark: 'Dark',
       light: 'Light',
-      sharedListSoon: '👥 Shared lists — coming soon',
-      navList: 'List',
-      navMap: 'Map',
-      mapRefresh: '🔄 Search stores nearby',
-      mapSearching: '🔄 Searching...',
-      mapResolvingCities: '🏙️ Identifying cities...',
-      mapNoSearchResults: 'No results for this search 🔍',
-      mapSearchPlaceholder: '🔍 Search by store or city...',
-      unknownCity: 'Unknown area',
-      mapNoStores: 'No stores found in the area 🤷',
-      mapSelectPrompt: 'Select a store from the list or the map',
       close: 'Close',
-      categories: {
-        dairy: 'Dairy 🧀', bakery: 'Bakery 🍞', veg: 'Vegetables 🥬',
-        fruit: 'Fruit 🍎', meat: 'Meat 🍗', clean: 'Cleaning 🧼',
-        frozen: 'Frozen ❄️', snacks: 'Snacks 🍫', drinks: 'Drinks 🥤', baking: 'Baking 🧂',
-        other: 'Other 🛍️',
-      },
+      categories: { dairy: 'Dairy 🧀', bakery: 'Bakery 🍞', veg: 'Vegetables 🥬', fruit: 'Fruit 🍎', meat: 'Meat 🍗', clean: 'Cleaning 🧼', frozen: 'Frozen ❄️', snacks: 'Snacks 🍫', drinks: 'Drinks 🥤', baking: 'Baking 🧂', other: 'Other 🛍️' },
       urgencyLabels: { high: 'Must have', medium: 'Almost out', low: 'Need' },
       navList: 'List',
       navStats: 'Stats',
       statsWeekTotal: 'Items this week',
       statsTopCategory: 'Top category',
       statsChartTitle: 'By category this week',
-      statsNoDataYet: "Not enough data yet. Start checking off items!",
-      statsFirstWeek: "This is your first week — we'll compare next week",
+      statsNoDataYet: 'Not enough data yet. Start checking off items!',
+      statsFirstWeek: 'This is your first week — we\'ll compare next week',
       statsMoreThanLastWeek: (n) => `${n} more than last week`,
       statsLessThanLastWeek: (n) => `${n} less than last week`,
       statsSameAsLastWeek: 'Same as last week',
@@ -1054,14 +1098,22 @@
       loginTitle: 'My List',
       loginSubtitle: 'Sign in to view and share shopping lists',
       googleSignInLabel: 'Sign in with Google',
+      welcomeTitle: 'Welcome 👋',
+      welcomeSubtitle: 'Create your first list, or join someone else’s with a code',
       listPickerTitle: 'My Lists',
       createListLabel: 'New list',
       joinListLabel: 'Join with code',
       joinCodeLabel: 'Code',
-      joinCodeNotFound: 'No list found with that code',
-      noListsYet: "You don't have any lists yet. Create one or join with a code",
+      noListsYet: 'You don\'t have any lists yet. Create one or join with a code',
       signedInAsLabel: 'Signed in as',
       signOutLabel: 'Sign out',
+      retryLabel: 'Try again',
+      errNotFound: 'No list found with that code',
+      errPermission: 'You don’t have permission to do that. Try signing out and back in',
+      errNetwork: 'No internet connection. Check your signal and try again',
+      errGeneric: 'Something went wrong. Please try again in a moment',
+      errPopupBlocked: 'Your browser blocked the sign-in window. Allow pop-ups and try again',
+      errSaveFailed: 'Your change wasn’t saved',
     },
     ar: {
       dir: 'rtl',
@@ -1071,40 +1123,13 @@
       itemPlaceholder: 'ما الذي ينقص؟',
       emptyState: 'قائمتك فارغة. أضف أول عنصر 👆',
       boughtSectionTitle: 'تم الشراء ✓',
-      findStoreBtn: '📍 ابحث عن متجر قريب',
-      findingLocation: '📍 تحديد الموقع...',
-      searchingStores: '📍 البحث عن متاجر...',
-      noGeoSupport: 'متصفحك لا يدعم تحديد الموقع 😕',
-      noLocationPermission: 'تعذر الحصول على موقعك. يرجى السماح بالوصول للموقع 📍',
-      noStoresFound: 'لم يتم العثور على متاجر قريبة 🤷',
-      searchError: 'حدث خطأ ما. حاول مرة أخرى 🙏',
-      metersAway: (m) => `حوالي ${m} متر منك`,
-      navigate: 'الملاحة ↗',
-      unnamedStore: 'سوبر ماركت',
-      approxLocation: 'موقع تقريبي',
       settingsTitle: 'الإعدادات',
       langLabel: 'اللغة',
       themeLabel: 'المظهر',
       dark: 'داكن',
       light: 'فاتح',
-      sharedListSoon: '👥 القوائم المشتركة — قريباً',
-      navList: 'القائمة',
-      navMap: 'الخريطة',
-      mapRefresh: '🔄 البحث عن متاجر قريبة',
-      mapSearching: '🔄 جارٍ البحث...',
-      mapResolvingCities: '🏙️ تحديد المدن...',
-      mapNoSearchResults: 'لا توجد نتائج لهذا البحث 🔍',
-      mapSearchPlaceholder: '🔍 ابحث بالاسم أو المدينة...',
-      unknownCity: 'منطقة غير معروفة',
-      mapNoStores: 'لم يتم العثور على متاجر في المنطقة 🤷',
-      mapSelectPrompt: 'اختر متجراً من القائمة أو الخريطة',
       close: 'إغلاق',
-      categories: {
-        dairy: 'ألبان 🧀', bakery: 'مخبوزات 🍞', veg: 'خضروات 🥬',
-        fruit: 'فواكه 🍎', meat: 'لحوم 🍗', clean: 'تنظيف 🧼',
-        frozen: 'مجمدات ❄️', snacks: 'وجبات خفيفة 🍫', drinks: 'مشروبات 🥤', baking: 'خبز وطهي 🧂',
-        other: 'أخرى 🛍️',
-      },
+      categories: { dairy: 'ألبان 🧀', bakery: 'مخبوزات 🍞', veg: 'خضروات 🥬', fruit: 'فواكه 🍎', meat: 'لحوم 🍗', clean: 'تنظيف 🧼', frozen: 'مجمدات ❄️', snacks: 'وجبات خفيفة 🍫', drinks: 'مشروبات 🥤', baking: 'خبز وطهي 🧂', other: 'أخرى 🛍️' },
       urgencyLabels: { high: 'ضروري', medium: 'أوشك على النفاد', low: 'مطلوب' },
       navList: 'القائمة',
       navStats: 'الإحصائيات',
@@ -1121,14 +1146,22 @@
       loginTitle: 'قائمتي',
       loginSubtitle: 'سجّل الدخول لعرض ومشاركة قوائم التسوق',
       googleSignInLabel: 'تسجيل الدخول بواسطة Google',
+      welcomeTitle: 'أهلاً بك 👋',
+      welcomeSubtitle: 'أنشئ قائمتك الأولى، أو انضم إلى قائمة شخص آخر باستخدام رمز',
       listPickerTitle: 'قوائمي',
       createListLabel: 'قائمة جديدة',
       joinListLabel: 'انضم برمز',
       joinCodeLabel: 'الرمز',
-      joinCodeNotFound: 'لم يتم العثور على قائمة بهذا الرمز',
       noListsYet: 'ليس لديك أي قوائم بعد. أنشئ واحدة أو انضم برمز',
       signedInAsLabel: 'مسجل الدخول كـ',
       signOutLabel: 'تسجيل الخروج',
+      retryLabel: 'حاول مرة أخرى',
+      errNotFound: 'لم يتم العثور على قائمة بهذا الرمز',
+      errPermission: 'ليس لديك صلاحية للقيام بذلك. جرّب تسجيل الخروج ثم الدخول من جديد',
+      errNetwork: 'لا يوجد اتصال بالإنترنت. تحقق من الشبكة وحاول مرة أخرى',
+      errGeneric: 'حدث خطأ ما. حاول مرة أخرى بعد قليل',
+      errPopupBlocked: 'حظر المتصفح نافذة تسجيل الدخول. اسمح بالنوافذ المنبثقة وحاول مرة أخرى',
+      errSaveFailed: 'لم يتم حفظ التغيير',
     },
     es: {
       dir: 'ltr',
@@ -1138,39 +1171,13 @@
       itemPlaceholder: '¿Qué falta?',
       emptyState: 'Tu lista está vacía. Añade el primer artículo 👆',
       boughtSectionTitle: 'Comprado ✓',
-      findStoreBtn: '📍 Buscar tienda cercana',
-      findingLocation: '📍 Buscando ubicación...',
-      searchingStores: '📍 Buscando tiendas...',
-      noGeoSupport: 'Tu navegador no soporta ubicación 😕',
-      noLocationPermission: 'No se pudo obtener tu ubicación. Permite el acceso 📍',
-      noStoresFound: 'No se encontraron tiendas cercanas 🤷',
-      searchError: 'Algo salió mal. Inténtalo de nuevo 🙏',
-      metersAway: (m) => `a ${m}m de ti`,
-      navigate: 'Navegar ↗',
-      unnamedStore: 'Supermercado',
-      approxLocation: 'Ubicación aproximada',
+      settingsTitle: 'Ajustes',
       langLabel: 'Idioma',
       themeLabel: 'Tema',
       dark: 'Oscuro',
       light: 'Claro',
-      sharedListSoon: '👥 Listas compartidas — próximamente',
-      navList: 'Lista',
-      navMap: 'Mapa',
-      mapRefresh: '🔄 Buscar tiendas cercanas',
-      mapSearching: '🔄 Buscando...',
-      mapResolvingCities: '🏙️ Identificando ciudades...',
-      mapNoSearchResults: 'No hay resultados para esta búsqueda 🔍',
-      mapSearchPlaceholder: '🔍 Buscar por tienda o ciudad...',
-      unknownCity: 'Zona desconocida',
-      mapNoStores: 'No se encontraron tiendas en la zona 🤷',
-      mapSelectPrompt: 'Selecciona una tienda de la lista o el mapa',
       close: 'Cerrar',
-      categories: {
-        dairy: 'Lácteos 🧀', bakery: 'Panadería 🍞', veg: 'Verduras 🥬',
-        fruit: 'Fruta 🍎', meat: 'Carne 🍗', clean: 'Limpieza 🧼',
-        frozen: 'Congelados ❄️', snacks: 'Snacks 🍫', drinks: 'Bebidas 🥤', baking: 'Repostería 🧂',
-        other: 'Otros 🛍️',
-      },
+      categories: { dairy: 'Lácteos 🧀', bakery: 'Panadería 🍞', veg: 'Verduras 🥬', fruit: 'Fruta 🍎', meat: 'Carne 🍗', clean: 'Limpieza 🧼', frozen: 'Congelados ❄️', snacks: 'Snacks 🍫', drinks: 'Bebidas 🥤', baking: 'Repostería 🧂', other: 'Otros 🛍️' },
       urgencyLabels: { high: 'Imprescindible', medium: 'Casi agotado', low: 'Necesario' },
       navList: 'Lista',
       navStats: 'Estadísticas',
@@ -1187,14 +1194,22 @@
       loginTitle: 'Mi Lista',
       loginSubtitle: 'Inicia sesión para ver y compartir listas de compras',
       googleSignInLabel: 'Iniciar sesión con Google',
+      welcomeTitle: 'Te damos la bienvenida 👋',
+      welcomeSubtitle: 'Crea tu primera lista o únete a la de otra persona con un código',
       listPickerTitle: 'Mis Listas',
       createListLabel: 'Nueva lista',
       joinListLabel: 'Unirse con código',
       joinCodeLabel: 'Código',
-      joinCodeNotFound: 'No se encontró ninguna lista con ese código',
       noListsYet: 'Aún no tienes listas. Crea una o únete con un código',
       signedInAsLabel: 'Conectado como',
       signOutLabel: 'Cerrar sesión',
+      retryLabel: 'Reintentar',
+      errNotFound: 'No se encontró ninguna lista con ese código',
+      errPermission: 'No tienes permiso para hacer eso. Prueba a cerrar sesión y volver a entrar',
+      errNetwork: 'Sin conexión a internet. Revisa la señal e inténtalo de nuevo',
+      errGeneric: 'Algo salió mal. Inténtalo de nuevo en un momento',
+      errPopupBlocked: 'El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes e inténtalo de nuevo',
+      errSaveFailed: 'No se guardó el cambio',
     },
     fr: {
       dir: 'ltr',
@@ -1204,47 +1219,20 @@
       itemPlaceholder: 'Que manque-t-il ?',
       emptyState: 'Votre liste est vide. Ajoutez un article 👆',
       boughtSectionTitle: 'Acheté ✓',
-      findStoreBtn: '📍 Trouver un magasin proche',
-      findingLocation: '📍 Localisation...',
-      searchingStores: '📍 Recherche de magasins...',
-      noGeoSupport: "Votre navigateur ne supporte pas la localisation 😕",
-      noLocationPermission: "Impossible d'obtenir votre position. Autorisez l'accès 📍",
-      noStoresFound: 'Aucun magasin trouvé à proximité 🤷',
-      searchError: "Une erreur s'est produite. Réessayez 🙏",
-      metersAway: (m) => `à ${m}m de vous`,
-      navigate: 'Itinéraire ↗',
-      unnamedStore: 'Supermarché',
-      approxLocation: 'Emplacement approximatif',
       settingsTitle: 'Paramètres',
       langLabel: 'Langue',
       themeLabel: 'Thème',
       dark: 'Sombre',
       light: 'Clair',
-      sharedListSoon: '👥 Listes partagées — bientôt',
-      navList: 'Liste',
-      navMap: 'Carte',
-      mapRefresh: '🔄 Rechercher des magasins proches',
-      mapSearching: '🔄 Recherche...',
-      mapResolvingCities: '🏙️ Identification des villes...',
-      mapNoSearchResults: 'Aucun résultat pour cette recherche 🔍',
-      mapSearchPlaceholder: '🔍 Rechercher par magasin ou ville...',
-      unknownCity: 'Zone inconnue',
-      mapNoStores: 'Aucun magasin trouvé dans la zone 🤷',
-      mapSelectPrompt: 'Sélectionnez un magasin dans la liste ou la carte',
       close: 'Fermer',
-      categories: {
-        dairy: 'Laitier 🧀', bakery: 'Boulangerie 🍞', veg: 'Légumes 🥬',
-        fruit: 'Fruits 🍎', meat: 'Viande 🍗', clean: 'Nettoyage 🧼',
-        frozen: 'Surgelés ❄️', snacks: 'Snacks 🍫', drinks: 'Boissons 🥤', baking: 'Pâtisserie 🧂',
-        other: 'Autre 🛍️',
-      },
+      categories: { dairy: 'Laitier 🧀', bakery: 'Boulangerie 🍞', veg: 'Légumes 🥬', fruit: 'Fruits 🍎', meat: 'Viande 🍗', clean: 'Nettoyage 🧼', frozen: 'Surgelés ❄️', snacks: 'Snacks 🍫', drinks: 'Boissons 🥤', baking: 'Pâtisserie 🧂', other: 'Autre 🛍️' },
       urgencyLabels: { high: 'Indispensable', medium: 'Presque épuisé', low: 'Nécessaire' },
       navList: 'Liste',
       navStats: 'Statistiques',
       statsWeekTotal: 'Articles cette semaine',
       statsTopCategory: 'Catégorie principale',
       statsChartTitle: 'Par catégorie cette semaine',
-      statsNoDataYet: "Pas encore assez de données. Commencez à cocher des articles !",
+      statsNoDataYet: 'Pas encore assez de données. Commencez à cocher des articles !',
       statsFirstWeek: 'C\'est votre première semaine — on comparera la semaine prochaine',
       statsMoreThanLastWeek: (n) => `${n} de plus que la semaine dernière`,
       statsLessThanLastWeek: (n) => `${n} de moins que la semaine dernière`,
@@ -1254,14 +1242,22 @@
       loginTitle: 'Ma Liste',
       loginSubtitle: 'Connectez-vous pour voir et partager des listes de courses',
       googleSignInLabel: 'Se connecter avec Google',
+      welcomeTitle: 'Bienvenue 👋',
+      welcomeSubtitle: 'Créez votre première liste ou rejoignez celle de quelqu’un avec un code',
       listPickerTitle: 'Mes Listes',
       createListLabel: 'Nouvelle liste',
       joinListLabel: 'Rejoindre avec un code',
       joinCodeLabel: 'Code',
-      joinCodeNotFound: 'Aucune liste trouvée avec ce code',
-      noListsYet: "Vous n'avez pas encore de liste. Créez-en une ou rejoignez avec un code",
+      noListsYet: 'Vous n\'avez pas encore de liste. Créez-en une ou rejoignez avec un code',
       signedInAsLabel: 'Connecté en tant que',
       signOutLabel: 'Se déconnecter',
+      retryLabel: 'Réessayer',
+      errNotFound: 'Aucune liste trouvée avec ce code',
+      errPermission: 'Vous n’avez pas l’autorisation de faire cela. Essayez de vous déconnecter puis de vous reconnecter',
+      errNetwork: 'Pas de connexion internet. Vérifiez votre réseau et réessayez',
+      errGeneric: 'Une erreur est survenue. Réessayez dans un instant',
+      errPopupBlocked: 'Le navigateur a bloqué la fenêtre de connexion. Autorisez les pop-ups et réessayez',
+      errSaveFailed: 'La modification n’a pas été enregistrée',
     },
     de: {
       dir: 'ltr',
@@ -1271,40 +1267,13 @@
       itemPlaceholder: 'Was fehlt?',
       emptyState: 'Deine Liste ist leer. Füge ein Element hinzu 👆',
       boughtSectionTitle: 'Gekauft ✓',
-      findStoreBtn: '📍 Geschäft in der Nähe finden',
-      findingLocation: '📍 Standort wird ermittelt...',
-      searchingStores: '📍 Suche Geschäfte...',
-      noGeoSupport: 'Dein Browser unterstützt keine Standortdienste 😕',
-      noLocationPermission: 'Standort konnte nicht ermittelt werden. Bitte erlauben 📍',
-      noStoresFound: 'Keine Geschäfte in der Nähe gefunden 🤷',
-      searchError: 'Etwas ist schiefgelaufen. Versuche es erneut 🙏',
-      metersAway: (m) => `ca. ${m}m entfernt`,
-      navigate: 'Navigation ↗',
-      unnamedStore: 'Supermarkt',
-      approxLocation: 'Ungefährer Standort',
       settingsTitle: 'Einstellungen',
       langLabel: 'Sprache',
       themeLabel: 'Design',
       dark: 'Dunkel',
       light: 'Hell',
-      sharedListSoon: '👥 Geteilte Listen — bald verfügbar',
-      navList: 'Liste',
-      navMap: 'Karte',
-      mapRefresh: '🔄 Geschäfte in der Nähe suchen',
-      mapSearching: '🔄 Suche...',
-      mapResolvingCities: '🏙️ Städte werden ermittelt...',
-      mapNoSearchResults: 'Keine Ergebnisse für diese Suche 🔍',
-      mapSearchPlaceholder: '🔍 Nach Geschäft oder Stadt suchen...',
-      unknownCity: 'Unbekanntes Gebiet',
-      mapNoStores: 'Keine Geschäfte in der Umgebung gefunden 🤷',
-      mapSelectPrompt: 'Wähle ein Geschäft aus der Liste oder Karte',
       close: 'Schließen',
-      categories: {
-        dairy: 'Milchprodukte 🧀', bakery: 'Bäckerei 🍞', veg: 'Gemüse 🥬',
-        fruit: 'Obst 🍎', meat: 'Fleisch 🍗', clean: 'Reinigung 🧼',
-        frozen: 'Tiefkühl ❄️', snacks: 'Snacks 🍫', drinks: 'Getränke 🥤', baking: 'Backen 🧂',
-        other: 'Sonstiges 🛍️',
-      },
+      categories: { dairy: 'Milchprodukte 🧀', bakery: 'Bäckerei 🍞', veg: 'Gemüse 🥬', fruit: 'Obst 🍎', meat: 'Fleisch 🍗', clean: 'Reinigung 🧼', frozen: 'Tiefkühl ❄️', snacks: 'Snacks 🍫', drinks: 'Getränke 🥤', baking: 'Backen 🧂', other: 'Sonstiges 🛍️' },
       urgencyLabels: { high: 'Unverzichtbar', medium: 'Fast leer', low: 'Benötigt' },
       navList: 'Liste',
       navStats: 'Statistik',
@@ -1321,14 +1290,22 @@
       loginTitle: 'Meine Liste',
       loginSubtitle: 'Melde dich an, um Einkaufslisten anzuzeigen und zu teilen',
       googleSignInLabel: 'Mit Google anmelden',
+      welcomeTitle: 'Willkommen 👋',
+      welcomeSubtitle: 'Erstelle deine erste Liste oder tritt mit einem Code der Liste von jemand anderem bei',
       listPickerTitle: 'Meine Listen',
       createListLabel: 'Neue Liste',
       joinListLabel: 'Mit Code beitreten',
       joinCodeLabel: 'Code',
-      joinCodeNotFound: 'Keine Liste mit diesem Code gefunden',
       noListsYet: 'Du hast noch keine Listen. Erstelle eine oder tritt mit einem Code bei',
       signedInAsLabel: 'Angemeldet als',
       signOutLabel: 'Abmelden',
+      retryLabel: 'Erneut versuchen',
+      errNotFound: 'Keine Liste mit diesem Code gefunden',
+      errPermission: 'Dafür hast du keine Berechtigung. Melde dich ab und wieder an',
+      errNetwork: 'Keine Internetverbindung. Prüfe deinen Empfang und versuche es erneut',
+      errGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es gleich noch einmal',
+      errPopupBlocked: 'Der Browser hat das Anmeldefenster blockiert. Erlaube Pop-ups und versuche es erneut',
+      errSaveFailed: 'Die Änderung wurde nicht gespeichert',
     },
     ru: {
       dir: 'ltr',
@@ -1338,40 +1315,13 @@
       itemPlaceholder: 'Что нужно купить?',
       emptyState: 'Список пуст. Добавьте первый товар 👆',
       boughtSectionTitle: 'Куплено ✓',
-      findStoreBtn: '📍 Найти ближайший магазин',
-      findingLocation: '📍 Определение местоположения...',
-      searchingStores: '📍 Поиск магазинов...',
-      noGeoSupport: 'Ваш браузер не поддерживает геолокацию 😕',
-      noLocationPermission: 'Не удалось определить местоположение. Разрешите доступ 📍',
-      noStoresFound: 'Магазины поблизости не найдены 🤷',
-      searchError: 'Что-то пошло не так. Попробуйте снова 🙏',
-      metersAway: (m) => `~${m}м от вас`,
-      navigate: 'Маршрут ↗',
-      unnamedStore: 'Супермаркет',
-      approxLocation: 'Примерное местоположение',
       settingsTitle: 'Настройки',
       langLabel: 'Язык',
       themeLabel: 'Тема',
       dark: 'Тёмная',
       light: 'Светлая',
-      sharedListSoon: '👥 Общие списки — скоро',
-      navList: 'Список',
-      navMap: 'Карта',
-      mapRefresh: '🔄 Искать магазины рядом',
-      mapSearching: '🔄 Поиск...',
-      mapResolvingCities: '🏙️ Определение городов...',
-      mapNoSearchResults: 'Нет результатов по этому запросу 🔍',
-      mapSearchPlaceholder: '🔍 Поиск по магазину или городу...',
-      unknownCity: 'Неизвестный район',
-      mapNoStores: 'Магазины в этом районе не найдены 🤷',
-      mapSelectPrompt: 'Выберите магазин из списка или карты',
       close: 'Закрыть',
-      categories: {
-        dairy: 'Молочное 🧀', bakery: 'Выпечка 🍞', veg: 'Овощи 🥬',
-        fruit: 'Фрукты 🍎', meat: 'Мясо 🍗', clean: 'Чистящие 🧼',
-        frozen: 'Заморозка ❄️', snacks: 'Снеки 🍫', drinks: 'Напитки 🥤', baking: 'Выпечка и специи 🧂',
-        other: 'Другое 🛍️',
-      },
+      categories: { dairy: 'Молочное 🧀', bakery: 'Выпечка 🍞', veg: 'Овощи 🥬', fruit: 'Фрукты 🍎', meat: 'Мясо 🍗', clean: 'Чистящие 🧼', frozen: 'Заморозка ❄️', snacks: 'Снеки 🍫', drinks: 'Напитки 🥤', baking: 'Выпечка и специи 🧂', other: 'Другое 🛍️' },
       urgencyLabels: { high: 'Обязательно', medium: 'Почти закончилось', low: 'Нужно' },
       navList: 'Список',
       navStats: 'Статистика',
@@ -1388,14 +1338,22 @@
       loginTitle: 'Мой список',
       loginSubtitle: 'Войдите, чтобы просматривать и делиться списками покупок',
       googleSignInLabel: 'Войти через Google',
+      welcomeTitle: 'Добро пожаловать 👋',
+      welcomeSubtitle: 'Создайте первый список или присоединитесь к чужому по коду',
       listPickerTitle: 'Мои списки',
       createListLabel: 'Новый список',
       joinListLabel: 'Присоединиться по коду',
       joinCodeLabel: 'Код',
-      joinCodeNotFound: 'Список с таким кодом не найден',
       noListsYet: 'У вас пока нет списков. Создайте новый или присоединитесь по коду',
       signedInAsLabel: 'Вы вошли как',
       signOutLabel: 'Выйти',
+      retryLabel: 'Повторить',
+      errNotFound: 'Список с таким кодом не найден',
+      errPermission: 'У вас нет разрешения на это действие. Попробуйте выйти и войти снова',
+      errNetwork: 'Нет подключения к интернету. Проверьте связь и попробуйте снова',
+      errGeneric: 'Что-то пошло не так. Попробуйте ещё раз через минуту',
+      errPopupBlocked: 'Браузер заблокировал окно входа. Разрешите всплывающие окна и попробуйте снова',
+      errSaveFailed: 'Изменение не сохранилось',
     },
     pt: {
       dir: 'ltr',
@@ -1405,40 +1363,13 @@
       itemPlaceholder: 'O que está faltando?',
       emptyState: 'Sua lista está vazia. Adicione um item 👆',
       boughtSectionTitle: 'Comprado ✓',
-      findStoreBtn: '📍 Encontrar mercado próximo',
-      findingLocation: '📍 Localizando...',
-      searchingStores: '📍 Buscando mercados...',
-      noGeoSupport: 'Seu navegador não suporta localização 😕',
-      noLocationPermission: 'Não foi possível obter sua localização. Permita o acesso 📍',
-      noStoresFound: 'Nenhum mercado encontrado por perto 🤷',
-      searchError: 'Algo deu errado. Tente novamente 🙏',
-      metersAway: (m) => `a ${m}m de você`,
-      navigate: 'Navegar ↗',
-      unnamedStore: 'Supermercado',
-      approxLocation: 'Localização aproximada',
       settingsTitle: 'Configurações',
       langLabel: 'Idioma',
       themeLabel: 'Tema',
       dark: 'Escuro',
       light: 'Claro',
-      sharedListSoon: '👥 Listas compartilhadas — em breve',
-      navList: 'Lista',
-      navMap: 'Mapa',
-      mapRefresh: '🔄 Buscar mercados próximos',
-      mapSearching: '🔄 Buscando...',
-      mapResolvingCities: '🏙️ Identificando cidades...',
-      mapNoSearchResults: 'Nenhum resultado para esta busca 🔍',
-      mapSearchPlaceholder: '🔍 Buscar por mercado ou cidade...',
-      unknownCity: 'Área desconhecida',
-      mapNoStores: 'Nenhum mercado encontrado na área 🤷',
-      mapSelectPrompt: 'Selecione um mercado da lista ou do mapa',
       close: 'Fechar',
-      categories: {
-        dairy: 'Laticínios 🧀', bakery: 'Padaria 🍞', veg: 'Vegetais 🥬',
-        fruit: 'Frutas 🍎', meat: 'Carne 🍗', clean: 'Limpeza 🧼',
-        frozen: 'Congelados ❄️', snacks: 'Salgadinhos 🍫', drinks: 'Bebidas 🥤', baking: 'Confeitaria 🧂',
-        other: 'Outros 🛍️',
-      },
+      categories: { dairy: 'Laticínios 🧀', bakery: 'Padaria 🍞', veg: 'Vegetais 🥬', fruit: 'Frutas 🍎', meat: 'Carne 🍗', clean: 'Limpeza 🧼', frozen: 'Congelados ❄️', snacks: 'Salgadinhos 🍫', drinks: 'Bebidas 🥤', baking: 'Confeitaria 🧂', other: 'Outros 🛍️' },
       urgencyLabels: { high: 'Essencial', medium: 'Quase acabando', low: 'Necessário' },
       navList: 'Lista',
       navStats: 'Estatísticas',
@@ -1455,14 +1386,22 @@
       loginTitle: 'Minha Lista',
       loginSubtitle: 'Entre para ver e compartilhar listas de compras',
       googleSignInLabel: 'Entrar com o Google',
+      welcomeTitle: 'Boas-vindas 👋',
+      welcomeSubtitle: 'Crie sua primeira lista ou entre na lista de outra pessoa com um código',
       listPickerTitle: 'Minhas Listas',
       createListLabel: 'Nova lista',
       joinListLabel: 'Entrar com código',
       joinCodeLabel: 'Código',
-      joinCodeNotFound: 'Nenhuma lista encontrada com esse código',
       noListsYet: 'Você ainda não tem listas. Crie uma ou entre com um código',
       signedInAsLabel: 'Conectado como',
       signOutLabel: 'Sair',
+      retryLabel: 'Tentar de novo',
+      errNotFound: 'Nenhuma lista encontrada com esse código',
+      errPermission: 'Você não tem permissão para fazer isso. Tente sair e entrar de novo',
+      errNetwork: 'Sem conexão com a internet. Verifique o sinal e tente novamente',
+      errGeneric: 'Algo deu errado. Tente novamente em instantes',
+      errPopupBlocked: 'O navegador bloqueou a janela de login. Permita pop-ups e tente novamente',
+      errSaveFailed: 'A alteração não foi salva',
     },
     zh: {
       dir: 'ltr',
@@ -1472,40 +1411,13 @@
       itemPlaceholder: '缺什么？',
       emptyState: '清单是空的，添加第一项吧 👆',
       boughtSectionTitle: '已购买 ✓',
-      findStoreBtn: '📍 查找附近超市',
-      findingLocation: '📍 正在定位...',
-      searchingStores: '📍 正在搜索超市...',
-      noGeoSupport: '你的浏览器不支持定位 😕',
-      noLocationPermission: '无法获取你的位置，请允许位置权限 📍',
-      noStoresFound: '附近没有找到超市 🤷',
-      searchError: '出了点问题，请重试 🙏',
-      metersAway: (m) => `距你约 ${m} 米`,
-      navigate: '导航 ↗',
-      unnamedStore: '超市',
-      approxLocation: '大致位置',
       settingsTitle: '设置',
       langLabel: '语言',
       themeLabel: '主题',
       dark: '深色',
       light: '浅色',
-      sharedListSoon: '👥 共享清单 — 即将推出',
-      navList: '清单',
-      navMap: '地图',
-      mapRefresh: '🔄 搜索附近超市',
-      mapSearching: '🔄 搜索中...',
-      mapResolvingCities: '🏙️ 正在识别城市...',
-      mapNoSearchResults: '未找到相关结果 🔍',
-      mapSearchPlaceholder: '🔍 按超市或城市搜索...',
-      unknownCity: '未知区域',
-      mapNoStores: '该地区未找到超市 🤷',
-      mapSelectPrompt: '从列表或地图中选择一家超市',
       close: '关闭',
-      categories: {
-        dairy: '乳制品 🧀', bakery: '面包 🍞', veg: '蔬菜 🥬',
-        fruit: '水果 🍎', meat: '肉类 🍗', clean: '清洁用品 🧼',
-        frozen: '冷冻食品 ❄️', snacks: '零食 🍫', drinks: '饮料 🥤', baking: '烘焙 🧂',
-        other: '其他 🛍️',
-      },
+      categories: { dairy: '乳制品 🧀', bakery: '面包 🍞', veg: '蔬菜 🥬', fruit: '水果 🍎', meat: '肉类 🍗', clean: '清洁用品 🧼', frozen: '冷冻食品 ❄️', snacks: '零食 🍫', drinks: '饮料 🥤', baking: '烘焙 🧂', other: '其他 🛍️' },
       urgencyLabels: { high: '必需', medium: '快用完了', low: '需要' },
       navList: '清单',
       navStats: '统计',
@@ -1522,14 +1434,22 @@
       loginTitle: '我的清单',
       loginSubtitle: '登录以查看和共享购物清单',
       googleSignInLabel: '使用 Google 登录',
+      welcomeTitle: '欢迎 👋',
+      welcomeSubtitle: '创建你的第一个清单，或用代码加入别人的清单',
       listPickerTitle: '我的清单',
       createListLabel: '新建清单',
       joinListLabel: '用代码加入',
       joinCodeLabel: '代码',
-      joinCodeNotFound: '未找到该代码对应的清单',
       noListsYet: '你还没有任何清单。创建一个或用代码加入',
       signedInAsLabel: '当前登录账号',
       signOutLabel: '退出登录',
+      retryLabel: '重试',
+      errNotFound: '未找到该代码对应的清单',
+      errPermission: '你没有权限执行此操作。请尝试退出后重新登录',
+      errNetwork: '没有网络连接。请检查信号后重试',
+      errGeneric: '出了点问题，请稍后再试',
+      errPopupBlocked: '浏览器拦截了登录窗口。请允许弹出窗口后重试',
+      errSaveFailed: '更改未能保存',
     },
     hi: {
       dir: 'ltr',
@@ -1539,40 +1459,13 @@
       itemPlaceholder: 'क्या चाहिए?',
       emptyState: 'आपकी सूची खाली है। पहला आइटम जोड़ें 👆',
       boughtSectionTitle: 'खरीदा गया ✓',
-      findStoreBtn: '📍 नज़दीकी स्टोर खोजें',
-      findingLocation: '📍 स्थान खोजा जा रहा है...',
-      searchingStores: '📍 स्टोर खोजे जा रहे हैं...',
-      noGeoSupport: 'आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता 😕',
-      noLocationPermission: 'स्थान प्राप्त नहीं हो सका। कृपया अनुमति दें 📍',
-      noStoresFound: 'आसपास कोई स्टोर नहीं मिला 🤷',
-      searchError: 'कुछ गलत हो गया। दोबारा कोशिश करें 🙏',
-      metersAway: (m) => `आपसे लगभग ${m} मीटर दूर`,
-      navigate: 'नेविगेट करें ↗',
-      unnamedStore: 'सुपरमार्केट',
-      approxLocation: 'अनुमानित स्थान',
       settingsTitle: 'सेटिंग्स',
       langLabel: 'भाषा',
       themeLabel: 'थीम',
       dark: 'डार्क',
       light: 'लाइट',
-      sharedListSoon: '👥 साझा सूचियाँ — जल्द आ रहा है',
-      navList: 'सूची',
-      navMap: 'नक्शा',
-      mapRefresh: '🔄 आसपास स्टोर खोजें',
-      mapSearching: '🔄 खोजा जा रहा है...',
-      mapResolvingCities: '🏙️ शहरों की पहचान हो रही है...',
-      mapNoSearchResults: 'इस खोज के लिए कोई परिणाम नहीं मिला 🔍',
-      mapSearchPlaceholder: '🔍 स्टोर या शहर से खोजें...',
-      unknownCity: 'अज्ञात क्षेत्र',
-      mapNoStores: 'इस क्षेत्र में कोई स्टोर नहीं मिला 🤷',
-      mapSelectPrompt: 'सूची या नक्शे से एक स्टोर चुनें',
       close: 'बंद करें',
-      categories: {
-        dairy: 'डेयरी 🧀', bakery: 'बेकरी 🍞', veg: 'सब्ज़ियाँ 🥬',
-        fruit: 'फल 🍎', meat: 'मांस 🍗', clean: 'सफाई 🧼',
-        frozen: 'फ्रोज़न ❄️', snacks: 'नाश्ता 🍫', drinks: 'पेय 🥤', baking: 'बेकिंग 🧂',
-        other: 'अन्य 🛍️',
-      },
+      categories: { dairy: 'डेयरी 🧀', bakery: 'बेकरी 🍞', veg: 'सब्ज़ियाँ 🥬', fruit: 'फल 🍎', meat: 'मांस 🍗', clean: 'सफाई 🧼', frozen: 'फ्रोज़न ❄️', snacks: 'नाश्ता 🍫', drinks: 'पेय 🥤', baking: 'बेकिंग 🧂', other: 'अन्य 🛍️' },
       urgencyLabels: { high: 'ज़रूरी', medium: 'लगभग खत्म', low: 'चाहिए' },
       navList: 'सूची',
       navStats: 'आँकड़े',
@@ -1589,141 +1482,25 @@
       loginTitle: 'मेरी सूची',
       loginSubtitle: 'शॉपिंग सूचियाँ देखने और साझा करने के लिए साइन इन करें',
       googleSignInLabel: 'Google से साइन इन करें',
+      welcomeTitle: 'स्वागत है 👋',
+      welcomeSubtitle: 'अपनी पहली सूची बनाएं, या कोड से किसी और की सूची में जुड़ें',
       listPickerTitle: 'मेरी सूचियाँ',
       createListLabel: 'नई सूची',
       joinListLabel: 'कोड से जुड़ें',
       joinCodeLabel: 'कोड',
-      joinCodeNotFound: 'इस कोड से कोई सूची नहीं मिली',
       noListsYet: 'आपके पास अभी तक कोई सूची नहीं है। एक बनाएं या कोड से जुड़ें',
       signedInAsLabel: 'इस रूप में साइन इन किया',
       signOutLabel: 'साइन आउट करें',
+      retryLabel: 'फिर कोशिश करें',
+      errNotFound: 'इस कोड से कोई सूची नहीं मिली',
+      errPermission: 'आपके पास यह करने की अनुमति नहीं है। साइन आउट करके दोबारा साइन इन करें',
+      errNetwork: 'इंटरनेट कनेक्शन नहीं है। नेटवर्क जांचें और फिर कोशिश करें',
+      errGeneric: 'कुछ गड़बड़ हो गई। थोड़ी देर में फिर कोशिश करें',
+      errPopupBlocked: 'ब्राउज़र ने साइन-इन विंडो को रोक दिया। पॉप-अप की अनुमति दें और फिर कोशिश करें',
+      errSaveFailed: 'बदलाव सेव नहीं हुआ',
     },
   };
 
-  // Keyword lists per language, mapped to category keys (used to guess category from item name)
-  const CATEGORY_KEYWORDS = {
-    he: {
-      dairy: ['חלב', 'ביצים', 'גבינה', 'יוגורט', 'קוטג', 'חמאה', 'שמנת', 'לבן', 'מעדן', 'גבינת שמנת', 'קרם'],
-      bakery: ['לחם', 'פיתה', 'לחמניה', 'בגט', 'עוגה', 'עוגיות', 'חלה', 'קרואסון', 'טורטיה', 'לחמניות'],
-      veg: ['עגבניה', 'עגבניות', 'מלפפון', 'מלפפונים', 'חסה', 'גזר', 'בצל', 'פלפל', 'תפוח אדמה', 'ירק', 'שום', 'כרוב', 'קישוא', 'חציל', 'תרד', 'פטריות', 'תירס', 'סלק', 'צנונית'],
-      fruit: ['תפוח', 'בננה', 'תות', 'ענבים', 'אבטיח', 'מלון', 'פרי', 'תפוז', 'לימון', 'אבוקדו', 'קיווי', 'אפרסק', 'שזיף', 'אגס', 'מנגו', 'רימון', 'תמר'],
-      meat: ['עוף', 'בשר', 'הודו', 'נקניק', 'סטייק', 'קציצות', 'שניצל', 'כבד', 'המבורגר', 'פרגית', 'כנפיים', 'טחון'],
-      clean: ['נייר טואלט', 'סבון', 'שמפו', 'מגבון', 'אקונומיקה', 'ניקוי', 'מרכך', 'אבקת כביסה', 'ספוג', 'שקיות זבל', 'נוזל כלים', 'מטהר אוויר'],
-      frozen: ['גלידה', 'פיצה קפואה', 'ירקות קפואים', 'שניצל קפוא', 'מלאווח', 'בורקס', 'קפוא', 'ארטיק', 'שרימפס קפוא'],
-      snacks: ['חטיף', 'צ׳יפס', 'ביסלי', 'במבה', 'שוקולד', 'עוגיות', 'ממתק', 'סוכריות', 'גומי', 'פופקורן', 'קרקר', 'וופל', 'חטיפי אנרגיה'],
-      drinks: ['מים', 'קולה', 'מיץ', 'סודה', 'בירה', 'יין', 'משקה אנרגיה', 'תה', 'קפה', 'סוכר', 'שוקו', 'לימונדה', 'משקה קל'],
-      baking: ['קמח', 'סוכר', 'שמרים', 'תבלין', 'מלח', 'שמן', 'אבקת אפייה', 'וניל', 'קקאו', 'דבש', 'רסק עגבניות', 'חומץ', 'ציר'],
-    },
-    en: {
-      dairy: ['milk', 'egg', 'cheese', 'yogurt', 'yoghurt', 'butter', 'cream', 'cottage', 'sour cream', 'cream cheese'],
-      bakery: ['bread', 'pita', 'bun', 'baguette', 'cake', 'cookie', 'challah', 'croissant', 'tortilla', 'roll', 'bagel'],
-      veg: ['tomato', 'cucumber', 'lettuce', 'carrot', 'onion', 'pepper', 'potato', 'vegetable', 'garlic', 'cabbage', 'zucchini', 'eggplant', 'spinach', 'mushroom', 'corn', 'beet', 'radish', 'broccoli'],
-      fruit: ['apple', 'banana', 'strawberr', 'grape', 'watermelon', 'melon', 'fruit', 'orange', 'lemon', 'avocado', 'kiwi', 'peach', 'plum', 'pear', 'mango', 'pomegranate', 'date'],
-      meat: ['chicken', 'beef', 'turkey', 'sausage', 'steak', 'meatball', 'meat', 'schnitzel', 'liver', 'burger', 'wings', 'ground beef', 'mince'],
-      clean: ['toilet paper', 'soap', 'shampoo', 'wipes', 'bleach', 'cleaning', 'detergent', 'softener', 'sponge', 'trash bag', 'dish soap', 'air freshener'],
-      frozen: ['ice cream', 'frozen pizza', 'frozen vegetable', 'frozen schnitzel', 'burekas', 'frozen', 'popsicle', 'frozen shrimp'],
-      snacks: ['snack', 'chips', 'chocolate', 'cookie', 'candy', 'sweets', 'gummy', 'popcorn', 'cracker', 'wafer', 'energy bar'],
-      drinks: ['water', 'cola', 'juice', 'soda', 'beer', 'wine', 'energy drink', 'tea', 'coffee', 'sugar', 'chocolate milk', 'lemonade', 'soft drink'],
-      baking: ['flour', 'sugar', 'yeast', 'spice', 'salt', 'oil', 'baking powder', 'vanilla', 'cocoa', 'honey', 'tomato paste', 'vinegar', 'broth'],
-    },
-    es: {
-      dairy: ['leche', 'huevo', 'queso', 'yogur', 'mantequilla', 'crema', 'requesón', 'nata'],
-      bakery: ['pan', 'pita', 'bollo', 'baguette', 'pastel', 'galleta', 'croissant', 'tortilla', 'bagel'],
-      veg: ['tomate', 'pepino', 'lechuga', 'zanahoria', 'cebolla', 'pimiento', 'papa', 'patata', 'verdura', 'ajo', 'repollo', 'calabacín', 'berenjena', 'espinaca', 'champiñón', 'maíz', 'remolacha', 'rábano'],
-      fruit: ['manzana', 'plátano', 'banana', 'fresa', 'uva', 'sandía', 'melón', 'fruta', 'naranja', 'limón', 'aguacate', 'kiwi', 'durazno', 'ciruela', 'pera', 'mango', 'granada', 'dátil'],
-      meat: ['pollo', 'res', 'carne', 'pavo', 'salchicha', 'bistec', 'albóndiga', 'hígado', 'hamburguesa', 'alitas'],
-      clean: ['papel higiénico', 'jabón', 'champú', 'toallitas', 'lejía', 'limpieza', 'suavizante', 'esponja', 'bolsa de basura', 'lavavajillas'],
-      frozen: ['helado', 'pizza congelada', 'verdura congelada', 'congelado', 'paleta', 'camarón congelado'],
-      snacks: ['snack', 'papas fritas', 'chocolate', 'galleta', 'dulce', 'caramelo', 'palomitas', 'galletas saladas'],
-      drinks: ['agua', 'refresco', 'jugo', 'zumo', 'cerveza', 'vino', 'bebida energética', 'té', 'café', 'azúcar', 'limonada'],
-      baking: ['harina', 'azúcar', 'levadura', 'especia', 'sal', 'aceite', 'polvo de hornear', 'vainilla', 'cacao', 'miel', 'vinagre'],
-    },
-    fr: {
-      dairy: ['lait', 'œuf', 'oeuf', 'fromage', 'yaourt', 'beurre', 'crème', 'fromage blanc'],
-      bakery: ['pain', 'pita', 'petit pain', 'baguette', 'gâteau', 'biscuit', 'croissant', 'tortilla', 'bagel'],
-      veg: ['tomate', 'concombre', 'laitue', 'carotte', 'oignon', 'poivron', 'pomme de terre', 'légume', 'ail', 'chou', 'courgette', 'aubergine', 'épinard', 'champignon', 'maïs', 'betterave', 'radis'],
-      fruit: ['pomme', 'banane', 'fraise', 'raisin', 'pastèque', 'melon', 'fruit', 'orange', 'citron', 'avocat', 'kiwi', 'pêche', 'prune', 'poire', 'mangue', 'grenade', 'datte'],
-      meat: ['poulet', 'bœuf', 'boeuf', 'dinde', 'saucisse', 'steak', 'boulette', 'viande', 'foie', 'burger', 'ailes'],
-      clean: ['papier toilette', 'savon', 'shampooing', 'lingette', 'javel', 'nettoyage', 'adoucissant', 'éponge', 'sac poubelle', 'liquide vaisselle'],
-      frozen: ['glace', 'pizza surgelée', 'légume surgelé', 'surgelé', 'esquimau', 'crevette surgelée'],
-      snacks: ['snack', 'chips', 'chocolat', 'biscuit', 'bonbon', 'confiserie', 'pop-corn', 'cracker'],
-      drinks: ['eau', 'cola', 'jus', 'soda', 'bière', 'vin', 'boisson énergisante', 'thé', 'café', 'sucre', 'limonade'],
-      baking: ['farine', 'sucre', 'levure', 'épice', 'sel', 'huile', 'levure chimique', 'vanille', 'cacao', 'miel', 'vinaigre'],
-    },
-    de: {
-      dairy: ['milch', 'ei', 'käse', 'joghurt', 'butter', 'sahne', 'quark', 'schmand'],
-      bakery: ['brot', 'pita', 'brötchen', 'baguette', 'kuchen', 'keks', 'croissant', 'tortilla', 'bagel'],
-      veg: ['tomate', 'gurke', 'salat', 'karotte', 'zwiebel', 'paprika', 'kartoffel', 'gemüse', 'knoblauch', 'kohl', 'zucchini', 'aubergine', 'spinat', 'pilz', 'mais', 'rote bete', 'radieschen'],
-      fruit: ['apfel', 'banane', 'erdbeere', 'traube', 'wassermelone', 'melone', 'obst', 'orange', 'zitrone', 'avocado', 'kiwi', 'pfirsich', 'pflaume', 'birne', 'mango', 'granatapfel', 'dattel'],
-      meat: ['huhn', 'rind', 'rindfleisch', 'pute', 'wurst', 'steak', 'frikadelle', 'fleisch', 'leber', 'burger', 'flügel'],
-      clean: ['toilettenpapier', 'seife', 'shampoo', 'feuchttücher', 'bleiche', 'reinigung', 'weichspüler', 'schwamm', 'müllbeutel', 'spülmittel'],
-      frozen: ['eis', 'tiefkühlpizza', 'tiefkühlgemüse', 'gefroren', 'wassereis', 'tiefkühlgarnelen'],
-      snacks: ['snack', 'chips', 'schokolade', 'keks', 'süßigkeit', 'bonbon', 'popcorn', 'cracker'],
-      drinks: ['wasser', 'cola', 'saft', 'limonade', 'bier', 'wein', 'energydrink', 'tee', 'kaffee', 'zucker'],
-      baking: ['mehl', 'zucker', 'hefe', 'gewürz', 'salz', 'öl', 'backpulver', 'vanille', 'kakao', 'honig', 'essig'],
-    },
-    ru: {
-      dairy: ['молоко', 'яйцо', 'сыр', 'йогурт', 'масло', 'сметана', 'творог', 'сливки'],
-      bakery: ['хлеб', 'питa', 'булка', 'багет', 'торт', 'печенье', 'круассан', 'лаваш', 'бублик'],
-      veg: ['помидор', 'огурец', 'салат', 'морковь', 'лук', 'перец', 'картофель', 'овощ', 'чеснок', 'капуста', 'кабачок', 'баклажан', 'шпинат', 'гриб', 'кукуруза', 'свекла', 'редис'],
-      fruit: ['яблоко', 'банан', 'клубника', 'виноград', 'арбуз', 'дыня', 'фрукт', 'апельсин', 'лимон', 'авокадо', 'киви', 'персик', 'слива', 'груша', 'манго', 'гранат', 'финик'],
-      meat: ['курица', 'говядина', 'индейка', 'колбаса', 'стейк', 'котлета', 'мясо', 'печень', 'бургер', 'крылья'],
-      clean: ['туалетная бумага', 'мыло', 'шампунь', 'салфетки', 'отбеливатель', 'уборка', 'кондиционер для белья', 'губка', 'мешок для мусора', 'средство для посуды'],
-      frozen: ['мороженое', 'замороженная пицца', 'замороженные овощи', 'замороженный', 'фруктовый лед', 'замороженные креветки'],
-      snacks: ['снек', 'чипсы', 'шоколад', 'печенье', 'конфета', 'сладости', 'попкорн', 'крекер'],
-      drinks: ['вода', 'кола', 'сок', 'газировка', 'пиво', 'вино', 'энергетик', 'чай', 'кофе', 'сахар', 'лимонад'],
-      baking: ['мука', 'сахар', 'дрожжи', 'специя', 'соль', 'масло', 'разрыхлитель', 'ваниль', 'какао', 'мёд', 'уксус'],
-    },
-    pt: {
-      dairy: ['leite', 'ovo', 'queijo', 'iogurte', 'manteiga', 'creme', 'requeijão', 'nata'],
-      bakery: ['pão', 'pita', 'pãozinho', 'baguete', 'bolo', 'biscoito', 'croissant', 'tortilla', 'bagel'],
-      veg: ['tomate', 'pepino', 'alface', 'cenoura', 'cebola', 'pimentão', 'batata', 'legume', 'alho', 'repolho', 'abobrinha', 'berinjela', 'espinafre', 'cogumelo', 'milho', 'beterraba', 'rabanete'],
-      fruit: ['maçã', 'banana', 'morango', 'uva', 'melancia', 'melão', 'fruta', 'laranja', 'limão', 'abacate', 'kiwi', 'pêssego', 'ameixa', 'pera', 'manga', 'romã', 'tâmara'],
-      meat: ['frango', 'carne bovina', 'peru', 'salsicha', 'bife', 'almôndega', 'carne', 'fígado', 'hambúrguer', 'asinha'],
-      clean: ['papel higiênico', 'sabão', 'shampoo', 'lenço umedecido', 'água sanitária', 'limpeza', 'amaciante', 'esponja', 'saco de lixo', 'detergente'],
-      frozen: ['sorvete', 'pizza congelada', 'vegetal congelado', 'congelado', 'picolé', 'camarão congelado'],
-      snacks: ['salgadinho', 'batata frita', 'chocolate', 'biscoito', 'doce', 'bala', 'pipoca', 'bolacha'],
-      drinks: ['água', 'refrigerante', 'suco', 'cerveja', 'vinho', 'energético', 'chá', 'café', 'açúcar', 'limonada'],
-      baking: ['farinha', 'açúcar', 'fermento', 'tempero', 'sal', 'óleo', 'fermento em pó', 'baunilha', 'cacau', 'mel', 'vinagre'],
-    },
-    zh: {
-      dairy: ['牛奶', '鸡蛋', '奶酪', '酸奶', '黄油', '奶油', '芝士'],
-      bakery: ['面包', '皮塔饼', '小圆面包', '法棍', '蛋糕', '饼干', '牛角包', '百吉饼'],
-      veg: ['西红柿', '番茄', '黄瓜', '生菜', '胡萝卜', '洋葱', '辣椒', '土豆', '蔬菜', '大蒜', '卷心菜', '西葫芦', '茄子', '菠菜', '蘑菇', '玉米', '甜菜', '萝卜'],
-      fruit: ['苹果', '香蕉', '草莓', '葡萄', '西瓜', '甜瓜', '水果', '橙子', '柠檬', '牛油果', '猕猴桃', '桃子', '李子', '梨', '芒果', '石榴', '枣'],
-      meat: ['鸡肉', '牛肉', '火鸡', '香肠', '牛排', '肉丸', '肉', '肝', '汉堡', '鸡翅'],
-      clean: ['卫生纸', '肥皂', '洗发水', '湿巾', '漂白剂', '清洁', '柔顺剂', '海绵', '垃圾袋', '洗洁精'],
-      frozen: ['冰淇淋', '冷冻披萨', '冷冻蔬菜', '冷冻', '冰棍', '冷冻虾'],
-      snacks: ['零食', '薯片', '巧克力', '饼干', '糖果', '爆米花', '饼干'],
-      drinks: ['水', '可乐', '果汁', '汽水', '啤酒', '葡萄酒', '功能饮料', '茶', '咖啡', '糖', '柠檬水'],
-      baking: ['面粉', '糖', '酵母', '香料', '盐', '油', '泡打粉', '香草', '可可', '蜂蜜', '醋'],
-    },
-    hi: {
-      dairy: ['दूध', 'अंडा', 'पनीर', 'दही', 'मक्खन', 'क्रीम'],
-      bakery: ['ब्रेड', 'पिटा', 'बन', 'बैगेट', 'केक', 'कुकी', 'क्रोइसैंट'],
-      veg: ['टमाटर', 'खीरा', 'सलाद पत्ता', 'गाजर', 'प्याज', 'शिमला मिर्च', 'आलू', 'सब्जी', 'लहसुन', 'पत्ता गोभी', 'बैंगन', 'पालक', 'मशरूम', 'मक्का', 'चुकंदर', 'मूली'],
-      fruit: ['सेब', 'केला', 'स्ट्रॉबेरी', 'अंगूर', 'तरबूज', 'खरबूजा', 'फल', 'संतरा', 'नींबू', 'एवोकाडो', 'कीवी', 'आड़ू', 'आलूबुखारा', 'नाशपाती', 'आम', 'अनार', 'खजूर'],
-      meat: ['चिकन', 'बीफ', 'टर्की', 'सॉसेज', 'स्टेक', 'मीटबॉल', 'मांस', 'लिवर', 'बर्गर'],
-      clean: ['टॉयलेट पेपर', 'साबुन', 'शैम्पू', 'वाइप्स', 'ब्लीच', 'सफाई', 'सॉफ्टनर', 'स्पंज', 'कचरा बैग', 'डिश सोप'],
-      frozen: ['आइसक्रीम', 'फ्रोज़न पिज़्ज़ा', 'फ्रोज़न सब्ज़ी', 'फ्रोज़न', 'फ्रोज़न झींगा'],
-      snacks: ['नाश्ता', 'चिप्स', 'चॉकलेट', 'कुकी', 'मिठाई', 'कैंडी', 'पॉपकॉर्न'],
-      drinks: ['पानी', 'कोला', 'जूस', 'सोडा', 'बीयर', 'वाइन', 'एनर्जी ड्रिंक', 'चाय', 'कॉफी', 'चीनी', 'नींबू पानी'],
-      baking: ['आटा', 'चीनी', 'खमीर', 'मसाला', 'नमक', 'तेल', 'बेकिंग पाउडर', 'वेनिला', 'कोको', 'शहद', 'सिरका'],
-    },
-    ar: {
-      dairy: ['حليب', 'بيض', 'جبن', 'زبادي', 'زبدة', 'قشطة', 'لبنة'],
-      bakery: ['خبز', 'بيتا', 'كعك', 'باغيت', 'كيك', 'بسكويت', 'كرواسون', 'خبز التورتيلا'],
-      veg: ['طماطم', 'خيار', 'خس', 'جزر', 'بصل', 'فلفل', 'بطاطا', 'خضار', 'ثوم', 'ملفوف', 'كوسة', 'باذنجان', 'سبانخ', 'فطر', 'ذرة', 'شمندر', 'فجل'],
-      fruit: ['تفاح', 'موز', 'فراولة', 'عنب', 'بطيخ', 'شمام', 'فاكهة', 'برتقال', 'ليمون', 'أفوكادو', 'كيوي', 'خوخ', 'برقوق', 'كمثرى', 'مانجو', 'رمان', 'تمر'],
-      meat: ['دجاج', 'لحم بقري', 'ديك رومي', 'نقانق', 'ستيك', 'كرات لحم', 'لحم', 'كبد', 'برغر', 'أجنحة'],
-      clean: ['ورق تواليت', 'صابون', 'شامبو', 'مناديل مبللة', 'مبيض', 'تنظيف', 'منعم', 'إسفنجة', 'كيس قمامة', 'سائل جلي'],
-      frozen: ['آيس كريم', 'بيتزا مجمدة', 'خضار مجمد', 'مجمد', 'بوظة على عصا', 'روبيان مجمد'],
-      snacks: ['وجبة خفيفة', 'شيبس', 'شوكولاتة', 'بسكويت', 'حلوى', 'سكاكر', 'فشار', 'كراكر'],
-      drinks: ['ماء', 'كولا', 'عصير', 'صودا', 'بيرة', 'نبيذ', 'مشروب طاقة', 'شاي', 'قهوة', 'سكر', 'ليموناضة'],
-      baking: ['طحين', 'سكر', 'خميرة', 'بهار', 'ملح', 'زيت', 'بيكنج باودر', 'فانيليا', 'كاكاو', 'عسل', 'خل'],
-    },
-  };
-  // For languages without a curated keyword list, fall back to English keywords (still functional, just less accurate)
 
   // The three urgency levels a user can assign to an item (colors only — labels are translated)
   const URGENCY_LEVELS = {
@@ -1761,28 +1538,36 @@
         purchaseHistory,
       });
     } catch (err) {
+      // Our write failed, so no echo of it is coming: don't swallow the next real snapshot.
+      suppressNextSnapshot = false;
       console.error('Failed to save list to Firestore:', err);
+      showToast([t().errSaveFailed, messageFor(err)].filter(Boolean).join(' · '));
     }
+  }
+
+  // ============================================================
+  // USER-FACING MESSAGES
+  // ============================================================
+  function messageFor(err) {
+    const key = friendlyErrorKey(err);
+    return key ? t()[key] : '';
+  }
+
+  let toastTimer = null;
+  function showToast(text) {
+    const el = document.getElementById('toast');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
   }
 
   // ============================================================
   // CATEGORY GUESSING
   // ============================================================
   function guessCategory(name) {
-    const lower = name.trim().toLowerCase();
-    const keywordSet = CATEGORY_KEYWORDS[currentLang] || CATEGORY_KEYWORDS.en;
-    const catColors = {
-      dairy: 'var(--teal)', bakery: 'var(--yellow)', veg: '#4ade80', fruit: '#fb923c',
-      meat: 'var(--coral)', clean: 'var(--purple)',
-      frozen: '#60a5fa', snacks: '#f472b6', drinks: '#38bdf8', baking: '#d97706',
-    };
-
-    for (const key in keywordSet) {
-      if (keywordSet[key].some(k => lower.includes(k))) {
-        return { key, name: t().categories[key], color: catColors[key] };
-      }
-    }
-    return { key: 'other', name: t().categories.other, color: 'var(--pink)' };
+    const key = guessCategoryKey(name, currentLang);
+    return { key, name: t().categories[key], color: CATEGORY_COLORS[key] };
   }
 
   // ============================================================
@@ -1869,10 +1654,10 @@
   // ACTIONS
   // ============================================================
   function addItem(name) {
-    if (!name.trim()) return;
+    if (!name.trim() || !activeListId) return;
     const cat = guessCategory(name);
     items.push({
-      id: Date.now().toString(),
+      id: newId(),
       name: name.trim(),
       bought: false,
       catKey: cat.key,
@@ -1884,33 +1669,15 @@
   }
 
   function toggleBought(id) {
-    const item = items.find(i => i.id === id);
-    if (item) {
-      item.bought = !item.bought;
-      if (item.bought) {
-        item.boughtAt = Date.now();
-        logPurchase(item);
-      } else {
-        item.boughtAt = null;
-      }
-    }
+    ({ items, purchaseHistory } = toggleBoughtState(items, purchaseHistory, id));
     save();
     render();
   }
 
-  // Purchase history: a separate, append-only log of {name, catKey, catColor, timestamp}
-  // for every item ever marked bought, stored alongside items in the same list document.
-  // Kept even if the item is later deleted from the active list, so weekly stats stay
-  // accurate. Capped to the most recent 500 entries.
-  function logPurchase(item) {
-    purchaseHistory.push({
-      name: item.name,
-      catKey: item.catKey,
-      catColor: item.catColor,
-      timestamp: item.boughtAt,
-    });
-    if (purchaseHistory.length > 500) purchaseHistory = purchaseHistory.slice(-500);
-  }
+  // purchaseHistory is a separate log of {itemId, name, catKey, catColor, timestamp} for
+  // every item marked bought. It is kept even if the item is later deleted from the list,
+  // so weekly stats stay accurate; un-marking an item removes the entry that marking added.
+  // Capped to the most recent 500 entries (see js/items.js).
 
   function deleteItem(id) {
     items = items.filter(i => i.id !== id);
@@ -2039,6 +1806,13 @@
     document.getElementById('signOutBtn').textContent = dict.signOutLabel;
     newListNameInput.placeholder = dict.createListLabel;
     joinCodeInput.placeholder = dict.joinCodeLabel;
+    document.getElementById('welcomeTitle').textContent = dict.welcomeTitle;
+    document.getElementById('welcomeSubtitle').textContent = dict.welcomeSubtitle;
+    document.getElementById('welcomeCreateLabel').textContent = dict.createListLabel;
+    document.getElementById('welcomeJoinLabel').textContent = dict.joinListLabel;
+    welcomeNewListInput.placeholder = dict.createListLabel;
+    welcomeJoinInput.placeholder = dict.joinCodeLabel;
+    document.getElementById('retryLoadBtn').textContent = dict.retryLabel;
     langSelect.value = currentLang;
     render(); // re-render list + stats + category names in new language
     renderStats(); // re-render stats screen labels in new language
@@ -2250,18 +2024,19 @@
   const joinListError = document.getElementById('joinListError');
 
   googleSignInBtn.addEventListener('click', () => {
-    // TEMP DEBUG: prove the click handler is even firing on this device
-    showLoginError({ message: 'DEBUG: הכפתור נלחץ, בודק חיבור ל-Firebase...' });
-    try {
-      if (!window.FB || !window.FB.signInWithGoogle) {
-        showLoginError({ message: 'DEBUG: Firebase עדיין לא נטען (window.FB חסר) - זו הבעיה' });
-        return;
-      }
-      window.FB.signInWithGoogle().catch(err => showLoginError(err));
-    } catch (err) {
-      showLoginError(err);
+    clearLoginError();
+    if (!window.FB || !window.FB.signInWithGoogle) {
+      // The Firebase scripts did not load (usually: no connection).
+      showLoginError({ code: 'unavailable' });
+      return;
     }
+    window.FB.signInWithGoogle().catch(showLoginError);
   });
+
+  function clearLoginError() {
+    const el = document.getElementById('loginErrorMsg');
+    if (el) el.textContent = '';
+  }
 
   function showLoginError(err) {
     console.error('Sign-in failed:', err);
@@ -2269,10 +2044,12 @@
     if (!existingMsg) {
       existingMsg = document.createElement('p');
       existingMsg.id = 'loginErrorMsg';
-      existingMsg.style.cssText = 'color:#ff6b6b;font-size:12px;margin-top:14px;word-break:break-word;';
+      existingMsg.setAttribute('role', 'alert');
+      existingMsg.style.cssText = 'color:#ff6b6b;font-size:13px;margin-top:14px;word-break:break-word;';
       document.querySelector('.login-box').appendChild(existingMsg);
     }
-    existingMsg.textContent = `שגיאת התחברות: ${err.code || err.message || err}`;
+    const code = DEBUG && err && err.code ? ` (${err.code})` : '';
+    existingMsg.textContent = messageFor(err) + code;
   }
 
   window.addEventListener('firebase-auth-error', (e) => showLoginError(e.detail));
@@ -2297,62 +2074,107 @@
     return code;
   }
 
-  createListBtn.addEventListener('click', async () => {
-    const name = newListNameInput.value.trim();
-    if (!name || !currentUser) return;
-    const code = generateJoinCode();
-    const newDoc = window.FB.doc(window.FB.collection(window.FB.db, 'lists'));
-    await window.FB.setDoc(newDoc, {
-      name,
-      code,
-      ownerUid: currentUser.uid,
-      members: [currentUser.uid],
-      items: [],
-      purchaseHistory: [],
-      createdAt: window.FB.serverTimestamp(),
-    });
-    newListNameInput.value = '';
-    await loadMyLists();
-    switchToList(newDoc.id);
-    renderListPicker();
-  });
+  // Creates a list and switches to it. Returns true on success; on failure the
+  // friendly message is shown in errEl.
+  async function createList(rawName, errEl, btn) {
+    errEl.textContent = '';
+    const name = rawName.trim();
+    if (!name || !currentUser) return false;
+    btn.disabled = true;
+    try {
+      const code = generateJoinCode();
+      const ref = window.FB.doc(window.FB.collection(window.FB.db, 'lists'));
+      const data = { name, code, ownerUid: currentUser.uid, members: [currentUser.uid], items: [], purchaseHistory: [] };
+      await window.FB.setDoc(ref, { ...data, createdAt: window.FB.serverTimestamp() });
+      try {
+        await loadMyLists();
+      } catch (err) {
+        console.error('Reloading lists failed after create:', err);
+      }
+      if (!myLists.some(l => l.id === ref.id)) myLists.push({ id: ref.id, ...data });
+      switchToList(ref.id);
+      return true;
+    } catch (err) {
+      console.error('Create list failed:', err);
+      errEl.textContent = messageFor(err);
+      return false;
+    } finally {
+      btn.disabled = false;
+    }
+  }
 
-  joinListBtn.addEventListener('click', async () => {
-    const code = joinCodeInput.value.trim().toUpperCase();
-    joinListError.textContent = '';
-    if (!code || !currentUser) return;
+  // Joins the list with this code and switches to it. Returns true on success.
+  async function joinList(rawCode, errEl, btn) {
+    errEl.textContent = '';
+    const code = rawCode.trim().toUpperCase();
+    if (!code || !currentUser) return false;
+    btn.disabled = true;
     try {
       const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('code', '==', code));
-      const snap = await getDocsCompat(q);
+      const snap = await window.FB.getDocs(q);
       if (snap.empty) {
-        joinListError.textContent = t().joinCodeNotFound;
-        return;
+        errEl.textContent = t().errNotFound;
+        return false;
       }
       const listDoc = snap.docs[0];
       await window.FB.updateDoc(window.FB.doc(window.FB.db, 'lists', listDoc.id), {
         members: window.FB.arrayUnion(currentUser.uid),
       });
-      joinCodeInput.value = '';
-      await loadMyLists();
+      try {
+        await loadMyLists();
+      } catch (err) {
+        console.error('Reloading lists failed after join:', err);
+      }
+      if (!myLists.some(l => l.id === listDoc.id)) myLists.push({ id: listDoc.id, ...listDoc.data() });
       switchToList(listDoc.id);
-      renderListPicker();
+      return true;
     } catch (err) {
-      console.error('Join failed:', err);
-      joinListError.textContent = t().joinCodeNotFound;
+      console.error('Join failed:', err.code, err);
+      errEl.textContent = messageFor(err);
+      return false;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  const createListError = document.getElementById('createListError');
+  createListBtn.addEventListener('click', async () => {
+    if (await createList(newListNameInput.value, createListError, createListBtn)) {
+      newListNameInput.value = '';
+      renderListPicker();
     }
   });
 
-  // getDocs isn't imported by name above (kept the import list minimal) — small helper
-  // that fetches a query's results once, used only for the join-by-code lookup.
-  async function getDocsCompat(q) {
-    const { getDocs } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-    return getDocs(q);
-  }
+  joinListBtn.addEventListener('click', async () => {
+    if (await joinList(joinCodeInput.value, joinListError, joinListBtn)) {
+      joinCodeInput.value = '';
+      renderListPicker();
+    }
+  });
+
+  // First-run screen: same actions, shown when the user has no list at all
+  const welcomeNewListInput = document.getElementById('welcomeNewListInput');
+  const welcomeCreateBtn = document.getElementById('welcomeCreateBtn');
+  const welcomeCreateError = document.getElementById('welcomeCreateError');
+  const welcomeJoinInput = document.getElementById('welcomeJoinInput');
+  const welcomeJoinBtn = document.getElementById('welcomeJoinBtn');
+  const welcomeJoinError = document.getElementById('welcomeJoinError');
+
+  const submitWelcomeCreate = async () => {
+    if (await createList(welcomeNewListInput.value, welcomeCreateError, welcomeCreateBtn)) welcomeNewListInput.value = '';
+  };
+  const submitWelcomeJoin = async () => {
+    if (await joinList(welcomeJoinInput.value, welcomeJoinError, welcomeJoinBtn)) welcomeJoinInput.value = '';
+  };
+  welcomeCreateBtn.addEventListener('click', submitWelcomeCreate);
+  welcomeJoinBtn.addEventListener('click', submitWelcomeJoin);
+  welcomeNewListInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitWelcomeCreate(); });
+  welcomeJoinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitWelcomeJoin(); });
 
   async function loadMyLists() {
     if (!currentUser) { myLists = []; return; }
     const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('members', 'array-contains', currentUser.uid));
-    const snap = await getDocsCompat(q);
+    const snap = await window.FB.getDocs(q);
     myLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
@@ -2389,12 +2211,16 @@
 
   function subscribeToActiveList() {
     if (unsubscribeActiveList) { unsubscribeActiveList(); unsubscribeActiveList = null; }
+    // With no active list the first-run screen replaces the list, so nothing can be added "into the void"
+    appRoot.classList.remove('load-failed');
+    appRoot.classList.toggle('no-list', !activeListId);
     if (!activeListId) {
       items = [];
       purchaseHistory = [];
       render();
       renderStats();
       updateHeaderForList();
+      statsEl.textContent = '';
       return;
     }
     unsubscribeActiveList = window.FB.onSnapshot(
@@ -2413,7 +2239,10 @@
         // so every member's list stays clean, not just this device's local view.
         if (removedStaleItems) save();
       },
-      (err) => console.error('List subscription error:', err)
+      (err) => {
+        console.error('List subscription error:', err);
+        showToast(messageFor(err));
+      }
     );
   }
 
@@ -2439,31 +2268,47 @@
       : t().headerTitle;
   }
 
+  async function initForUser() {
+    appRoot.classList.remove('load-failed');
+    try {
+      await loadMyLists();
+    } catch (err) {
+      // Could not read the lists: say so, instead of pretending the user has none.
+      console.error('Loading lists failed:', err);
+      document.getElementById('loadErrorText').textContent = messageFor(err);
+      appRoot.classList.remove('no-list');
+      appRoot.classList.add('load-failed');
+      return;
+    }
+    // If no active list, or the saved one isn't among ours anymore, fall back to the first available
+    if (!activeListId || !myLists.some(l => l.id === activeListId)) {
+      activeListId = myLists.length > 0 ? myLists[0].id : null;
+      if (activeListId) localStorage.setItem('activeListId', activeListId);
+      else localStorage.removeItem('activeListId');
+    }
+    subscribeToActiveList();
+  }
+
+  document.getElementById('retryLoadBtn').addEventListener('click', initForUser);
+
   function startAuthListener() {
     window.FB.onAuthChange(async (user) => {
       currentUser = user;
       if (user) {
         loginScreen.style.display = 'none';
         appRoot.style.display = 'block';
-        await loadMyLists();
-        // If no active list, or the saved one isn't among ours anymore, fall back to the first available
-        if (!activeListId || !myLists.some(l => l.id === activeListId)) {
-          activeListId = myLists.length > 0 ? myLists[0].id : null;
-          if (activeListId) localStorage.setItem('activeListId', activeListId);
-        }
-        subscribeToActiveList();
+        await initForUser();
       } else {
         loginScreen.style.display = 'flex';
         appRoot.style.display = 'none';
+        listPickerOverlay.classList.remove('show');
         if (unsubscribeActiveList) { unsubscribeActiveList(); unsubscribeActiveList = null; }
       }
     });
   }
 
-  // The Firebase module script (type="module") runs asynchronously and may not have
-  // finished by the time this classic script executes, so wait for its ready signal —
-  // unless it already fired before we got here (module scripts can sometimes beat a
-  // classic script that comes after them, depending on load timing).
+  // Both scripts are modules and run in document order, so Firebase is normally ready
+  // by now. If its imports have not finished (or failed), wait for the ready signal.
   if (window.FB) {
     startAuthListener();
   } else {
