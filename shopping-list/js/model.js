@@ -7,7 +7,7 @@
 //
 // Version 1 kept everything in two arrays on the list document (`items`,
 // `purchaseHistory`). Those arrays are left in place as a backup after migrating.
-import { safeCategoryKey } from './category.js';
+import { safeCategoryKey, CATEGORY_ORDER } from './category.js';
 
 export const SCHEMA_VERSION = 2;
 export const HISTORY_MONTHS = 6;
@@ -49,6 +49,17 @@ export function isStaleBought(item, now = Date.now()) {
 
 export function sortItems(items) {
   return [...items].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+}
+
+const URGENCY_RANK = { high: 0, medium: 1, low: 2 };
+
+// The order of items still to buy: by category, then the most urgent first inside each
+// category (must-have, almost out, needed, unspecified), then the oldest first.
+export function compareItems(a, b) {
+  const rank = (i) => URGENCY_RANK[i.urgency] ?? 3;
+  return (CATEGORY_ORDER.indexOf(safeCategoryKey(a.catKey)) - CATEGORY_ORDER.indexOf(safeCategoryKey(b.catKey)))
+    || (rank(a) - rank(b))
+    || ((a.createdAt ?? 0) - (b.createdAt ?? 0));
 }
 
 // All entries of the given history bucket documents, oldest first.

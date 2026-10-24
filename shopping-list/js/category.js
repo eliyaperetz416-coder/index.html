@@ -137,6 +137,9 @@ export const CATEGORY_COLORS = {
   other: 'var(--pink)',
 };
 
+// The order categories appear in on the list.
+export const CATEGORY_ORDER = ['dairy', 'bakery', 'veg', 'fruit', 'meat', 'frozen', 'snacks', 'drinks', 'baking', 'clean', 'other'];
+
 // A category key read from Firestore is only trusted if it is one of ours
 // ("constructor", "__proto__" or injected markup become "other").
 export function safeCategoryKey(key) {

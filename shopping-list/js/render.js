@@ -3,6 +3,7 @@ import { t } from './i18n.js';
 import { $ } from './util.js';
 import { escapeHtml } from './html.js';
 import { safeCategoryKey, categoryColor } from './category.js';
+import { compareItems } from './model.js';
 
 // The three urgency levels a user can assign to an item (colors only — labels are translated)
 export const URGENCY_LEVELS = {
@@ -10,10 +11,6 @@ export const URGENCY_LEVELS = {
   medium: { color: '#ffd166' }, // yellow — moderate
   low: { color: '#4ade80' },    // green — plenty left
 };
-
-// Fixed display order for category groups — categories not in this list (shouldn't
-// happen, but as a safety net) fall back to appearing after all of these.
-const CATEGORY_ORDER = ['dairy', 'bakery', 'veg', 'fruit', 'meat', 'frozen', 'snacks', 'drinks', 'baking', 'clean', 'other'];
 
 const listEl = $('list');
 const statsEl = $('stats');
@@ -61,7 +58,12 @@ function renderItemCard(item) {
     </div>
     <button class="delete-btn" data-id="${id}">✕</button>
   `;
-  return el;
+  // The row sits on top of a green / red layer that a swipe uncovers (see swipe.js).
+  const wrap = document.createElement('div');
+  wrap.className = 'item-swipe';
+  wrap.innerHTML = '<div class="swipe-bg" aria-hidden="true"><span class="swipe-tick">✓</span><span class="swipe-trash">🗑</span></div>';
+  wrap.appendChild(el);
+  return wrap;
 }
 
 export function render() {
@@ -76,14 +78,9 @@ export function render() {
   const unbought = state.items.filter(i => !i.bought);
   const bought = state.items.filter(i => i.bought);
 
-  // Sort unbought items by CATEGORY_ORDER (grouped visually via each item's own
-  // category tag — no separate group headers), so items of the same category still
-  // end up next to each other without an extra heading line.
-  const sortedUnbought = [...unbought].sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(safeCategoryKey(a.catKey));
-    const bi = CATEGORY_ORDER.indexOf(safeCategoryKey(b.catKey));
-    return (ai === -1 ? CATEGORY_ORDER.length : ai) - (bi === -1 ? CATEGORY_ORDER.length : bi);
-  });
+  // Items of the same category sit together (the category tag on each row, no heading
+  // line), most urgent first inside each category.
+  const sortedUnbought = [...unbought].sort(compareItems);
 
   sortedUnbought.forEach(item => listEl.appendChild(renderItemCard(item)));
 

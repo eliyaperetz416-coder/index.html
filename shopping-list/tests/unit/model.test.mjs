@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory, itemChanges, REMOVE } from '../../js/model.js';
+import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory, itemChanges, REMOVE, compareItems } from '../../js/model.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -124,4 +124,25 @@ test('category and urgency: only known values; "none" removes the urgency', () =
   assert.deepEqual(itemChanges(base, { name: 'חלב', catKey: 'meat', quantity: '2', note: 'דל שומן', urgency: 'none' }), { catKey: 'meat', urgency: REMOVE });
   assert.deepEqual(itemChanges(base, { name: 'חלב', catKey: '<b>', quantity: '2', note: 'דל שומן', urgency: 'whenever' }), { catKey: 'other' });
   assert.deepEqual(itemChanges({ id: 'a', name: 'x', catKey: 'other' }, { name: 'x', catKey: 'other', quantity: '', note: '', urgency: 'none' }), {});
+});
+
+// ---------- order of the list ----------
+
+test('items are ordered by category, then by urgency inside each category, then by age', () => {
+  const items = [
+    { id: 'bread', catKey: 'bakery', urgency: 'high', createdAt: 1 },
+    { id: 'milk-none', catKey: 'dairy', createdAt: 5 },
+    { id: 'milk-high', catKey: 'dairy', urgency: 'high', createdAt: 9 },
+    { id: 'milk-low', catKey: 'dairy', urgency: 'low', createdAt: 2 },
+    { id: 'milk-med', catKey: 'dairy', urgency: 'medium', createdAt: 7 },
+    { id: 'eggs-none', catKey: 'dairy', createdAt: 3 },
+    { id: 'odd', catKey: '<x>', createdAt: 0 },
+  ];
+  assert.deepEqual([...items].sort(compareItems).map((i) => i.id),
+    ['milk-high', 'milk-med', 'milk-low', 'eggs-none', 'milk-none', 'bread', 'odd']);
+});
+
+test('an unknown urgency is treated like none', () => {
+  const items = [{ id: 'a', catKey: 'veg', urgency: 'whatever', createdAt: 1 }, { id: 'b', catKey: 'veg', urgency: 'low', createdAt: 2 }];
+  assert.deepEqual([...items].sort(compareItems).map((i) => i.id), ['b', 'a']);
 });

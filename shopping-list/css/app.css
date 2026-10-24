@@ -896,3 +896,25 @@
   .primary-btn { background: var(--teal); color: #1a1a2e; }
   .secondary-btn { background: var(--surface-dim); color: var(--text); }
   .text-link-btn.danger { display: block; margin: 0 auto 4px; padding: 10px; }
+
+  /* Swipe layer: the row slides over a green (tick) or red (delete) background */
+  .item-swipe { position: relative; border-radius: var(--radius); overflow: hidden; }
+
+  .item-swipe > .item { position: relative; touch-action: pan-y; user-select: none; -webkit-user-select: none; transition: transform 0.18s ease, opacity 0.16s ease; }
+  .item-swipe > .item.dragging { transition: none; }
+
+  .swipe-bg {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    padding: 0 22px;
+    font-size: 22px;
+    color: #1a1a2e;
+  }
+
+  .item-swipe[data-swipe] .swipe-bg { display: flex; }
+  .item-swipe[data-swipe="tick"] .swipe-bg { background: #4ade80; justify-content: flex-start; }
+  .item-swipe[data-swipe="delete"] .swipe-bg { background: var(--coral); justify-content: flex-end; }
+  .item-swipe[data-swipe="tick"] .swipe-trash, .item-swipe[data-swipe="delete"] .swipe-tick { display: none; }
+  .item-swipe.armed .swipe-bg { font-size: 26px; }
