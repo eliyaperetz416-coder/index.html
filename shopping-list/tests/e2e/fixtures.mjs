@@ -48,3 +48,26 @@ export async function readListDoc(page, listId) {
 }
 
 export const activeListId = (page) => page.evaluate(() => localStorage.getItem('activeListId'));
+
+// Writes fields straight into a list document (as another device / member would).
+export async function patchListDoc(page, listId, data) {
+  await page.evaluate(async ({ id, data }) => {
+    const { doc, updateDoc } = window.__fb.firestore;
+    await updateDoc(doc(window.FB.db, 'lists', id), data);
+  }, { id: listId, data });
+}
+
+export async function createFirstList(page, name, sub = 'u-x') {
+  await page.goto('/');
+  await signInAs(page, sub, `${sub}@example.com`);
+  await page.fill('#welcomeNewListInput', name);
+  await page.click('#welcomeCreateBtn');
+  await page.waitForSelector('#itemInput', { state: 'visible' });
+  return activeListId(page);
+}
+
+export async function addItem(page, name) {
+  await page.fill('#itemInput', name);
+  await page.click('#addBtn');
+  await page.locator('.item-name', { hasText: name }).first().waitFor();
+}
