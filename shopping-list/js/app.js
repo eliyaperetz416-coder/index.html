@@ -10,6 +10,7 @@ import { initItemEdit } from './item-edit.js';
 import { initToast } from './ui.js';
 import { initSwipe } from './swipe.js';
 import { initShopping } from './shopping.js';
+import { initListManage, captureInvite } from './list-manage.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
@@ -17,6 +18,7 @@ import { cleanupStaleBoughtItems } from './sync.js';
 import { initConnection } from './connection.js';
 
 async function main() {
+  captureInvite(); // ?join=CODE in the address: remember it, then clean the address
   // A language we cannot load (unknown value in storage, or offline) falls back to Hebrew.
   if (!(await loadLanguage(state.lang))) state.lang = 'he';
 
@@ -30,6 +32,7 @@ async function main() {
   initStats(addItem);
   initNav();
   initListUi();
+  initListManage();
   initAuth();
   initConnection();
 

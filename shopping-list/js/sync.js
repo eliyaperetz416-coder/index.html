@@ -238,6 +238,7 @@ function onListsChanged() {
   }
   document.dispatchEvent(new Event('lists-changed'));
   registerOldJoinCodes();
+  publishMyName();
 }
 
 // Called once a user is signed in (and again by the "try again" button).
@@ -261,6 +262,22 @@ export function startSync() {
     appRoot.classList.remove('no-list');
     appRoot.classList.add('load-failed');
   });
+}
+
+// ============================================================
+// MEMBERS' NAMES: each member publishes their own display name on the list
+// ============================================================
+const nameChecks = new Set();
+function publishMyName() {
+  const name = (state.user.displayName || '').trim().slice(0, 100);
+  if (!name) return;
+  const uid = state.user.uid;
+  for (const list of state.lists) {
+    const key = `${list.id}:${name}`;
+    if (list.pending || nameChecks.has(key) || (list.memberNames || {})[uid] === name) continue;
+    nameChecks.add(key);
+    write(FB().updateDoc(listRef(list.id), { [`memberNames.${uid}`]: name }));
+  }
 }
 
 // ============================================================
@@ -381,4 +398,89 @@ async function registerOldJoinCodes() {
       console.error('Registering the join code failed (will retry next time):', list.id, err);
     }
   }
+}
+
+// ============================================================
+// MANAGING A LIST: rename, leave, delete, new join code
+// ============================================================
+export function renameList(listId, rawName) {
+  const name = rawName.trim().slice(0, 100);
+  if (name) write(FB().updateDoc(listRef(listId), { name }));
+}
+
+// Takes the current user out of the list's members. The list then drops out of "my
+// lists" by itself and the app moves on to another one (or the welcome screen).
+export function leaveList(listId) {
+  const uid = state.user.uid;
+  stopActiveList();
+  FB().updateDoc(listRef(listId), { members: FB().arrayRemove(uid), [`memberNames.${uid}`]: FB().deleteField() })
+    .catch((err) => {
+      reportWriteError(err);
+      if (state.activeListId === listId) subscribeToActiveList();
+    });
+}
+
+const SUBCOLLECTIONS = ['items', 'history', 'joins', 'templates'];
+
+// Deletes a list for everyone: first everything inside it, then its join code, then the
+// list itself. Needs a connection (it reads before it deletes). Returns true on success.
+export async function deleteList(listId) {
+  if (!navigator.onLine) { showToast(t().renewNeedsNetwork); return false; }
+  const list = state.lists.find((l) => l.id === listId);
+  stopActiveList();
+  try {
+    for (const sub of SUBCOLLECTIONS) {
+      const snap = await FB().getDocs(FB().collection(FB().db, 'lists', listId, sub));
+      for (let i = 0; i < snap.docs.length; i += 450) {
+        const batch = FB().writeBatch(FB().db);
+        snap.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+    const batch = FB().writeBatch(FB().db);
+    if (list?.code) {
+      const codeRef = FB().doc(FB().db, 'joinCodes', list.code);
+      const codeSnap = await FB().getDoc(codeRef);
+      if (codeSnap.exists() && codeSnap.data().createdBy === state.user.uid) batch.delete(codeRef);
+    }
+    batch.delete(listRef(listId));
+    await batch.commit();
+    return true;
+  } catch (err) {
+    reportWriteError(err);
+    if (state.activeListId === listId) subscribeToActiveList();
+    return false;
+  }
+}
+
+// Replaces the join code: the old one stops working, people already in the list stay.
+// Returns the new code (or null on failure).
+export async function renewJoinCode(listId) {
+  if (!navigator.onLine) { showToast(t().renewNeedsNetwork); return null; }
+  const list = state.lists.find((l) => l.id === listId);
+  try {
+    let oldRef = null;
+    if (list?.code) {
+      const ref = FB().doc(FB().db, 'joinCodes', list.code);
+      const snap = await FB().getDoc(ref);
+      if (snap.exists() && snap.data().createdBy === state.user.uid) oldRef = ref;
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const code = generateJoinCode();
+      const batch = FB().writeBatch(FB().db);
+      batch.update(listRef(listId), { code });
+      if (oldRef) batch.delete(oldRef);
+      batch.set(FB().doc(FB().db, 'joinCodes', code), { listId, createdBy: state.user.uid, createdAt: FB().serverTimestamp() });
+      try {
+        await batch.commit();
+        localStorage.setItem(`joinCodeOk:${listId}:${code}`, '1');
+        return code;
+      } catch (err) {
+        if (err.code !== 'permission-denied' || attempt === 2) throw err; // a taken code: try another
+      }
+    }
+  } catch (err) {
+    reportWriteError(err);
+  }
+  return null;
 }

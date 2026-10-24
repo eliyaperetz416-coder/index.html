@@ -32,7 +32,7 @@
 <div class="app" id="appRoot" style="display:none;">
   <header>
     <div>
-      <h1 id="headerTitle">הרשימה שלי 🛒</h1>
+      <h1 id="headerTitle" role="button" tabindex="0">הרשימה שלי 🛒</h1>
       <p id="stats">0 פריטים</p>
     </div>
     <div class="header-actions">
@@ -134,6 +134,8 @@
 
     <div class="list-picker-items" id="listPickerItems"></div>
 
+    <button class="secondary-btn wide" id="manageListBtn">ניהול הרשימה</button>
+
     <div class="setting-group">
       <label id="createListLabel">רשימה חדשה</label>
       <div class="inline-form-row">
@@ -197,6 +199,41 @@
   </div>
 </div>
 
+<div class="settings-overlay" id="listManageOverlay">
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="listManageTitle">
+    <h2 id="listManageTitle">ניהול הרשימה</h2>
+
+    <div class="setting-group">
+      <label id="manageNameLabel" for="manageName">שם הרשימה</label>
+      <div class="inline-form-row">
+        <input type="text" id="manageName" maxlength="100" autocomplete="off" />
+        <button class="inline-form-btn" id="manageRenameBtn" aria-label="✓">✓</button>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label id="manageCodeLabel">קוד הצטרפות</label>
+      <div class="code-box" id="manageCode" dir="ltr"></div>
+      <div class="sheet-actions">
+        <button class="secondary-btn" id="copyCodeBtn">העתק קוד</button>
+        <button class="secondary-btn" id="copyLinkBtn">העתק קישור</button>
+        <button class="primary-btn" id="shareBtn">שתף</button>
+      </div>
+      <button class="text-link-btn" id="newCodeBtn">צור קוד חדש</button>
+    </div>
+
+    <div class="setting-group">
+      <label id="manageMembersLabel">חברים</label>
+      <ul class="member-list" id="memberList"></ul>
+    </div>
+
+    <p class="hint" id="ownerLeaveHint" hidden></p>
+    <button class="text-link-btn danger" id="leaveListBtn">עזוב את הרשימה</button>
+    <button class="text-link-btn danger" id="deleteListBtn">מחק את הרשימה</button>
+    <button class="close-btn" id="closeManageBtn">סגור</button>
+  </div>
+</div>
+
 <div class="settings-overlay" id="settingsOverlay">
   <div class="settings-panel">
     <h2 id="settingsTitle">הגדרות</h2>
@@ -226,6 +263,16 @@
     </div>
 
     <button class="close-btn" id="closeSettingsBtn">סגור</button>
+  </div>
+</div>
+
+<div class="settings-overlay confirm-overlay" id="confirmOverlay">
+  <div class="settings-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+    <p class="confirm-text" id="confirmText"></p>
+    <div class="sheet-actions">
+      <button class="primary-btn" id="confirmOk"></button>
+      <button class="secondary-btn" id="confirmCancel"></button>
+    </div>
   </div>
 </div>
 

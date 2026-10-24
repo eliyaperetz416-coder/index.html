@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, collection, query, where,
-  writeBatch, arrayUnion, arrayRemove, serverTimestamp,
+  writeBatch, arrayUnion, arrayRemove, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 
 let env;
@@ -252,7 +252,7 @@ test('members append to and remove from a monthly history bucket', async () => {
   await assertSucceeds(getDocs(collection(as(OWNER), 'lists', LIST, 'history')));
 });
 
-test('history buckets: right month format, only entries, members only, never deleted', async () => {
+test('history buckets: right month format, only entries, members only, only the owner deletes', async () => {
   const db = as(MEMBER);
   await assertFails(setDoc(bucketRef(db, 'october'), { entries: [] }));
   await assertFails(setDoc(bucketRef(db, '2026-10'), { entries: [], other: 1 }));
@@ -298,4 +298,67 @@ test('items can carry a quantity and a note, within limits', async () => {
   await assertFails(updateDoc(itemRef(db, 'q1'), { note: 'x'.repeat(201) }));
   await assertFails(updateDoc(itemRef(db, 'q1'), { quantity: 5 }));
   await assertFails(updateDoc(itemRef(db, 'q1'), { note: { a: 1 } }));
+});
+
+// ======================= list management =======================
+
+test('a member can publish their own name on the list, and only their own', async () => {
+  const db = as(MEMBER);
+  await assertSucceeds(updateDoc(doc(db, 'lists', LIST), { 'memberNames.member': 'דנה' }));
+  await assertSucceeds(updateDoc(doc(db, 'lists', LIST), { 'memberNames.member': 'דנה כהן' }));
+  await assertFails(updateDoc(doc(db, 'lists', LIST), { 'memberNames.owner': 'מתחזה' }));
+  await assertFails(updateDoc(doc(db, 'lists', LIST), { 'memberNames.member': 'x'.repeat(101) }));
+  await assertFails(updateDoc(doc(db, 'lists', LIST), { 'memberNames.member': 5 }));
+  await assertFails(updateDoc(doc(db, 'lists', LIST), { memberNames: { owner: 'a', member: 'b' } }));
+  await assertFails(updateDoc(doc(as(STRANGER), 'lists', LIST), { 'memberNames.stranger': 'זר' }));
+});
+
+test('leaving the list can take the member\'s own name along', async () => {
+  await assertSucceeds(updateDoc(doc(as(MEMBER), 'lists', LIST), { 'memberNames.member': 'דנה' }));
+  await assertSucceeds(updateDoc(doc(as(MEMBER), 'lists', LIST), { members: arrayRemove(MEMBER), 'memberNames.member': deleteField() }));
+  await assertFails(getDoc(doc(as(MEMBER), 'lists', LIST)));
+});
+
+test('deleting a whole list: the owner clears its history and join records first, members cannot', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const admin = ctx.firestore();
+    await setDoc(bucketRef(admin), { entries: [] });
+    await setDoc(doc(admin, 'lists', LIST, 'joins', MEMBER), { code: CODE, at: new Date() });
+  });
+  await assertFails(deleteDoc(bucketRef(as(MEMBER))));
+  await assertFails(deleteDoc(doc(as(MEMBER), 'lists', LIST, 'joins', MEMBER)));
+  await assertSucceeds(deleteDoc(bucketRef(as(OWNER))));
+  await assertSucceeds(deleteDoc(doc(as(OWNER), 'lists', LIST, 'joins', MEMBER)));
+  const db = as(OWNER);
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'joinCodes', CODE));
+  batch.delete(doc(db, 'lists', LIST));
+  await assertSucceeds(batch.commit());
+});
+
+test('the owner can replace the join code in one batch; a member or stranger cannot', async () => {
+  const renew = (db, uid) => {
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'lists', LIST), { code: 'NEWC2345' });
+    batch.delete(doc(db, 'joinCodes', CODE));
+    batch.set(doc(db, 'joinCodes', 'NEWC2345'), { listId: LIST, createdBy: uid, createdAt: serverTimestamp() });
+    return batch.commit();
+  };
+  await assertFails(renew(as(MEMBER), MEMBER));
+  await assertFails(renew(as(STRANGER), STRANGER));
+  await assertSucceeds(renew(as(OWNER), OWNER));
+  await assertSucceeds(getDoc(doc(as(STRANGER), 'joinCodes', 'NEWC2345')));
+  const old = await getDoc(doc(as(STRANGER), 'joinCodes', CODE));
+  if (old.exists()) throw new Error('the old code should be gone');
+});
+
+test('with the old code gone, joining with it fails and joining with the new one works', async () => {
+  const db = as(OWNER);
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'lists', LIST), { code: 'NEWC2345' });
+  batch.delete(doc(db, 'joinCodes', CODE));
+  batch.set(doc(db, 'joinCodes', 'NEWC2345'), { listId: LIST, createdBy: OWNER, createdAt: serverTimestamp() });
+  await batch.commit();
+  await assertFails(joinBatch(as(STRANGER), STRANGER, LIST, CODE));
+  await assertSucceeds(joinBatch(as(STRANGER), STRANGER, LIST, 'NEWC2345'));
 });

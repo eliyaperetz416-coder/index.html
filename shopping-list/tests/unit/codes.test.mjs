@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateJoinCode, normalizeJoinCode, isValidJoinCode, JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from '../../js/codes.js';
+import { generateJoinCode, normalizeJoinCode, isValidJoinCode, parseJoinParam, inviteUrl, JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from '../../js/codes.js';
 
 test('new codes are 8 characters from the unambiguous alphabet (no 0/O/1/I)', () => {
   assert.equal(JOIN_CODE_LENGTH, 8);
@@ -36,4 +36,20 @@ test('old 6-character codes and new 8-character codes are valid; anything else i
   for (const bad of ['', 'AB3K7', 'AB3K7MP', 'AB3K7MPQR', 'AB0K7M', 'ABIK7M', 'ab3k7m', 'AB3K7M"', null, undefined, 42]) {
     assert.ok(!isValidJoinCode(bad), `${bad} should be invalid`);
   }
+});
+
+
+test('a join link carries the code; odd or broken ones are ignored', () => {
+  assert.equal(parseJoinParam('?join=AB3K7MPQ'), 'AB3K7MPQ');
+  assert.equal(parseJoinParam('?x=1&join=ab3k-7mpq'), 'AB3K7MPQ');
+  assert.equal(parseJoinParam('?join=AB3K7M'), 'AB3K7M');
+  assert.equal(parseJoinParam('?join=%3Cscript%3E'), null);
+  assert.equal(parseJoinParam('?join=AB0K7M'), null);
+  assert.equal(parseJoinParam('?join='), null);
+  assert.equal(parseJoinParam(''), null);
+});
+
+test('the invitation link points at this page with the code', () => {
+  assert.equal(inviteUrl('https://list.example/app/', 'AB3K7MPQ'), 'https://list.example/app/?join=AB3K7MPQ');
+  assert.equal(inviteUrl('https://list.example/app/?old=1#x', 'AB3K7MPQ'), 'https://list.example/app/?join=AB3K7MPQ');
 });

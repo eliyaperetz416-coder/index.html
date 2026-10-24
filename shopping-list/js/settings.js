@@ -6,6 +6,7 @@ import { render } from './render.js';
 import { renderStats } from './stats.js';
 import { renderConnection } from './connection.js';
 import { applyItemEditLanguage } from './item-edit.js';
+import { applyListManageLanguage } from './list-manage.js';
 
 export function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
@@ -56,6 +57,7 @@ export function applyLanguage() {
   $('welcomeJoinInput').placeholder = dict.joinCodeLabel;
   $('retryLoadBtn').textContent = dict.retryLabel;
   $('shopModeLabel').textContent = dict.shopModeLabel;
+  applyListManageLanguage();
   applyItemEditLanguage();
   $('langSelect').value = state.lang;
   renderConnection();

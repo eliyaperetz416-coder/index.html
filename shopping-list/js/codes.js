@@ -18,3 +18,19 @@ export function normalizeJoinCode(input) {
 export function isValidJoinCode(code) {
   return typeof code === 'string' && /^[A-HJ-NP-Z2-9]{6}([A-HJ-NP-Z2-9]{2})?$/.test(code);
 }
+
+// "?join=CODE" in the address -> the normalised code, or null if there is none / it is malformed.
+export function parseJoinParam(search) {
+  const raw = new URLSearchParams(search).get('join');
+  const code = normalizeJoinCode(raw);
+  return isValidJoinCode(code) ? code : null;
+}
+
+// The link to send to someone: this page, with the code to join.
+export function inviteUrl(pageUrl, code) {
+  const url = new URL(pageUrl);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('join', code);
+  return url.toString();
+}
