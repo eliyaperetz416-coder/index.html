@@ -10,6 +10,7 @@ export const state = {
   items: [],                  // items of the active list, from lists/{id}/items
   purchaseHistory: [],        // recent purchases of the active list, from lists/{id}/history
   shopping: localStorage.getItem('shoppingMode') === '1', // shopping mode: big rows, grouped by category
+  statsPeriod: localStorage.getItem('statsPeriod') === 'month' ? 'month' : 'week',
   collapsed: new Set(),       // categories folded away in shopping mode
   completedSeen: new Set(),   // categories that were already finished (they fold once, by themselves)
   pendingListId: null,        // a list just created or joined, before "my lists" includes it

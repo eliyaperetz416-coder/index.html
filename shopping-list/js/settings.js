@@ -35,9 +35,7 @@ export function applyLanguage() {
   $('closeSettingsBtn').textContent = dict.close;
   $('navListLabel').textContent = dict.navList;
   $('navStatsLabel').textContent = dict.navStats;
-  $('statsWeekTotalLabel').textContent = dict.statsWeekTotal;
   $('statsTopCategoryLabel').textContent = dict.statsTopCategory;
-  $('statsChartTitle').textContent = dict.statsChartTitle;
   $('suggestionsTitle').textContent = dict.suggestionsTitle;
   $('loginTitle').textContent = dict.loginTitle;
   $('loginSubtitle').textContent = dict.loginSubtitle;

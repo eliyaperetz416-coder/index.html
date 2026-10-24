@@ -91,4 +91,13 @@ export default {
   joinNowLabel: 'जुड़ें',
   notNowLabel: 'अभी नहीं',
   renewNeedsNetwork: 'इसके लिए इंटरनेट कनेक्शन चाहिए',
+  periodWeek: 'सप्ताह',
+  periodMonth: 'महीना',
+  statsMonthTotal: 'इस महीने के आइटम',
+  statsChartTitleMonth: 'इस महीने श्रेणी के अनुसार',
+  statsFirstMonth: 'यह आपका पहला महीना है — अगले महीने से तुलना होगी',
+  statsMoreThanLastMonth: (n) => `पिछले महीने से ${n} ज़्यादा`,
+  statsLessThanLastMonth: (n) => `पिछले महीने से ${n} कम`,
+  statsSameAsLastMonth: 'पिछले महीने जितना ही',
+  statsTopItemsTitle: 'सबसे ज़्यादा खरीदे गए',
 };

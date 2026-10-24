@@ -2,82 +2,79 @@
 // locally from purchaseHistory.
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { $, DAY_MS } from './util.js';
+import { $ } from './util.js';
 import { escapeHtml } from './html.js';
-import { safeCategoryKey, categoryColor } from './category.js';
+import { categoryColor } from './category.js';
+import { computeStats, DAY_MS } from './stats-calc.js';
 
-function purchasesInRange(startMs, endMs) {
-  return state.purchaseHistory.filter(p => p.timestamp >= startMs && p.timestamp < endMs);
+// The texts that depend on the chosen period (week / month).
+function periodTexts(period) {
+  const dict = t();
+  return period === 'month'
+    ? { total: dict.statsMonthTotal, chart: dict.statsChartTitleMonth, first: dict.statsFirstMonth, more: dict.statsMoreThanLastMonth, less: dict.statsLessThanLastMonth, same: dict.statsSameAsLastMonth }
+    : { total: dict.statsWeekTotal, chart: dict.statsChartTitle, first: dict.statsFirstWeek, more: dict.statsMoreThanLastWeek, less: dict.statsLessThanLastWeek, same: dict.statsSameAsLastWeek };
 }
 
 export function renderStats() {
   renderSuggestions();
 
-  const now = Date.now();
-  const thisWeekStart = now - 7 * DAY_MS;
-  const lastWeekStart = now - 14 * DAY_MS;
+  const period = state.statsPeriod;
+  const stats = computeStats(state.purchaseHistory, period);
+  const texts = periodTexts(period);
 
-  const thisWeek = purchasesInRange(thisWeekStart, now);
-  const lastWeek = purchasesInRange(lastWeekStart, thisWeekStart);
-
-  // Total items this week
-  $('statsWeekTotalValue').textContent = thisWeek.length;
-
-  // Category breakdown this week
-  const byCategory = {}; // catKey -> { count, color }
-  thisWeek.forEach(p => {
-    const key = safeCategoryKey(p.catKey);
-    if (!byCategory[key]) byCategory[key] = { count: 0, color: categoryColor(key) };
-    byCategory[key].count++;
+  document.querySelectorAll('#statsPeriod button').forEach((btn) => {
+    btn.setAttribute('aria-checked', String(btn.dataset.period === period));
+    btn.textContent = btn.dataset.period === 'month' ? t().periodMonth : t().periodWeek;
   });
-  const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1].count - a[1].count);
+  $('statsWeekTotalLabel').textContent = texts.total;
+  $('statsChartTitle').textContent = texts.chart;
+  $('statsTopItemsTitle').textContent = t().statsTopItemsTitle;
+  $('statsWeekTotalValue').textContent = stats.total;
+  $('statsTopCategoryValue').textContent = stats.topCategory ? t().categories[stats.topCategory] : '–';
 
-  // Top category
-  const topCategoryEl = $('statsTopCategoryValue');
-  if (sortedCategories.length > 0) {
-    const [topKey] = sortedCategories[0];
-    topCategoryEl.textContent = t().categories[topKey];
-  } else {
-    topCategoryEl.textContent = '–';
-  }
-
-  // Week-over-week comparison
+  // Comparison with the period before
   const compareBox = $('statsCompareBox');
-  if (lastWeek.length === 0 && thisWeek.length === 0) {
+  if (stats.previousTotal === 0 && stats.total === 0) {
     compareBox.innerHTML = `<span>📊</span><span>${t().statsNoDataYet}</span>`;
-  } else if (lastWeek.length === 0) {
-    compareBox.innerHTML = `<span>🆕</span><span>${t().statsFirstWeek}</span>`;
+  } else if (stats.previousTotal === 0) {
+    compareBox.innerHTML = `<span>🆕</span><span>${texts.first}</span>`;
+  } else if (stats.diff > 0) {
+    compareBox.innerHTML = `<span>📈</span><span>${texts.more(stats.diff)}</span>`;
+  } else if (stats.diff < 0) {
+    compareBox.innerHTML = `<span>📉</span><span>${texts.less(-stats.diff)}</span>`;
   } else {
-    const diff = thisWeek.length - lastWeek.length;
-    if (diff > 0) {
-      compareBox.innerHTML = `<span>📈</span><span>${t().statsMoreThanLastWeek(diff)}</span>`;
-    } else if (diff < 0) {
-      compareBox.innerHTML = `<span>📉</span><span>${t().statsLessThanLastWeek(Math.abs(diff))}</span>`;
-    } else {
-      compareBox.innerHTML = `<span>➖</span><span>${t().statsSameAsLastWeek}</span>`;
-    }
+    compareBox.innerHTML = `<span>➖</span><span>${texts.same}</span>`;
   }
 
-  // Simple bar chart by category
+  // Bars by category
   const chartEl = $('statsChart');
-  if (sortedCategories.length === 0) {
+  if (stats.byCategory.length === 0) {
     chartEl.innerHTML = `<div class="stats-empty">${t().statsEmptyChart}</div>`;
-    return;
-  }
-  const maxCount = sortedCategories[0][1].count;
-  chartEl.innerHTML = sortedCategories.map(([key, data]) => {
-    const label = t().categories[key];
-    const widthPct = Math.max(6, Math.round((data.count / maxCount) * 100));
-    return `
-      <div class="stats-bar-row">
-        <span class="stats-bar-label">${escapeHtml(label)}</span>
-        <div class="stats-bar-track">
-          <div class="stats-bar-fill" style="width:${widthPct}%; background:${data.color}"></div>
+  } else {
+    const maxCount = stats.byCategory[0].count;
+    chartEl.innerHTML = stats.byCategory.map(({ catKey, count }) => {
+      const widthPct = Math.max(6, Math.round((count / maxCount) * 100));
+      return `
+        <div class="stats-bar-row">
+          <span class="stats-bar-label">${escapeHtml(t().categories[catKey])}</span>
+          <div class="stats-bar-track">
+            <div class="stats-bar-fill" style="width:${widthPct}%; background:${categoryColor(catKey)}"></div>
+          </div>
+          <span class="stats-bar-count">${count}</span>
         </div>
-        <span class="stats-bar-count">${data.count}</span>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+  }
+
+  // The most bought items
+  $('statsTopItems').innerHTML = stats.topItems.length === 0
+    ? `<li class="stats-empty">${t().statsEmptyChart}</li>`
+    : stats.topItems.map((item) => `
+        <li class="top-item" style="--cat-color:${categoryColor(item.catKey)}">
+          <span class="top-item-dot"></span>
+          <span class="top-item-name">${escapeHtml(item.name)}</span>
+          <span class="top-item-count">×${item.count}</span>
+        </li>`).join('');
 }
 
 // ============================================================
@@ -155,6 +152,14 @@ function renderSuggestions() {
 
 // `onPick(name)` adds the suggested item to the list.
 export function initStats(onPick) {
+  $('statsPeriod').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-period]');
+    if (!btn || btn.dataset.period === state.statsPeriod) return;
+    state.statsPeriod = btn.dataset.period;
+    localStorage.setItem('statsPeriod', state.statsPeriod);
+    renderStats();
+  });
+
   $('suggestionsList').addEventListener('click', (e) => {
     const chip = e.target.closest('.suggestion-chip');
     if (!chip || chip.classList.contains('added')) return;

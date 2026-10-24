@@ -91,4 +91,13 @@ export default {
   joinNowLabel: 'Entrar',
   notNowLabel: 'Agora não',
   renewNeedsNetwork: 'Isso precisa de conexão com a internet',
+  periodWeek: 'Semana',
+  periodMonth: 'Mês',
+  statsMonthTotal: 'Itens neste mês',
+  statsChartTitleMonth: 'Por categoria neste mês',
+  statsFirstMonth: 'Este é o seu primeiro mês — vamos comparar a partir do próximo',
+  statsMoreThanLastMonth: (n) => `${n} a mais que no mês passado`,
+  statsLessThanLastMonth: (n) => `${n} a menos que no mês passado`,
+  statsSameAsLastMonth: 'Igual ao mês passado',
+  statsTopItemsTitle: 'Mais comprados',
 };

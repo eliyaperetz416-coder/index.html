@@ -93,6 +93,11 @@
   </div>
 
   <div class="screen" id="statsScreen">
+    <div class="segmented stats-period" id="statsPeriod" role="radiogroup">
+      <button type="button" role="radio" data-period="week" aria-checked="true" id="periodWeekBtn">שבוע</button>
+      <button type="button" role="radio" data-period="month" aria-checked="false" id="periodMonthBtn">חודש</button>
+    </div>
+
     <div class="suggestions-card" id="suggestionsCard" style="display:none;">
       <p class="suggestions-title" id="suggestionsTitle">מוסיפים מהיר?</p>
       <div class="suggestions-list" id="suggestionsList"></div>
@@ -114,6 +119,11 @@
     <div class="stats-chart-card">
       <p class="stats-chart-title" id="statsChartTitle">לפי קטגוריה השבוע</p>
       <div id="statsChart"></div>
+    </div>
+
+    <div class="stats-chart-card stats-top-card">
+      <p class="stats-chart-title" id="statsTopItemsTitle">הפריטים הנפוצים</p>
+      <ol class="top-items" id="statsTopItems"></ol>
     </div>
   </div>
 

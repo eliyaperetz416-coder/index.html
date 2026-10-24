@@ -1036,3 +1036,20 @@
   .confirm-overlay .settings-panel { border-radius: 20px; }
   .confirm-text { font-size: 15px; line-height: 1.5; margin-bottom: 18px; }
   .primary-btn.danger-btn { background: var(--coral); }
+
+  /* Stats: period switch and most-bought list */
+  .stats-period { margin-bottom: 12px; }
+  .stats-top-card { margin-top: 12px; }
+  .top-items { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .top-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .top-item-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat-color, var(--purple)); flex-shrink: 0; }
+  .top-item-name { flex: 1; overflow-wrap: anywhere; }
+  .top-item-count { font-weight: 700; color: var(--text-dim); }

@@ -91,4 +91,13 @@ export default {
   joinNowLabel: 'Присоединиться',
   notNowLabel: 'Не сейчас',
   renewNeedsNetwork: 'Для этого нужно подключение к интернету',
+  periodWeek: 'Неделя',
+  periodMonth: 'Месяц',
+  statsMonthTotal: 'Товаров за месяц',
+  statsChartTitleMonth: 'По категориям за месяц',
+  statsFirstMonth: 'Это ваш первый месяц — сравним со следующего',
+  statsMoreThanLastMonth: (n) => `На ${n} больше, чем в прошлом месяце`,
+  statsLessThanLastMonth: (n) => `На ${n} меньше, чем в прошлом месяце`,
+  statsSameAsLastMonth: 'Столько же, сколько в прошлом месяце',
+  statsTopItemsTitle: 'Чаще всего покупали',
 };

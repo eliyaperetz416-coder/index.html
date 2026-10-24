@@ -91,4 +91,13 @@ export default {
   joinNowLabel: 'Join',
   notNowLabel: 'Not now',
   renewNeedsNetwork: 'This needs an internet connection',
+  periodWeek: 'Week',
+  periodMonth: 'Month',
+  statsMonthTotal: 'Items this month',
+  statsChartTitleMonth: 'By category this month',
+  statsFirstMonth: 'This is your first month — we’ll compare from next month',
+  statsMoreThanLastMonth: (n) => `${n} more than last month`,
+  statsLessThanLastMonth: (n) => `${n} fewer than last month`,
+  statsSameAsLastMonth: 'Same as last month',
+  statsTopItemsTitle: 'Most bought',
 };

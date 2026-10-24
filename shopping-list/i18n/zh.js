@@ -91,4 +91,13 @@ export default {
   joinNowLabel: '加入',
   notNowLabel: '暂不',
   renewNeedsNetwork: '此操作需要联网',
+  periodWeek: '周',
+  periodMonth: '月',
+  statsMonthTotal: '本月商品数',
+  statsChartTitleMonth: '本月按类别',
+  statsFirstMonth: '这是你的第一个月——下个月起会做对比',
+  statsMoreThanLastMonth: (n) => `比上月多 ${n}`,
+  statsLessThanLastMonth: (n) => `比上月少 ${n}`,
+  statsSameAsLastMonth: '与上月相同',
+  statsTopItemsTitle: '最常购买',
 };
