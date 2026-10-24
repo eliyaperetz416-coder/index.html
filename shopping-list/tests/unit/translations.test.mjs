@@ -1,23 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
+import { readFileSync, readdirSync } from 'node:fs';
 import { CATEGORY_KEYWORDS } from '../../js/category.js';
 
-// Until the dictionaries move into their own files (step 2) they live inside
-// index.html; APP_HTML lets us point this test at another copy of the file.
-const FILE = process.env.APP_HTML || new URL('../../index.html', import.meta.url).pathname;
-const html = readFileSync(FILE, 'utf8');
-
-const start = html.indexOf('const TRANSLATIONS = {');
-const end = html.indexOf('\n  };', start) + 5;
-const blockText = html.slice(start, end);
-const T = vm.runInNewContext(blockText.replace('const TRANSLATIONS =', '(').replace(/;\s*$/, ')'));
+const root = new URL('../../', import.meta.url);
 const LANGS = ['he', 'en', 'ar', 'es', 'fr', 'de', 'ru', 'pt', 'zh', 'hi'];
+
+const T = {};
+const sources = {};
+for (const lang of LANGS) {
+  T[lang] = (await import(new URL(`i18n/${lang}.js`, root))).default;
+  sources[lang] = readFileSync(new URL(`i18n/${lang}.js`, root), 'utf8');
+}
 
 // Keys read through a variable (t()[key]) instead of a literal t().name
 const DYNAMIC_KEYS = ['errPermission', 'errNotFound', 'errNetwork', 'errPopupBlocked', 'errGeneric'];
-const code = html.slice(end);
+const code = readdirSync(new URL('js/', root)).filter((f) => f.endsWith('.js'))
+  .map((f) => readFileSync(new URL(`js/${f}`, root), 'utf8')).join('\n');
 const staticKeys = new Set([
   ...[...code.matchAll(/\bt\(\)\.(\w+)/g)].map((m) => m[1]),
   ...[...code.matchAll(/\bdict\.(\w+)/g)].map((m) => m[1]),
@@ -34,13 +33,10 @@ test('every language has exactly the same keys as Hebrew', () => {
   }
 });
 
-test('no key is written twice inside one language block', () => {
+test('no key is written twice inside one language file', () => {
   // A repeated key is silently ignored by JavaScript (the old duplicate navList).
-  const langBlocks = blockText.split(/\n    (?=[a-z]{2}: \{)/).slice(1);
-  assert.equal(langBlocks.length, LANGS.length);
-  for (const block of langBlocks) {
-    const lang = block.slice(0, 2);
-    const keys = [...block.matchAll(/^      (\w+):/gm)].map((m) => m[1]);
+  for (const lang of LANGS) {
+    const keys = [...sources[lang].matchAll(/^  (\w+):/gm)].map((m) => m[1]);
     const dupes = keys.filter((k, i) => keys.indexOf(k) !== i);
     assert.deepEqual(dupes, [], `${lang} repeats: ${dupes.join(', ')}`);
   }
