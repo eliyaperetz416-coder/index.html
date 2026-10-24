@@ -918,3 +918,71 @@
   .item-swipe[data-swipe="delete"] .swipe-bg { background: var(--coral); justify-content: flex-end; }
   .item-swipe[data-swipe="tick"] .swipe-trash, .item-swipe[data-swipe="delete"] .swipe-tick { display: none; }
   .item-swipe.armed .swipe-bg { font-size: 26px; }
+
+  /* List toolbar, clear-bought button */
+  .list-toolbar { display: flex; gap: 8px; margin: -6px 0 14px; flex-wrap: wrap; }
+
+  .chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 22px;
+    border: 2px solid transparent;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .chip-btn[aria-pressed="true"] { border-color: var(--teal); }
+
+  .clear-bought {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-bottom: 14px;
+    border-radius: var(--radius);
+    border: 2px dashed var(--text-dim);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .clear-bought[hidden] { display: none; }
+
+  /* Shopping mode */
+  .cat-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 6px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid var(--cat-color, var(--purple));
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 800;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .cat-header-name { flex: 1; }
+  .cat-header-count { font-size: 13px; color: var(--text-dim); font-weight: 600; }
+  .cat-group.done .cat-header { opacity: 0.6; }
+
+  .shopping .item { min-height: 68px; padding: 14px 16px; gap: 14px; }
+  .shopping .item-name { font-size: 19px; }
+  .shopping .item-sub { font-size: 14px; }
+  .shopping .checkbox { width: 34px; height: 34px; border-radius: 11px; border-width: 3px; }
+  .shopping .checkbox svg { width: 18px; height: 18px; }
+  .shopping .item-cat, .shopping .urgency-wrap, .shopping .delete-btn { display: none; }
+  .shopping .urgency-square { width: 14px; height: 14px; }

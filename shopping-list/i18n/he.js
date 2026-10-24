@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? 'הפריט נמחק' : `${n} פריטים נמחקו`,
   boughtFn: (name) => `סומן כנקנה: ${name}`,
   unboughtFn: (name) => `הוחזר לרשימה: ${name}`,
+  shopModeLabel: 'מצב קנייה',
+  clearBoughtFn: (n) => `נקה את מה שנקנה (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

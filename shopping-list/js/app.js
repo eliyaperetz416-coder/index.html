@@ -9,6 +9,7 @@ import { initAutocomplete } from './autocomplete.js';
 import { initItemEdit } from './item-edit.js';
 import { initToast } from './ui.js';
 import { initSwipe } from './swipe.js';
+import { initShopping } from './shopping.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
@@ -24,6 +25,7 @@ async function main() {
   initAutocomplete(addItem);
   initItemEdit();
   initToast();
+  initShopping();
   initSwipe({ onTick: toggleBought, onDelete: deleteItem });
   initStats(addItem);
   initNav();

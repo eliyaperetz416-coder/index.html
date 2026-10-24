@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory, itemChanges, REMOVE, compareItems } from '../../js/model.js';
+import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory, itemChanges, REMOVE, compareItems, groupByCategory } from '../../js/model.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -145,4 +145,31 @@ test('items are ordered by category, then by urgency inside each category, then 
 test('an unknown urgency is treated like none', () => {
   const items = [{ id: 'a', catKey: 'veg', urgency: 'whatever', createdAt: 1 }, { id: 'b', catKey: 'veg', urgency: 'low', createdAt: 2 }];
   assert.deepEqual([...items].sort(compareItems).map((i) => i.id), ['b', 'a']);
+});
+
+// ---------- shopping mode: grouping ----------
+
+test('shopping groups: categories in list order, urgent first, bought ones at the end of their group', () => {
+  const items = [
+    { id: 'bread', catKey: 'bakery', bought: false, createdAt: 1 },
+    { id: 'milk', catKey: 'dairy', bought: false, createdAt: 2 },
+    { id: 'eggs', catKey: 'dairy', bought: true, boughtAt: 50, createdAt: 3 },
+    { id: 'cheese', catKey: 'dairy', bought: false, urgency: 'high', createdAt: 4 },
+    { id: 'rolls', catKey: 'bakery', bought: true, boughtAt: 40, createdAt: 5 },
+    { id: 'pita', catKey: 'bakery', bought: true, boughtAt: 60, createdAt: 6 },
+  ];
+  const groups = groupByCategory(items);
+  assert.deepEqual(groups.map((g) => g.catKey), ['dairy', 'bakery']);
+  assert.deepEqual(groups[0].items.map((i) => i.id), ['cheese', 'milk', 'eggs']);
+  assert.deepEqual(groups[1].items.map((i) => i.id), ['bread', 'pita', 'rolls']);
+  assert.deepEqual(groups.map((g) => [g.done, g.boughtCount, g.items.length]), [[false, 1, 3], [false, 2, 3]]);
+});
+
+test('a group is done when everything in it is bought; unknown categories land in "other"', () => {
+  const groups = groupByCategory([
+    { id: 'a', catKey: 'veg', bought: true, boughtAt: 1, createdAt: 1 },
+    { id: 'b', catKey: '<x>', bought: false, createdAt: 2 },
+  ]);
+  assert.deepEqual(groups.map((g) => [g.catKey, g.done]), [['veg', true], ['other', false]]);
+  assert.deepEqual(groupByCategory([]), []);
 });

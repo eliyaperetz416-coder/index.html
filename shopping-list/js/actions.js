@@ -3,7 +3,8 @@ import { state } from './state.js';
 import { $ } from './util.js';
 import { guessCategoryKey, safeCategoryKey } from './category.js';
 import { newId } from './ids.js';
-import { addItemDoc, setBought, setUrgencyDoc, deleteItemDoc } from './sync.js';
+import { addItemDoc, setBought, setUrgencyDoc, deleteItemDoc, deleteItemsDoc } from './sync.js';
+import { render } from './render.js';
 import { showUndoDelete, showUndoTick } from './undo.js';
 
 // Each action writes one item document; the list re-renders from the live listener
@@ -34,7 +35,17 @@ function setUrgency(id, urgency) {
   setUrgencyDoc(id, urgency);
 }
 
+// "Clear what's bought": removes every ticked item (they come back with Undo).
+export function clearBought() {
+  const bought = state.items.filter(i => i.bought);
+  if (bought.length === 0) return;
+  deleteItemsDoc(bought);
+  showUndoDelete(bought);
+}
+
 export function initItemActions() {
+  $('clearBoughtBtn').addEventListener('click', clearBought);
+
   const itemInput = $('itemInput');
   const addBtn = $('addBtn');
   const listEl = $('list');
@@ -47,6 +58,13 @@ export function initItemActions() {
   });
 
   listEl.addEventListener('click', (e) => {
+    const catHeader = e.target.closest('.cat-header');
+    if (catHeader) {
+      const key = catHeader.dataset.cat;
+      if (state.collapsed.has(key)) state.collapsed.delete(key); else state.collapsed.add(key);
+      render();
+      return;
+    }
     const checkboxBtn = e.target.closest('.checkbox');
     const deleteBtn = e.target.closest('.delete-btn');
     const urgencyBtn = e.target.closest('.urgency-btn');

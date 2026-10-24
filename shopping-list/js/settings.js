@@ -55,6 +55,7 @@ export function applyLanguage() {
   $('welcomeNewListInput').placeholder = dict.createListLabel;
   $('welcomeJoinInput').placeholder = dict.joinCodeLabel;
   $('retryLoadBtn').textContent = dict.retryLabel;
+  $('shopModeLabel').textContent = dict.shopModeLabel;
   applyItemEditLanguage();
   $('langSelect').value = state.lang;
   renderConnection();

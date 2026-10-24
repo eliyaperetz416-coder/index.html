@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? '已删除商品' : `已删除 ${n} 件商品`,
   boughtFn: (name) => `已购买：${name}`,
   unboughtFn: (name) => `已放回清单：${name}`,
+  shopModeLabel: '购物模式',
+  clearBoughtFn: (n) => `清除已购买的 (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

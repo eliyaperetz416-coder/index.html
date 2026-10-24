@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? 'Article supprimé' : `${n} articles supprimés`,
   boughtFn: (name) => `Acheté : ${name}`,
   unboughtFn: (name) => `Remis dans la liste : ${name}`,
+  shopModeLabel: 'Mode courses',
+  clearBoughtFn: (n) => `Retirer ce qui est acheté (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

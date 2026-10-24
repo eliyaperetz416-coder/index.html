@@ -133,3 +133,20 @@ export function itemChanges(item, form) {
   else if (URGENCIES.includes(form.urgency) && form.urgency !== item.urgency) changes.urgency = form.urgency;
   return changes;
 }
+
+// Shopping mode: the list grouped by category (in list order). Inside a group the items
+// still to buy come first (most urgent first), then the ones already in the basket.
+export function groupByCategory(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const catKey = safeCategoryKey(item.catKey);
+    if (!groups.has(catKey)) groups.set(catKey, []);
+    groups.get(catKey).push(item);
+  }
+  return CATEGORY_ORDER.filter((key) => groups.has(key)).map((catKey) => {
+    const all = groups.get(catKey);
+    const todo = all.filter((i) => !i.bought).sort(compareItems);
+    const done = all.filter((i) => i.bought).sort((a, b) => (b.boughtAt ?? 0) - (a.boughtAt ?? 0));
+    return { catKey, items: [...todo, ...done], boughtCount: done.length, done: todo.length === 0 };
+  });
+}

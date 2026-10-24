@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? 'تم حذف العنصر' : `تم حذف ${n} عناصر`,
   boughtFn: (name) => `تم تحديد «${name}» كمشترى`,
   unboughtFn: (name) => `أُعيد إلى القائمة: ${name}`,
+  shopModeLabel: 'وضع التسوق',
+  clearBoughtFn: (n) => `مسح ما تم شراؤه (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

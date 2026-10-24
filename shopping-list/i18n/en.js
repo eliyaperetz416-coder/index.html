@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? 'Item deleted' : `${n} items deleted`,
   boughtFn: (name) => `Marked as bought: ${name}`,
   unboughtFn: (name) => `Back on the list: ${name}`,
+  shopModeLabel: 'Shopping mode',
+  clearBoughtFn: (n) => `Clear what’s bought (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

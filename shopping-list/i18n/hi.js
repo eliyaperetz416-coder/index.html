@@ -64,4 +64,7 @@ export default {
   deletedFn: (n) => n === 1 ? 'आइटम हटाया गया' : `${n} आइटम हटाए गए`,
   boughtFn: (name) => `खरीदा गया: ${name}`,
   unboughtFn: (name) => `सूची में वापस: ${name}`,
+  shopModeLabel: 'खरीदारी मोड',
+  clearBoughtFn: (n) => `खरीदा हुआ हटाएं (${n})`,
+  categoryProgressFn: (done, total) => `${done}/${total}`,
 };

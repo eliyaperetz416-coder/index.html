@@ -75,6 +75,16 @@ export function deleteItemDoc(itemId) {
   write(FB().deleteDoc(itemRef(state.activeListId, itemId)));
 }
 
+// Deletes several items (in batches of at most 450 writes).
+export function deleteItemsDoc(items) {
+  const listId = state.activeListId;
+  for (let i = 0; i < items.length; i += 450) {
+    const batch = FB().writeBatch(FB().db);
+    items.slice(i, i + 450).forEach((item) => batch.delete(itemRef(listId, item.id)));
+    write(batch.commit());
+  }
+}
+
 // Puts a deleted item back with its id, time and everything else (undo). `createdBy` is
 // the person undoing, because the rules only let you create items as yourself.
 export function restoreItemDoc(item, listId = state.activeListId) {

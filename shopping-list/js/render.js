@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { $ } from './util.js';
 import { escapeHtml } from './html.js';
 import { safeCategoryKey, categoryColor } from './category.js';
-import { compareItems } from './model.js';
+import { compareItems, groupByCategory } from './model.js';
 
 // The three urgency levels a user can assign to an item (colors only — labels are translated)
 export const URGENCY_LEVELS = {
@@ -66,32 +66,69 @@ function renderItemCard(item) {
   return wrap;
 }
 
+function updateClearBought(boughtCount) {
+  const btn = $('clearBoughtBtn');
+  btn.hidden = boughtCount === 0;
+  btn.textContent = t().clearBoughtFn(boughtCount);
+}
+
+// Shopping mode: one group per category (finished categories fold themselves once).
+function renderShoppingGroups() {
+  const groups = groupByCategory(state.items);
+  for (const g of groups) {
+    if (g.done && !state.completedSeen.has(g.catKey)) { state.completedSeen.add(g.catKey); state.collapsed.add(g.catKey); }
+    if (!g.done) state.completedSeen.delete(g.catKey);
+    const folded = state.collapsed.has(g.catKey);
+    const section = document.createElement('section');
+    section.className = 'cat-group' + (g.done ? ' done' : '');
+    section.style.setProperty('--cat-color', categoryColor(g.catKey));
+    const header = document.createElement('button');
+    header.type = 'button';
+    header.className = 'cat-header';
+    header.dataset.cat = g.catKey;
+    header.setAttribute('aria-expanded', String(!folded));
+    header.innerHTML = `<span class="cat-header-name">${escapeHtml(t().categories[g.catKey])}</span>
+      <span class="cat-header-count">${escapeHtml(t().categoryProgressFn(g.boughtCount, g.items.length))}</span>
+      <span class="cat-header-chevron" aria-hidden="true">${folded ? '▸' : '▾'}</span>`;
+    section.appendChild(header);
+    if (!folded) g.items.forEach(item => section.appendChild(renderItemCard(item)));
+    listEl.appendChild(section);
+  }
+}
+
 export function render() {
   listEl.innerHTML = '';
+  $('appRoot').classList.toggle('shopping', state.shopping);
+  $('shopModeBtn').setAttribute('aria-pressed', String(state.shopping));
 
   if (state.items.length === 0) {
     listEl.innerHTML = `<div class="empty-state">${t().emptyState}</div>`;
     statsEl.textContent = t().statsFn(0, 0);
+    updateClearBought(0);
     return;
   }
 
   const unbought = state.items.filter(i => !i.bought);
   const bought = state.items.filter(i => i.bought);
 
-  // Items of the same category sit together (the category tag on each row, no heading
-  // line), most urgent first inside each category.
-  const sortedUnbought = [...unbought].sort(compareItems);
+  if (state.shopping) {
+    renderShoppingGroups();
+  } else {
+    // Items of the same category sit together (the category tag on each row, no heading
+    // line), most urgent first inside each category.
+    const sortedUnbought = [...unbought].sort(compareItems);
+    sortedUnbought.forEach(item => listEl.appendChild(renderItemCard(item)));
 
-  sortedUnbought.forEach(item => listEl.appendChild(renderItemCard(item)));
-
-  if (bought.length > 0) {
-    const boughtHeader = document.createElement('div');
-    boughtHeader.className = 'category-group-title bought-group-title';
-    boughtHeader.textContent = `${t().boughtSectionTitle} · ${bought.length}`;
-    listEl.appendChild(boughtHeader);
-    bought.forEach(item => listEl.appendChild(renderItemCard(item)));
+    if (bought.length > 0) {
+      const boughtHeader = document.createElement('div');
+      boughtHeader.className = 'category-group-title bought-group-title';
+      boughtHeader.textContent = `${t().boughtSectionTitle} · ${bought.length}`;
+      listEl.appendChild(boughtHeader);
+      bought.forEach(item => listEl.appendChild(renderItemCard(item)));
+    }
   }
 
+  updateClearBought(bought.length);
   statsEl.textContent = t().statsFn(state.items.length, bought.length);
 }
 
