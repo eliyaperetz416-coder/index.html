@@ -137,6 +137,17 @@ export const CATEGORY_COLORS = {
   other: 'var(--pink)',
 };
 
+// A category key read from Firestore is only trusted if it is one of ours
+// ("constructor", "__proto__" or injected markup become "other").
+export function safeCategoryKey(key) {
+  return typeof key === 'string' && Object.hasOwn(CATEGORY_COLORS, key) ? key : 'other';
+}
+
+// The colour always comes from the key, never from a colour stored in the document.
+export function categoryColor(key) {
+  return CATEGORY_COLORS[safeCategoryKey(key)];
+}
+
 // Languages where the main noun comes first ("jugo de naranja", "מיץ תפוזים"), so an
 // earlier match wins; elsewhere ("orange juice", "Orangensaft") the later one does.
 const HEAD_FIRST = new Set(['he', 'ar', 'es', 'fr', 'pt']);

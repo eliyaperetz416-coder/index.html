@@ -4,9 +4,3 @@ export const $ = (id) => document.getElementById(id);
 export const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
-
-export function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}

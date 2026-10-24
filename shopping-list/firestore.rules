@@ -1,14 +1,112 @@
 rules_version = '2';
-service cloud.firestore { match /databases/{database}/documents {
-match /lists/{listId} { allow read: if request.auth != null;
-  allow create: if request.auth != null &&
-    request.auth.uid in request.resource.data.members;
 
-  allow update: if request.auth != null && (
-    request.auth.uid in resource.data.members ||
-    (request.auth.uid in request.resource.data.members &&
-     !(request.auth.uid in resource.data.members))
-  );
- }
-}
+// Shopping list security rules.
+//
+//   lists/{listId}                 a shared list; only its members can read or edit it
+//   lists/{listId}/joins/{uid}     "I joined with this code" — written by the joiner
+//   joinCodes/{code}               code -> listId; can be looked up one at a time, never listed
+//
+// Tested in tests/rules/firestore.test.mjs (npm run test:rules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+
+    // Old app versions made 6-character codes, new ones make 8. Same alphabet (no 0/O/1/I).
+    function validCode(code) {
+      return code is string && code.matches('^[A-HJ-NP-Z2-9]{6}([A-HJ-NP-Z2-9]{2})?$');
+    }
+    function validName(name) {
+      return name is string && name.size() > 0 && name.size() <= 100;
+    }
+    function smallList(value) {
+      return value is list && value.size() <= 1000;
+    }
+    function listPath(listId) {
+      return /databases/$(database)/documents/lists/$(listId);
+    }
+    function codePath(code) {
+      return /databases/$(database)/documents/joinCodes/$(code);
+    }
+
+    match /lists/{listId} {
+      function isMember() { return signedIn() && me() in resource.data.members; }
+      function isOwner() { return signedIn() && resource.data.ownerUid == me(); }
+      function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+      // The only change to `members` a member may make: remove themselves (leave).
+      // The owner cannot leave their own list.
+      function leavesAlone() {
+        return !isOwner()
+          && request.resource.data.members.toSet() == resource.data.members.toSet().difference([me()].toSet())
+          && request.resource.data.members.size() == resource.data.members.size() - 1;
+      }
+
+      function memberEdit() {
+        return isMember()
+          && !changed().hasAny(['ownerUid', 'createdAt'])
+          && (!changed().hasAny(['members']) || leavesAlone())
+          && (!changed().hasAny(['code']) || (isOwner() && validCode(request.resource.data.code)))
+          && (!changed().hasAny(['name']) || validName(request.resource.data.name))
+          && (!changed().hasAny(['items']) || smallList(request.resource.data.items))
+          && (!changed().hasAny(['purchaseHistory']) || smallList(request.resource.data.purchaseHistory));
+      }
+
+      // Joining: in the same batch the joiner writes lists/{listId}/joins/{me} with the
+      // code they typed, and adds exactly themselves to `members` — nothing else.
+      function joinsWithCode() {
+        let joinRecord = getAfter(/databases/$(database)/documents/lists/$(listId)/joins/$(me()));
+        return signedIn()
+          && !(me() in resource.data.members)
+          && changed().hasOnly(['members'])
+          && request.resource.data.members.toSet() == resource.data.members.toSet().union([me()].toSet())
+          && request.resource.data.members.size() == resource.data.members.size() + 1
+          && get(codePath(joinRecord.data.code)).data.listId == listId;
+      }
+
+      // `list` (queries) works only for "where members array-contains me".
+      allow get, list: if isMember();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'code', 'ownerUid', 'members', 'items', 'purchaseHistory', 'createdAt'])
+        && request.resource.data.ownerUid == me()
+        && request.resource.data.members == [me()]
+        && validName(request.resource.data.name)
+        && validCode(request.resource.data.code)
+        && smallList(request.resource.data.items)
+        && smallList(request.resource.data.purchaseHistory);
+
+      allow update: if memberEdit() || joinsWithCode();
+      allow delete: if isOwner();
+
+      match /joins/{uid} {
+        allow read: if signedIn() && (uid == me() || me() in get(listPath(listId)).data.members);
+        allow create, update: if signedIn()
+          && uid == me()
+          && request.resource.data.keys().hasOnly(['code', 'at'])
+          && validCode(request.resource.data.code)
+          && request.resource.data.at == request.time
+          && get(codePath(request.resource.data.code)).data.listId == listId;
+      }
+    }
+
+    match /joinCodes/{code} {
+      // Looking up a single code you were given is fine; listing all codes is not.
+      allow get: if signedIn();
+      allow list: if false;
+
+      // Only the list's owner registers its code (also in the same batch that creates the
+      // list, hence getAfter). An existing code can never be overwritten (that is an update).
+      allow create: if signedIn()
+        && validCode(code)
+        && request.resource.data.keys().hasOnly(['listId', 'createdBy', 'createdAt'])
+        && request.resource.data.createdBy == me()
+        && request.resource.data.createdAt == request.time
+        && getAfter(listPath(request.resource.data.listId)).data.ownerUid == me()
+        && getAfter(listPath(request.resource.data.listId)).data.code == code;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.createdBy == me();
+    }
+  }
 }

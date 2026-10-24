@@ -8,7 +8,7 @@ import {
   getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot,
+  getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, writeBatch,
   collection, query, where, arrayUnion, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -48,7 +48,7 @@ getRedirectResult(auth).catch(err => {
 // Expose what the rest of the app needs via window.FB (the app calls window.FB.x at
 // call time; the end-to-end tests also replace members of it to simulate failures).
 window.FB = {
-  auth, db, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot,
+  auth, db, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, writeBatch,
   collection, query, where, arrayUnion, serverTimestamp,
   signInWithGoogle,
   signOutUser: () => signOut(auth),

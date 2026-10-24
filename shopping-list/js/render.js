@@ -1,6 +1,8 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { $, escapeHtml } from './util.js';
+import { $ } from './util.js';
+import { escapeHtml } from './html.js';
+import { safeCategoryKey, categoryColor } from './category.js';
 
 // The three urgency levels a user can assign to an item (colors only — labels are translated)
 export const URGENCY_LEVELS = {
@@ -16,30 +18,37 @@ const CATEGORY_ORDER = ['dairy', 'bakery', 'veg', 'fruit', 'meat', 'frozen', 'sn
 const listEl = $('list');
 const statsEl = $('stats');
 
+function urgencyColorOf(item) {
+  return typeof item.urgency === 'string' && Object.hasOwn(URGENCY_LEVELS, item.urgency) ? URGENCY_LEVELS[item.urgency].color : '';
+}
+
+// Everything in `item` was written by some list member, so nothing is trusted:
+// text is escaped, and category name and colour are derived from the category key.
 function renderItemCard(item) {
-  const catInfo = { name: t().categories[item.catKey] || item.catName, color: item.catColor };
+  const catKey = safeCategoryKey(item.catKey);
+  const id = escapeHtml(item.id);
   const el = document.createElement('div');
   el.className = 'item' + (item.bought ? ' bought' : '');
-  el.style.setProperty('--cat-color', catInfo.color);
-  const urgencyColor = URGENCY_LEVELS[item.urgency]?.color || '';
+  el.style.setProperty('--cat-color', categoryColor(catKey));
+  const urgencyColor = urgencyColorOf(item);
   el.innerHTML = `
-    <button class="checkbox" data-id="${item.id}">
+    <button class="checkbox" data-id="${id}">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
     </button>
     <span class="item-name">${escapeHtml(item.name)}</span>
     ${urgencyColor ? `<span class="urgency-square" style="--urgency-color:${urgencyColor}"></span>` : ''}
-    <span class="item-cat">${catInfo.name}</span>
+    <span class="item-cat">${escapeHtml(t().categories[catKey])}</span>
     <div class="urgency-wrap">
-      <button class="urgency-btn" data-id="${item.id}">⋮</button>
-      <div class="urgency-menu" data-menu-for="${item.id}">
+      <button class="urgency-btn" data-id="${id}">⋮</button>
+      <div class="urgency-menu" data-menu-for="${id}">
         ${Object.entries(URGENCY_LEVELS).map(([key, level]) => `
-          <button class="urgency-option" data-id="${item.id}" data-urgency="${key}">
+          <button class="urgency-option" data-id="${id}" data-urgency="${key}">
             <span class="dot" style="background:${level.color}"></span>${t().urgencyLabels[key]}
           </button>
         `).join('')}
       </div>
     </div>
-    <button class="delete-btn" data-id="${item.id}">✕</button>
+    <button class="delete-btn" data-id="${id}">✕</button>
   `;
   return el;
 }
@@ -60,8 +69,8 @@ export function render() {
   // category tag — no separate group headers), so items of the same category still
   // end up next to each other without an extra heading line.
   const sortedUnbought = [...unbought].sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(a.catKey || 'other');
-    const bi = CATEGORY_ORDER.indexOf(b.catKey || 'other');
+    const ai = CATEGORY_ORDER.indexOf(safeCategoryKey(a.catKey));
+    const bi = CATEGORY_ORDER.indexOf(safeCategoryKey(b.catKey));
     return (ai === -1 ? CATEGORY_ORDER.length : ai) - (bi === -1 ? CATEGORY_ORDER.length : bi);
   });
 

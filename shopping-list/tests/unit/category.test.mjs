@@ -169,3 +169,18 @@ test('no keyword is listed under two categories in the same language', () => {
     }
   }
 });
+
+import { safeCategoryKey, categoryColor, CATEGORY_COLORS } from '../../js/category.js';
+
+test('stored category keys are only trusted if they are real categories', () => {
+  assert.equal(safeCategoryKey('dairy'), 'dairy');
+  for (const bad of ['constructor', '__proto__', 'toString', '"><img src=x>', '', null, undefined, 7]) {
+    assert.equal(safeCategoryKey(bad), 'other', String(bad));
+  }
+});
+
+test('colours are derived from the category key, never from stored text', () => {
+  assert.equal(categoryColor('meat'), CATEGORY_COLORS.meat);
+  assert.equal(categoryColor('constructor'), CATEGORY_COLORS.other);
+  assert.equal(categoryColor('red; background:url(http://evil)'), CATEGORY_COLORS.other);
+});

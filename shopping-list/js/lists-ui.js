@@ -1,7 +1,8 @@
 // The list picker (header button), the first-run welcome screen and the
 // "try again" button: the screens around creating, joining and switching lists.
 import { state } from './state.js';
-import { $, escapeHtml } from './util.js';
+import { $ } from './util.js';
+import { escapeHtml } from './html.js';
 import { t } from './i18n.js';
 import { createList, joinList, switchToList, initForUser } from './sync.js';
 
@@ -11,10 +12,10 @@ function renderListPicker() {
     listPickerItemsEl.innerHTML = `<p class="stats-empty">${t().noListsYet}</p>`;
   } else {
     listPickerItemsEl.innerHTML = state.lists.map(list => `
-      <div class="list-picker-item${list.id === state.activeListId ? ' active' : ''}" data-id="${list.id}">
+      <div class="list-picker-item${list.id === state.activeListId ? ' active' : ''}" data-id="${escapeHtml(list.id)}">
         <div>
           <div class="list-name">${escapeHtml(list.name)}</div>
-          <div class="list-code">${t().joinCodeLabel}: ${list.code}</div>
+          <div class="list-code">${escapeHtml(t().joinCodeLabel)}: ${escapeHtml(list.code)}</div>
         </div>
         ${list.id === state.activeListId ? '✓' : ''}
       </div>

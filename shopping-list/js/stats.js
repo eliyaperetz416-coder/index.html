@@ -2,7 +2,9 @@
 // locally from purchaseHistory.
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { $, escapeHtml, DAY_MS } from './util.js';
+import { $, DAY_MS } from './util.js';
+import { escapeHtml } from './html.js';
+import { safeCategoryKey, categoryColor } from './category.js';
 
 function purchasesInRange(startMs, endMs) {
   return state.purchaseHistory.filter(p => p.timestamp >= startMs && p.timestamp < endMs);
@@ -24,8 +26,8 @@ export function renderStats() {
   // Category breakdown this week
   const byCategory = {}; // catKey -> { count, color }
   thisWeek.forEach(p => {
-    const key = p.catKey || 'other';
-    if (!byCategory[key]) byCategory[key] = { count: 0, color: p.catColor || 'var(--purple)' };
+    const key = safeCategoryKey(p.catKey);
+    if (!byCategory[key]) byCategory[key] = { count: 0, color: categoryColor(key) };
     byCategory[key].count++;
   });
   const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1].count - a[1].count);
@@ -34,7 +36,7 @@ export function renderStats() {
   const topCategoryEl = $('statsTopCategoryValue');
   if (sortedCategories.length > 0) {
     const [topKey] = sortedCategories[0];
-    topCategoryEl.textContent = t().categories[topKey] || topKey;
+    topCategoryEl.textContent = t().categories[topKey];
   } else {
     topCategoryEl.textContent = '–';
   }
@@ -64,7 +66,7 @@ export function renderStats() {
   }
   const maxCount = sortedCategories[0][1].count;
   chartEl.innerHTML = sortedCategories.map(([key, data]) => {
-    const label = t().categories[key] || key;
+    const label = t().categories[key];
     const widthPct = Math.max(6, Math.round((data.count / maxCount) * 100));
     return `
       <div class="stats-bar-row">
@@ -91,6 +93,7 @@ function detectHabits() {
   // Group purchase history by item name (case-insensitive, trimmed)
   const byName = new Map();
   state.purchaseHistory.forEach(p => {
+    if (typeof p.name !== 'string') return;
     const key = p.name.trim().toLowerCase();
     if (!byName.has(key)) byName.set(key, []);
     byName.get(key).push(p);
@@ -121,12 +124,7 @@ function detectHabits() {
     // Only suggest it if we're at or past the point where it'd usually be bought again
     if (daysSinceLast < avgGap * 0.7) return;
 
-    habits.push({
-      name: latest.name,
-      catKey: latest.catKey,
-      catColor: latest.catColor,
-      avgGap,
-    });
+    habits.push({ name: latest.name, avgGap });
   });
 
   // Most "due" first (furthest past their expected interval)
@@ -146,9 +144,9 @@ function renderSuggestions() {
   card.style.display = 'block';
   listEl.innerHTML = habits.map(habit => {
     // Skip suggesting something already sitting in the active list, unbought
-    const alreadyInList = state.items.some(i => !i.bought && i.name.trim().toLowerCase() === habit.name.trim().toLowerCase());
+    const alreadyInList = state.items.some(i => !i.bought && typeof i.name === 'string' && i.name.trim().toLowerCase() === habit.name.trim().toLowerCase());
     return `
-      <button class="suggestion-chip${alreadyInList ? ' added' : ''}" data-name="${escapeHtml(habit.name)}" data-cat-key="${habit.catKey || ''}" data-cat-color="${habit.catColor || ''}">
+      <button class="suggestion-chip${alreadyInList ? ' added' : ''}" data-name="${escapeHtml(habit.name)}">
         <span class="plus">${alreadyInList ? '✓' : '+'}</span>${escapeHtml(habit.name)}
       </button>
     `;

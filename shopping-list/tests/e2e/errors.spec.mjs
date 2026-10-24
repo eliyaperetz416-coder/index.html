@@ -19,8 +19,8 @@ test('join failures show a friendly message by error code, not "not found" for e
     ['unavailable', 'אין חיבור לאינטרנט. בדקו את הקליטה ונסו שוב'],
     ['something-odd', 'משהו השתבש. נסו שוב בעוד רגע'],
   ]) {
-    await page.evaluate((c) => { window.FB.getDocs = () => Promise.reject({ code: c }); }, code);
-    await page.fill('#joinCodeInput', 'ABCDEF');
+    await page.evaluate((c) => { window.FB.getDoc = () => Promise.reject({ code: c }); }, code);
+    await page.fill('#joinCodeInput', 'ABCDEFGH');
     await page.click('#joinListBtn');
     await expect(page.locator('#joinListError')).toHaveText(message);
   }
@@ -40,7 +40,9 @@ test('a failed save tells the user and does not swallow the next remote update',
 test('create-list failure is shown under the form and the button works again', async ({ page }) => {
   await page.goto('/');
   await signInAs(page, 'u-c', 'c@example.com');
-  await page.evaluate(() => { window.FB.setDoc = () => Promise.reject({ code: 'permission-denied' }); });
+  await page.evaluate(() => {
+    window.FB.writeBatch = () => ({ set() {}, update() {}, commit: () => Promise.reject({ code: 'permission-denied' }) });
+  });
   await page.fill('#welcomeNewListInput', 'x');
   await page.click('#welcomeCreateBtn');
   await expect(page.locator('#welcomeCreateError')).toHaveText('אין לך הרשאה לפעולה הזו. נסו להתנתק ולהתחבר מחדש');

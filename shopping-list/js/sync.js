@@ -6,6 +6,7 @@ import { $ } from './util.js';
 import { showToast, messageFor } from './ui.js';
 import { render, updateHeaderForList } from './render.js';
 import { renderStats } from './stats.js';
+import { generateJoinCode, normalizeJoinCode, isValidJoinCode } from './codes.js';
 
 const appRoot = $('appRoot');
 
@@ -28,18 +29,35 @@ export async function save() {
   }
 }
 
-function generateJoinCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous 0/O/1/I
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
-}
+const FB = () => window.FB;
 
 export async function loadMyLists() {
   if (!state.user) { state.lists = []; return; }
-  const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('members', 'array-contains', state.user.uid));
-  const snap = await window.FB.getDocs(q);
+  const q = FB().query(FB().collection(FB().db, 'lists'), FB().where('members', 'array-contains', state.user.uid));
+  const snap = await FB().getDocs(q);
   state.lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// Creates a list together with its join code (joinCodes/{code} -> listId) in one
+// batch. If the random code is already taken the batch is refused, so try another.
+async function createListWithCode(name) {
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const code = generateJoinCode();
+    const ref = FB().doc(FB().collection(FB().db, 'lists'));
+    const data = { name, code, ownerUid: state.user.uid, members: [state.user.uid], items: [], purchaseHistory: [] };
+    const batch = FB().writeBatch(FB().db);
+    batch.set(ref, { ...data, createdAt: FB().serverTimestamp() });
+    batch.set(FB().doc(FB().db, 'joinCodes', code), { listId: ref.id, createdBy: state.user.uid, createdAt: FB().serverTimestamp() });
+    try {
+      await batch.commit();
+      return { id: ref.id, ...data };
+    } catch (err) {
+      lastErr = err;
+      if (err.code !== 'permission-denied') break;
+    }
+  }
+  throw lastErr;
 }
 
 // Creates a list and switches to it. Returns true on success; on failure the
@@ -50,17 +68,14 @@ export async function createList(rawName, errEl, btn) {
   if (!name || !state.user) return false;
   btn.disabled = true;
   try {
-    const code = generateJoinCode();
-    const ref = window.FB.doc(window.FB.collection(window.FB.db, 'lists'));
-    const data = { name, code, ownerUid: state.user.uid, members: [state.user.uid], items: [], purchaseHistory: [] };
-    await window.FB.setDoc(ref, { ...data, createdAt: window.FB.serverTimestamp() });
+    const list = await createListWithCode(name);
     try {
       await loadMyLists();
     } catch (err) {
       console.error('Reloading lists failed after create:', err);
     }
-    if (!state.lists.some(l => l.id === ref.id)) state.lists.push({ id: ref.id, ...data });
-    switchToList(ref.id);
+    if (!state.lists.some(l => l.id === list.id)) state.lists.push(list);
+    switchToList(list.id);
     return true;
   } catch (err) {
     console.error('Create list failed:', err);
@@ -72,29 +87,34 @@ export async function createList(rawName, errEl, btn) {
 }
 
 // Joins the list with this code and switches to it. Returns true on success.
+// The code is looked up in joinCodes (one document, never a search over lists); then a
+// single batch records "I joined with this code" and adds only me to the members.
 export async function joinList(rawCode, errEl, btn) {
   errEl.textContent = '';
-  const code = rawCode.trim().toUpperCase();
+  const code = normalizeJoinCode(rawCode);
   if (!code || !state.user) return false;
+  if (!isValidJoinCode(code)) { errEl.textContent = t().errNotFound; return false; }
   btn.disabled = true;
   try {
-    const q = window.FB.query(window.FB.collection(window.FB.db, 'lists'), window.FB.where('code', '==', code));
-    const snap = await window.FB.getDocs(q);
-    if (snap.empty) {
+    const codeSnap = await FB().getDoc(FB().doc(FB().db, 'joinCodes', code));
+    if (!codeSnap.exists()) {
       errEl.textContent = t().errNotFound;
       return false;
     }
-    const listDoc = snap.docs[0];
-    await window.FB.updateDoc(window.FB.doc(window.FB.db, 'lists', listDoc.id), {
-      members: window.FB.arrayUnion(state.user.uid),
-    });
+    const { listId } = codeSnap.data();
+    const uid = state.user.uid;
+    if (!state.lists.some(l => l.id === listId)) {
+      const batch = FB().writeBatch(FB().db);
+      batch.set(FB().doc(FB().db, 'lists', listId, 'joins', uid), { code, at: FB().serverTimestamp() });
+      batch.update(FB().doc(FB().db, 'lists', listId), { members: FB().arrayUnion(uid) });
+      await batch.commit();
+    }
     try {
       await loadMyLists();
     } catch (err) {
       console.error('Reloading lists failed after join:', err);
     }
-    if (!state.lists.some(l => l.id === listDoc.id)) state.lists.push({ id: listDoc.id, ...listDoc.data() });
-    switchToList(listDoc.id);
+    switchToList(listId);
     return true;
   } catch (err) {
     console.error('Join failed:', err.code, err);
@@ -102,6 +122,35 @@ export async function joinList(rawCode, errEl, btn) {
     return false;
   } finally {
     btn.disabled = false;
+  }
+}
+
+// Lists created before join codes had their own collection only store `code` on the
+// list itself. The owner's app registers it in joinCodes so that people can join with
+// it again (strangers can no longer search lists by code). If that code is already
+// used by another list, this list gets a new one. Checked once per list per device.
+async function registerOldJoinCodes() {
+  for (const list of state.lists) {
+    if (list.ownerUid !== state.user.uid) continue;
+    const marker = `joinCodeOk:${list.id}:${list.code}`;
+    if (localStorage.getItem(marker)) continue;
+    try {
+      const valid = isValidJoinCode(list.code);
+      const snap = valid ? await FB().getDoc(FB().doc(FB().db, 'joinCodes', list.code)) : null;
+      if (snap && snap.exists() && snap.data().listId === list.id) {
+        localStorage.setItem(marker, '1');
+        continue;
+      }
+      const code = valid && !snap.exists() ? list.code : generateJoinCode(); // invalid or taken: new code
+      const batch = FB().writeBatch(FB().db);
+      if (code !== list.code) batch.update(FB().doc(FB().db, 'lists', list.id), { code });
+      batch.set(FB().doc(FB().db, 'joinCodes', code), { listId: list.id, createdBy: state.user.uid, createdAt: FB().serverTimestamp() });
+      await batch.commit();
+      list.code = code;
+      localStorage.setItem(`joinCodeOk:${list.id}:${code}`, '1');
+    } catch (err) {
+      console.error('Registering the join code failed (will retry next time):', list.id, err);
+    }
   }
 }
 
@@ -186,4 +235,5 @@ export async function initForUser() {
     else localStorage.removeItem('activeListId');
   }
   subscribeToActiveList();
+  registerOldJoinCodes();
 }
