@@ -13,7 +13,7 @@ import { renderStats } from './stats.js';
 import { generateJoinCode, normalizeJoinCode, isValidJoinCode } from './codes.js';
 import {
   SCHEMA_VERSION, planMigration, historyStartKey, flattenHistory, sortItems,
-  isStaleBought, purchaseEntry, monthKey,
+  isStaleBought, purchaseEntry, monthKey, REMOVE,
 } from './model.js';
 
 const appRoot = $('appRoot');
@@ -65,8 +65,21 @@ export function setUrgencyDoc(itemId, urgency) {
   write(FB().updateDoc(itemRef(state.activeListId, itemId), { urgency }));
 }
 
+// `changes` comes from model.itemChanges: values to set, or REMOVE to delete the field.
+export function updateItemDoc(itemId, changes) {
+  const fields = Object.fromEntries(Object.entries(changes).map(([k, v]) => [k, v === REMOVE ? FB().deleteField() : v]));
+  if (Object.keys(fields).length) write(FB().updateDoc(itemRef(state.activeListId, itemId), fields));
+}
+
 export function deleteItemDoc(itemId) {
   write(FB().deleteDoc(itemRef(state.activeListId, itemId)));
+}
+
+// Puts a deleted item back with its id, time and everything else (undo). `createdBy` is
+// the person undoing, because the rules only let you create items as yourself.
+export function restoreItemDoc(item, listId = state.activeListId) {
+  const { id, ...data } = item;
+  write(FB().setDoc(itemRef(listId, id), { ...data, createdBy: state.user.uid }));
 }
 
 // Items ticked off before today's midnight are removed — a bought item stays visible

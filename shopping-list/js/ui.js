@@ -9,10 +9,31 @@ export function messageFor(err) {
 }
 
 let toastTimer = null;
-export function showToast(text) {
+let toastAction = null;
+
+// A short message at the bottom. With `actionLabel` and `onAction` it carries a button
+// (used for "Undo"); such a message stays a little longer.
+export function showToast(text, { actionLabel, onAction, duration } = {}) {
   const el = $('toast');
-  el.textContent = text;
+  const button = $('toastAction');
+  $('toastText').textContent = text;
+  toastAction = onAction || null;
+  button.hidden = !onAction;
+  button.textContent = actionLabel || '';
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+  toastTimer = setTimeout(hideToast, duration ?? (onAction ? 6000 : 4000));
+}
+
+export function hideToast() {
+  $('toast').classList.remove('show');
+  toastAction = null;
+}
+
+export function initToast() {
+  $('toastAction').addEventListener('click', () => {
+    const action = toastAction;
+    hideToast();
+    if (action) action();
+  });
 }

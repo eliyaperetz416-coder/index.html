@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory } from '../../js/model.js';
+import { monthKey, historyStartKey, purchaseEntry, isStaleBought, planMigration, sortItems, flattenHistory, itemChanges, REMOVE } from '../../js/model.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -94,4 +94,34 @@ test('migration of an empty or brand-new list does nothing', () => {
 
 test('migration is deterministic (two members migrating at once write the same thing)', () => {
   assert.deepEqual(planMigration(legacy), planMigration(structuredClone(legacy)));
+});
+
+// ---------- editing an item ----------
+
+const base = { id: 'a', name: 'חלב', catKey: 'dairy', quantity: '2', note: 'דל שומן', urgency: 'high' };
+
+test('editing changes only what differs', () => {
+  assert.deepEqual(itemChanges(base, { name: 'חלב', catKey: 'dairy', quantity: '2', note: 'דל שומן', urgency: 'high' }), {});
+  assert.deepEqual(itemChanges(base, { name: 'חלב 3%', catKey: 'dairy', quantity: '2', note: 'דל שומן', urgency: 'high' }), { name: 'חלב 3%' });
+});
+
+test('texts are trimmed; emptied quantity or note are removed from the item', () => {
+  assert.deepEqual(itemChanges(base, { name: '  חלב  ', catKey: 'dairy', quantity: '  3 קרטונים ', note: '   ', urgency: 'high' }), { quantity: '3 קרטונים', note: REMOVE });
+});
+
+test('an empty name is ignored (the item keeps its name)', () => {
+  assert.deepEqual(itemChanges(base, { name: '   ', catKey: 'dairy', quantity: '2', note: 'דל שומן', urgency: 'high' }), {});
+});
+
+test('over-long texts are cut to the allowed length', () => {
+  const c = itemChanges({ id: 'a', name: 'x', catKey: 'other' }, { name: 'n'.repeat(300), catKey: 'other', quantity: 'q'.repeat(100), note: 'z'.repeat(500), urgency: 'none' });
+  assert.equal(c.name.length, 200);
+  assert.equal(c.quantity.length, 40);
+  assert.equal(c.note.length, 200);
+});
+
+test('category and urgency: only known values; "none" removes the urgency', () => {
+  assert.deepEqual(itemChanges(base, { name: 'חלב', catKey: 'meat', quantity: '2', note: 'דל שומן', urgency: 'none' }), { catKey: 'meat', urgency: REMOVE });
+  assert.deepEqual(itemChanges(base, { name: 'חלב', catKey: '<b>', quantity: '2', note: 'דל שומן', urgency: 'whenever' }), { catKey: 'other' });
+  assert.deepEqual(itemChanges({ id: 'a', name: 'x', catKey: 'other' }, { name: 'x', catKey: 'other', quantity: '', note: '', urgency: 'none' }), {});
 });

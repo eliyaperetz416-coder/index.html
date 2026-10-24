@@ -22,6 +22,14 @@ function urgencyColorOf(item) {
   return typeof item.urgency === 'string' && Object.hasOwn(URGENCY_LEVELS, item.urgency) ? URGENCY_LEVELS[item.urgency].color : '';
 }
 
+// "2 packs · gluten-free" under the name (nothing when both are empty).
+function itemSubline(item) {
+  const quantity = typeof item.quantity === 'string' ? item.quantity.trim() : '';
+  const note = typeof item.note === 'string' ? item.note.trim() : '';
+  if (!quantity && !note) return '';
+  return `<span class="item-sub">${quantity ? `<b class="item-qty">${escapeHtml(quantity)}</b>` : ''}${quantity && note ? ' · ' : ''}${escapeHtml(note)}</span>`;
+}
+
 // Everything in `item` was written by some list member, so nothing is trusted:
 // text is escaped, and category name and colour are derived from the category key.
 function renderItemCard(item) {
@@ -35,7 +43,10 @@ function renderItemCard(item) {
     <button class="checkbox" data-id="${id}">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
     </button>
-    <span class="item-name">${escapeHtml(item.name)}</span>
+    <button class="item-main" data-id="${id}">
+      <span class="item-name">${escapeHtml(item.name)}</span>
+      ${itemSubline(item)}
+    </button>
     ${urgencyColor ? `<span class="urgency-square" style="--urgency-color:${urgencyColor}"></span>` : ''}
     <span class="item-cat">${escapeHtml(t().categories[catKey])}</span>
     <div class="urgency-wrap">

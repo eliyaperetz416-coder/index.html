@@ -117,7 +117,10 @@
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastText"></span>
+  <button type="button" id="toastAction" hidden></button>
+</div>
 
 <div class="settings-overlay" id="listPickerOverlay">
   <div class="settings-panel">
@@ -152,6 +155,39 @@
     </div>
 
     <button class="close-btn" id="closeListPickerBtn">סגור</button>
+  </div>
+</div>
+
+<div class="settings-overlay" id="itemEditOverlay">
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="itemEditTitle">
+    <h2 id="itemEditTitle">עריכת פריט</h2>
+
+    <div class="setting-group">
+      <label id="editNameLabel" for="editName">שם</label>
+      <input class="field" type="text" id="editName" maxlength="200" autocomplete="off" />
+    </div>
+    <div class="setting-group">
+      <label id="editQuantityLabel" for="editQuantity">כמות</label>
+      <input class="field" type="text" id="editQuantity" maxlength="40" autocomplete="off" />
+    </div>
+    <div class="setting-group">
+      <label id="editNoteLabel" for="editNote">הערה</label>
+      <input class="field" type="text" id="editNote" maxlength="200" autocomplete="off" />
+    </div>
+    <div class="setting-group">
+      <label id="editCategoryLabel" for="editCategory">קטגוריה</label>
+      <select id="editCategory"></select>
+    </div>
+    <div class="setting-group">
+      <label id="editUrgencyLabel">דחיפות</label>
+      <div class="segmented" id="editUrgency" role="radiogroup" aria-labelledby="editUrgencyLabel"></div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="primary-btn" id="editSaveBtn">שמור</button>
+      <button class="secondary-btn" id="editCancelBtn">ביטול</button>
+    </div>
+    <button class="text-link-btn danger" id="editDeleteBtn">מחק</button>
   </div>
 </div>
 

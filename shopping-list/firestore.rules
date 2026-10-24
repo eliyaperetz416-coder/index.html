@@ -3,7 +3,7 @@ rules_version = '2';
 // Shopping list security rules.
 //
 //   lists/{listId}                  a shared list; only its members can read or edit it
-//   lists/{listId}/items/{itemId}   one item on the list (schema version 2)
+//   lists/{listId}/items/{itemId}   one item on the list (schema version 2); optional quantity, note
 //   lists/{listId}/history/{YYYY-MM} purchases of one month (schema version 2)
 //   lists/{listId}/joins/{uid}      "I joined with this code" — written by the joiner
 //   joinCodes/{code}                code -> listId; can be looked up one at a time, never listed
@@ -49,7 +49,7 @@ service cloud.firestore {
         && e.timestamp is number;
     }
     function validItem(d) {
-      return d.keys().hasOnly(['name', 'catKey', 'bought', 'boughtAt', 'createdAt', 'createdBy', 'urgency', 'purchase'])
+      return d.keys().hasOnly(['name', 'catKey', 'bought', 'boughtAt', 'createdAt', 'createdBy', 'urgency', 'purchase', 'quantity', 'note'])
         && d.name is string && d.name.size() > 0 && d.name.size() <= 200
         && d.catKey is string && d.catKey.size() <= 20
         && d.bought is bool
@@ -57,7 +57,9 @@ service cloud.firestore {
         && d.createdAt is number
         && d.createdBy is string
         && optional(d, 'urgency', d.get('urgency', null) == null || d.get('urgency', null) in ['high', 'medium', 'low'])
-        && optional(d, 'purchase', validEntry(d.get('purchase', null)));
+        && optional(d, 'purchase', validEntry(d.get('purchase', null)))
+        && optional(d, 'quantity', d.get('quantity', '') is string && d.get('quantity', '').size() <= 40)
+        && optional(d, 'note', d.get('note', '') is string && d.get('note', '').size() <= 200);
     }
 
     match /lists/{listId} {

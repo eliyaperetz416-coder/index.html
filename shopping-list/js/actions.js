@@ -4,6 +4,7 @@ import { $ } from './util.js';
 import { guessCategoryKey, safeCategoryKey } from './category.js';
 import { newId } from './ids.js';
 import { addItemDoc, setBought, setUrgencyDoc, deleteItemDoc } from './sync.js';
+import { showUndoDelete, showUndoTick } from './undo.js';
 
 // Each action writes one item document; the list re-renders from the live listener
 // (immediately, from the local cache — also offline).
@@ -15,13 +16,18 @@ export function addItem(name, catKey) {
   addItemDoc({ id: newId(), name: name.trim(), catKey: key });
 }
 
-function toggleBought(id) {
+export function toggleBought(id) {
   const item = state.items.find(i => i.id === id);
-  if (item) setBought(item, !item.bought);
+  if (!item) return;
+  setBought(item, !item.bought);
+  showUndoTick(item, !item.bought);
 }
 
-function deleteItem(id) {
+export function deleteItem(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
   deleteItemDoc(id);
+  showUndoDelete([item]);
 }
 
 function setUrgency(id, urgency) {

@@ -5,6 +5,7 @@ import { t, loadLanguage } from './i18n.js';
 import { render } from './render.js';
 import { renderStats } from './stats.js';
 import { renderConnection } from './connection.js';
+import { applyItemEditLanguage } from './item-edit.js';
 
 export function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
@@ -54,6 +55,7 @@ export function applyLanguage() {
   $('welcomeNewListInput').placeholder = dict.createListLabel;
   $('welcomeJoinInput').placeholder = dict.joinCodeLabel;
   $('retryLoadBtn').textContent = dict.retryLabel;
+  applyItemEditLanguage();
   $('langSelect').value = state.lang;
   renderConnection();
   render(); // re-render list + stats + category names in new language

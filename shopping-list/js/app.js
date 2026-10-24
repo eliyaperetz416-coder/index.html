@@ -6,6 +6,8 @@ import { initStats, renderStats } from './stats.js';
 import { initNav } from './nav.js';
 import { initItemActions, addItem } from './actions.js';
 import { initAutocomplete } from './autocomplete.js';
+import { initItemEdit } from './item-edit.js';
+import { initToast } from './ui.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
@@ -19,6 +21,8 @@ async function main() {
   initSettings();
   initItemActions();
   initAutocomplete(addItem);
+  initItemEdit();
+  initToast();
   initStats(addItem);
   initNav();
   initListUi();

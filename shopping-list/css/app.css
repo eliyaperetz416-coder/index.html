@@ -742,7 +742,25 @@
     z-index: 20;
   }
 
-  .toast.show { opacity: 1; transform: none; }
+  .toast {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .toast.show { opacity: 1; transform: none; pointer-events: auto; }
+
+  .toast button {
+    background: none;
+    border: none;
+    color: var(--coral);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 8px 4px;
+    min-height: 44px;
+  }
 
 
   /* Shown while there is no connection; changes keep working from the device cache */
@@ -809,3 +827,72 @@
   }
 
   .suggest-option[aria-selected="true"], .suggest-option:hover { background: var(--surface-dim); }
+
+  /* Item row: tap the name to edit; quantity and note under it */
+  .item-main {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .item-main .item-name { flex: none; overflow-wrap: anywhere; }
+  .item-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+  .item-qty { color: var(--teal); font-weight: 700; }
+  .item.bought .item-sub { text-decoration: line-through; }
+
+  /* Edit sheet */
+  .field {
+    width: 100%;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: var(--surface-dim);
+    color: var(--text);
+    padding: 0 14px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .field:focus, .setting-group select:focus { box-shadow: 0 0 0 2px var(--teal); }
+
+  .segmented { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .segmented button {
+    flex: 1;
+    min-width: 64px;
+    height: 44px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: var(--surface-dim);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .segmented button[aria-checked="true"] { border-color: var(--teal); }
+
+  .sheet-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+
+  .primary-btn, .secondary-btn {
+    flex: 1;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .primary-btn { background: var(--teal); color: #1a1a2e; }
+  .secondary-btn { background: var(--surface-dim); color: var(--text); }
+  .text-link-btn.danger { display: block; margin: 0 auto 4px; padding: 10px; }

@@ -289,3 +289,13 @@ test('new lists are created directly in version 2, without the old arrays', asyn
   await assertSucceeds(setDoc(doc(db, 'lists', 'v2'), data));
   await assertFails(setDoc(doc(db, 'lists', 'v3'), { ...data, schemaVersion: 7 }));
 });
+
+test('items can carry a quantity and a note, within limits', async () => {
+  const db = as(MEMBER);
+  await assertSucceeds(setDoc(itemRef(db, 'q1'), item({ quantity: '2 חבילות', note: 'בלי גלוטן' })));
+  await assertSucceeds(updateDoc(itemRef(db, 'q1'), { quantity: '3', note: 'x'.repeat(200) }));
+  await assertFails(updateDoc(itemRef(db, 'q1'), { quantity: 'x'.repeat(41) }));
+  await assertFails(updateDoc(itemRef(db, 'q1'), { note: 'x'.repeat(201) }));
+  await assertFails(updateDoc(itemRef(db, 'q1'), { quantity: 5 }));
+  await assertFails(updateDoc(itemRef(db, 'q1'), { note: { a: 1 } }));
+});

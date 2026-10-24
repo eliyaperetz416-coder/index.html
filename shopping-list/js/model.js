@@ -93,3 +93,32 @@ export function planMigration(listData) {
   });
   return { items, buckets };
 }
+
+// ============================================================
+// EDITING AN ITEM
+// ============================================================
+export const REMOVE = Symbol('remove'); // "delete this field from the item"
+export const LIMITS = { name: 200, quantity: 40, note: 200 };
+
+// What to write to turn `item` into what the edit form now says. Only differences are
+// returned; texts are trimmed and cut to length; an emptied quantity / note / urgency
+// is REMOVE; an empty name is ignored.
+export function itemChanges(item, form) {
+  const changes = {};
+  const name = String(form.name ?? '').trim().slice(0, LIMITS.name);
+  if (name && name !== item.name) changes.name = name;
+
+  const catKey = safeCategoryKey(form.catKey);
+  if (catKey !== safeCategoryKey(item.catKey)) changes.catKey = catKey;
+
+  for (const field of ['quantity', 'note']) {
+    const value = String(form[field] ?? '').trim().slice(0, LIMITS[field]);
+    const before = item[field] ?? '';
+    if (value !== before) changes[field] = value === '' ? REMOVE : value;
+  }
+
+  // 'none' clears the urgency; anything that is not a known level leaves it alone.
+  if (form.urgency === 'none' && item.urgency != null) changes.urgency = REMOVE;
+  else if (URGENCIES.includes(form.urgency) && form.urgency !== item.urgency) changes.urgency = form.urgency;
+  return changes;
+}
