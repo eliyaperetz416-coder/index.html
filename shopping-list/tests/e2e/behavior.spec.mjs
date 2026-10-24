@@ -1,6 +1,6 @@
 // Characterisation tests: they pin down what the app does today so that the
 // code can be restructured (step 2) without changing behaviour.
-import { test, expect, resetEmulators, signInAs, readListDoc, patchListDoc, createFirstList, addItem } from './fixtures.mjs';
+import { test, expect, resetEmulators, signInAs, readListDoc, createFirstList, addItem, serverItems, putItems, putHistory } from './fixtures.mjs';
 
 const DAY = 24 * 60 * 60 * 1000;
 test.beforeEach(async () => { await resetEmulators(); });
@@ -33,7 +33,7 @@ test('an empty list shows the hint; deleting removes the item from the list and 
   await page.locator('.delete-btn').click();
   await expect(page.locator('.item')).toHaveCount(0);
   await expect(page.locator('.empty-state')).toBeVisible();
-  await expect.poll(async () => (await readListDoc(page, id)).items.length).toBe(0);
+  await expect.poll(async () => (await serverItems(id)).length).toBe(0);
 });
 
 test('urgency menu opens, sets a level, shows the coloured square and closes on outside click', async ({ page }) => {
@@ -45,7 +45,7 @@ test('urgency menu opens, sets a level, shows the coloured square and closes on 
   await expect(page.locator('.urgency-menu.show')).toBeVisible();
   await page.locator('.urgency-option[data-urgency="high"]').click();
   await expect(page.locator('.urgency-square')).toHaveCount(1);
-  await expect.poll(async () => (await readListDoc(page, id)).items[0].urgency).toBe('high');
+  await expect.poll(async () => (await serverItems(id))[0].urgency).toBe('high');
 
   await page.locator('.urgency-btn').click();
   await expect(page.locator('.urgency-menu.show')).toBeVisible();
@@ -67,11 +67,11 @@ test('pressing Enter adds an item and blank names are ignored', async ({ page })
 test('stats screen: weekly total, top category, comparison and bars', async ({ page }) => {
   const id = await createFirstList(page, 'סטטיסטיקה');
   const now = Date.now();
-  const p = (name, catKey, ago) => ({ itemId: name + ago, name, catKey, catColor: '#4ade80', timestamp: now - ago });
-  await patchListDoc(page, id, { purchaseHistory: [
+  const p = (name, catKey, ago) => ({ itemId: name + ago, name, catKey, timestamp: now - ago });
+  await putHistory(id, [
     p('חלב', 'dairy', 1 * DAY), p('גבינה', 'dairy', 2 * DAY), p('לחם', 'bakery', 3 * DAY),
     p('חלב', 'dairy', 9 * DAY),
-  ] });
+  ]);
   await page.click('#navStatsBtn');
   await expect(page.locator('#statsScreen')).toBeVisible();
   await expect(page.locator('#listScreen')).toBeHidden();
@@ -88,7 +88,7 @@ test('stats screen: weekly total, top category, comparison and bars', async ({ p
 test('smart suggestions offer a regularly bought item and adding it marks the chip', async ({ page }) => {
   const id = await createFirstList(page, 'הצעות');
   const now = Date.now();
-  await patchListDoc(page, id, { purchaseHistory: [40, 30, 20, 10].map((d) => ({ name: 'חלב', catKey: 'dairy', catColor: 'x', timestamp: now - d * DAY })) });
+  await putHistory(id, [40, 30, 20, 10].map((d) => ({ name: 'חלב', catKey: 'dairy', timestamp: now - d * DAY })));
   await page.click('#navStatsBtn');
   await expect(page.locator('#suggestionsCard')).toBeVisible();
   const chip = page.locator('.suggestion-chip', { hasText: 'חלב' });
@@ -102,13 +102,13 @@ test('smart suggestions offer a regularly bought item and adding it marks the ch
 test('bought items from an earlier day are cleared when the list is loaded', async ({ page }) => {
   const id = await createFirstList(page, 'ניקוי');
   const now = Date.now();
-  await patchListDoc(page, id, { items: [
-    { id: 'old', name: 'ישן', bought: true, boughtAt: now - 2 * DAY, catKey: 'other', catName: 'x', catColor: 'x' },
-    { id: 'today', name: 'היום', bought: true, boughtAt: now, catKey: 'other', catName: 'x', catColor: 'x' },
-    { id: 'open', name: 'פתוח', bought: false, catKey: 'other', catName: 'x', catColor: 'x' },
-  ] });
+  await putItems(id, [
+    { id: 'old', name: 'ישן', bought: true, boughtAt: now - 2 * DAY },
+    { id: 'today', name: 'היום', bought: true, boughtAt: now },
+    { id: 'open', name: 'פתוח', bought: false },
+  ]);
   await expect(page.locator('.item-name')).toHaveText(['פתוח', 'היום']);
-  await expect.poll(async () => (await readListDoc(page, id)).items.map((i) => i.id).sort()).toEqual(['open', 'today']);
+  await expect.poll(async () => (await serverItems(id)).map((i) => i.id).sort()).toEqual(['open', 'today']);
 });
 
 test('theme: switching to light is applied, remembered and survives a reload', async ({ page }) => {
@@ -178,6 +178,6 @@ test('list picker: create a second list, switch back and forth, see codes, sign 
 
 test('a change made on another device shows up live', async ({ page }) => {
   const id = await createFirstList(page, 'חי');
-  await patchListDoc(page, id, { items: [{ id: 'r1', name: 'נוסף מרחוק', bought: false, catKey: 'other', catName: 'x', catColor: 'var(--pink)' }] });
+  await putItems(id, [{ id: 'r1', name: 'נוסף מרחוק' }]);
   await expect(page.locator('.item-name')).toHaveText(['נוסף מרחוק']);
 });

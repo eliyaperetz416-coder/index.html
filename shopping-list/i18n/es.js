@@ -47,4 +47,5 @@ export default {
   errGeneric: 'Algo salió mal. Inténtalo de nuevo en un momento',
   errPopupBlocked: 'El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes e inténtalo de nuevo',
   errSaveFailed: 'No se guardó el cambio',
+  offlineNotice: 'Sin conexión · los cambios se guardan en el dispositivo y se sincronizarán al volver la conexión',
 };

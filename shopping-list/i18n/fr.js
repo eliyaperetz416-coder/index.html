@@ -47,4 +47,5 @@ export default {
   errGeneric: 'Une erreur est survenue. Réessayez dans un instant',
   errPopupBlocked: 'Le navigateur a bloqué la fenêtre de connexion. Autorisez les pop-ups et réessayez',
   errSaveFailed: 'La modification n’a pas été enregistrée',
+  offlineNotice: 'Hors ligne · les modifications sont enregistrées sur l’appareil et seront synchronisées au retour de la connexion',
 };

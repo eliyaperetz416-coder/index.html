@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { $ } from './util.js';
 import { escapeHtml } from './html.js';
 import { t } from './i18n.js';
-import { createList, joinList, switchToList, initForUser } from './sync.js';
+import { createList, joinList, switchToList, startSync } from './sync.js';
 
 function renderListPicker() {
   const listPickerItemsEl = $('listPickerItems');
@@ -79,7 +79,12 @@ export function initListUi() {
   welcomeNewListInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitWelcomeCreate(); });
   welcomeJoinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitWelcomeJoin(); });
 
-  $('retryLoadBtn').addEventListener('click', initForUser);
+  $('retryLoadBtn').addEventListener('click', startSync);
+
+  // "My lists" is live: redraw the picker when it changes while open.
+  document.addEventListener('lists-changed', () => {
+    if (listPickerOverlay.classList.contains('show')) renderListPicker();
+  });
 }
 
 // Closes the picker (used when the user signs out).

@@ -200,3 +200,92 @@ test('nothing else in the database is reachable', async () => {
   await assertFails(setDoc(doc(as(OWNER), 'users', OWNER), { a: 1 }));
   await assertFails(getDoc(doc(as(OWNER), 'anything', 'x')));
 });
+
+// ======================= schema version 2: items and history =======================
+const item = (over = {}) => ({ name: 'חלב', catKey: 'dairy', bought: false, boughtAt: null, createdAt: 1, createdBy: MEMBER, ...over });
+const itemRef = (db, id = 'it1', listId = LIST) => doc(db, 'lists', listId, 'items', id);
+const bucketRef = (db, month = '2026-10', listId = LIST) => doc(db, 'lists', listId, 'history', month);
+
+test('members can add, tick, prioritise and delete items', async () => {
+  const db = as(MEMBER);
+  await assertSucceeds(setDoc(itemRef(db), item()));
+  await assertSucceeds(updateDoc(itemRef(db), { bought: true, boughtAt: 5, purchase: { itemId: 'it1', name: 'חלב', catKey: 'dairy', timestamp: 5 } }));
+  await assertSucceeds(updateDoc(itemRef(db), { urgency: 'high' }));
+  await assertSucceeds(updateDoc(itemRef(db), { bought: false, boughtAt: null, urgency: null }));
+  await assertSucceeds(getDoc(itemRef(as(OWNER))));
+  await assertSucceeds(getDocs(collection(as(OWNER), 'lists', LIST, 'items')));
+  await assertSucceeds(deleteDoc(itemRef(db)));
+});
+
+test('strangers cannot read or write items', async () => {
+  await env.withSecurityRulesDisabled((ctx) => setDoc(itemRef(ctx.firestore()), item()));
+  await assertFails(getDoc(itemRef(as(STRANGER))));
+  await assertFails(getDocs(collection(as(STRANGER), 'lists', LIST, 'items')));
+  await assertFails(setDoc(itemRef(as(STRANGER), 'x'), item({ createdBy: STRANGER })));
+  await assertFails(deleteDoc(itemRef(as(STRANGER))));
+});
+
+test('items must have a sane shape', async () => {
+  const db = as(MEMBER);
+  await assertFails(setDoc(itemRef(db, 'a'), item({ name: '' })));
+  await assertFails(setDoc(itemRef(db, 'b'), item({ name: 'x'.repeat(201) })));
+  await assertFails(setDoc(itemRef(db, 'c'), item({ bought: 'yes' })));
+  await assertFails(setDoc(itemRef(db, 'd'), item({ urgency: 'now!!' })));
+  await assertFails(setDoc(itemRef(db, 'e'), item({ catKey: 'x'.repeat(30) })));
+  await assertFails(setDoc(itemRef(db, 'f'), item({ catColor: 'url(http://evil)' })));
+  await assertFails(setDoc(itemRef(db, 'g'), item({ createdBy: OWNER })));
+  await assertFails(setDoc(itemRef(db, 'h'), item({ purchase: 'x' })));
+});
+
+test('who created an item and when cannot be rewritten', async () => {
+  await assertSucceeds(setDoc(itemRef(as(MEMBER)), item()));
+  await assertFails(updateDoc(itemRef(as(OWNER)), { createdBy: OWNER }));
+  await assertFails(updateDoc(itemRef(as(OWNER)), { createdAt: 999 }));
+  await assertSucceeds(updateDoc(itemRef(as(OWNER)), { bought: true, boughtAt: 7 }));
+});
+
+test('members append to and remove from a monthly history bucket', async () => {
+  const db = as(MEMBER);
+  const entry = { itemId: 'it1', name: 'חלב', catKey: 'dairy', timestamp: 5 };
+  await assertSucceeds(setDoc(bucketRef(db), { entries: arrayUnion(entry) }, { merge: true }));
+  await assertSucceeds(setDoc(bucketRef(db), { entries: arrayRemove(entry) }, { merge: true }));
+  await assertSucceeds(getDocs(collection(as(OWNER), 'lists', LIST, 'history')));
+});
+
+test('history buckets: right month format, only entries, members only, never deleted', async () => {
+  const db = as(MEMBER);
+  await assertFails(setDoc(bucketRef(db, 'october'), { entries: [] }));
+  await assertFails(setDoc(bucketRef(db, '2026-10'), { entries: [], other: 1 }));
+  await assertFails(setDoc(bucketRef(db, '2026-10'), { entries: 'x' }));
+  await assertFails(setDoc(bucketRef(as(STRANGER)), { entries: [] }));
+  await assertFails(getDoc(bucketRef(as(STRANGER))));
+  await assertSucceeds(setDoc(bucketRef(db), { entries: [] }));
+  await assertFails(deleteDoc(bucketRef(db)));
+});
+
+test('a list is marked migrated once; a second, late migration is refused', async () => {
+  const db = as(MEMBER);
+  await assertSucceeds(updateDoc(doc(db, 'lists', LIST), { schemaVersion: 2, migratedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(as(OWNER), 'lists', LIST), { schemaVersion: 2, migratedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(db, 'lists', LIST), { schemaVersion: 3 }));
+});
+
+test('the migration flag needs a migration time, and can only go to version 2', async () => {
+  await assertFails(updateDoc(doc(as(MEMBER), 'lists', LIST), { schemaVersion: 2 }));
+  await assertFails(updateDoc(doc(as(MEMBER), 'lists', LIST), { schemaVersion: 1, migratedAt: serverTimestamp() }));
+});
+
+test('after migration the old arrays are read-only (old app versions cannot write there)', async () => {
+  await assertSucceeds(updateDoc(doc(as(MEMBER), 'lists', LIST), { items: [] }));
+  await assertSucceeds(updateDoc(doc(as(MEMBER), 'lists', LIST), { schemaVersion: 2, migratedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(as(MEMBER), 'lists', LIST), { items: [{ id: 'x' }] }));
+  await assertFails(updateDoc(doc(as(MEMBER), 'lists', LIST), { purchaseHistory: [{ name: 'x', timestamp: 1 }] }));
+  await assertSucceeds(updateDoc(doc(as(MEMBER), 'lists', LIST), { name: 'עדיין אפשר לשנות שם' }));
+});
+
+test('new lists are created directly in version 2, without the old arrays', async () => {
+  const db = as(STRANGER);
+  const data = { name: 'חדשה', code: 'QWER2345', ownerUid: STRANGER, members: [STRANGER], schemaVersion: 2, createdAt: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(db, 'lists', 'v2'), data));
+  await assertFails(setDoc(doc(db, 'lists', 'v3'), { ...data, schemaVersion: 7 }));
+});

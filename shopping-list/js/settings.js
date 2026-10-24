@@ -4,6 +4,7 @@ import { $ } from './util.js';
 import { t, loadLanguage } from './i18n.js';
 import { render } from './render.js';
 import { renderStats } from './stats.js';
+import { renderConnection } from './connection.js';
 
 export function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
@@ -54,6 +55,7 @@ export function applyLanguage() {
   $('welcomeJoinInput').placeholder = dict.joinCodeLabel;
   $('retryLoadBtn').textContent = dict.retryLabel;
   $('langSelect').value = state.lang;
+  renderConnection();
   render(); // re-render list + stats + category names in new language
   renderStats(); // re-render stats screen labels in new language
 }

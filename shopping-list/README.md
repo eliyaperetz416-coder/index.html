@@ -12,11 +12,13 @@ ten languages.
 | `css/app.css` | All styles |
 | `js/app.js` | Entry point: loads the language, wires every screen |
 | `js/state.js` | The shared, mutable app state |
-| `js/sync.js` | Lists + Firestore: load, create, join, live subscription, save |
+| `js/sync.js` | Lists + Firestore: live listeners, item writes, create / join, migration |
+| `js/model.js` | Data model v2 and the v1 -> v2 migration plan (pure, unit tested) |
+| `js/connection.js` | The quiet "offline" notice |
 | `js/actions.js` | Add / tick off / delete / urgency |
 | `js/render.js`, `js/stats.js` | Drawing the list, the stats screen and suggestions |
 | `js/settings.js`, `js/lists-ui.js`, `js/nav.js`, `js/auth.js` | The other screens and sign-in |
-| `js/category.js`, `js/errors.js`, `js/ids.js`, `js/items.js`, `js/codes.js`, `js/html.js` | Pure logic, unit tested |
+| `js/category.js`, `js/errors.js`, `js/ids.js`, `js/codes.js`, `js/html.js` | Pure logic, unit tested |
 | `js/firebase.js` | Firebase init, exposed as `window.FB`; loaded on demand |
 | `i18n/<lang>.js` | One dictionary per language; Hebrew is bundled, the rest load when chosen |
 
@@ -34,7 +36,16 @@ CDN requests are rerouted to a local bundle (see `tests/e2e/fixtures.mjs`).
 
 ## Data and security
 
-- `lists/{listId}`: a shared list. Only members can read or edit it.
+- `lists/{listId}`: a shared list (name, code, owner, members). Only members can read or edit it.
+- `lists/{listId}/items/{itemId}`: one document per item, so two people editing at once
+  never overwrite each other.
+- `lists/{listId}/history/{YYYY-MM}`: the purchases of one month (UTC), appended with
+  `arrayUnion`; un-ticking removes the same entry, which is also kept on the item.
+- Version-1 lists (arrays on the list document) are copied into the above by the first
+  member who opens them, then marked `schemaVersion: 2`; the old arrays stay as a
+  read-only backup. A second, simultaneous migration is refused by the rules.
+- Firestore keeps a copy on the device (IndexedDB), so an open app keeps working offline
+  and syncs when the connection returns.
 - `joinCodes/{code}`: points a join code at its list. Codes can be looked up one at a
   time but never listed. Joining writes `lists/{listId}/joins/{uid}` with the code and
   adds only the joiner to `members`, in one batch.

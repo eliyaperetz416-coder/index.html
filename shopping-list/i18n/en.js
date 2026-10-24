@@ -47,4 +47,5 @@ export default {
   errGeneric: 'Something went wrong. Please try again in a moment',
   errPopupBlocked: 'Your browser blocked the sign-in window. Allow pop-ups and try again',
   errSaveFailed: 'Your change wasn’t saved',
+  offlineNotice: 'Offline · changes are saved on this device and will sync when you’re back online',
 };

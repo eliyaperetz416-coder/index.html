@@ -8,7 +8,8 @@ import { initItemActions, addItem } from './actions.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
-import { cleanupStaleBoughtItems, save } from './sync.js';
+import { cleanupStaleBoughtItems } from './sync.js';
+import { initConnection } from './connection.js';
 
 async function main() {
   // A language we cannot load (unknown value in storage, or offline) falls back to Hebrew.
@@ -20,6 +21,7 @@ async function main() {
   initNav();
   initListUi();
   initAuth();
+  initConnection();
 
   applyTheme();
   applyLanguage();
@@ -31,7 +33,7 @@ async function main() {
   setInterval(() => {
     if (!state.activeListId) return;
     const removed = cleanupStaleBoughtItems();
-    if (removed) { render(); renderStats(); save(); }
+    if (removed) { render(); renderStats(); }
   }, 5 * 60 * 1000); // every 5 minutes
 
   // Register the service worker so the app can be installed to the home

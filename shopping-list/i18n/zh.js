@@ -47,4 +47,5 @@ export default {
   errGeneric: '出了点问题，请稍后再试',
   errPopupBlocked: '浏览器拦截了登录窗口。请允许弹出窗口后重试',
   errSaveFailed: '更改未能保存',
+  offlineNotice: '离线 · 更改已保存在本设备上，恢复联网后会自动同步',
 };

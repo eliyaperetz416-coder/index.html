@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { $, DEBUG } from './util.js';
 import { messageFor } from './ui.js';
-import { initForUser, stopListening } from './sync.js';
+import { startSync, stopSync } from './sync.js';
 import { closeListPicker } from './lists-ui.js';
 
 const loginScreen = $('loginScreen');
@@ -31,17 +31,17 @@ let listening = false;
 function startAuthListener() {
   if (listening) return;
   listening = true;
-  window.FB.onAuthChange(async (user) => {
+  window.FB.onAuthChange((user) => {
     state.user = user;
     if (user) {
       loginScreen.style.display = 'none';
       appRoot.style.display = 'block';
-      await initForUser();
+      startSync();
     } else {
       loginScreen.style.display = 'flex';
       appRoot.style.display = 'none';
       closeListPicker();
-      stopListening();
+      stopSync();
     }
   });
 }

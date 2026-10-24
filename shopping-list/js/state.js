@@ -7,8 +7,7 @@ export const state = {
   user: null,                 // Firebase auth user object
   lists: [],                  // [{id, name, code, ownerUid, members}]
   activeListId: localStorage.getItem('activeListId') || null,
-  items: [],                  // items of the active list (local mirror of Firestore)
-  purchaseHistory: [],        // purchase history of the active list
-  unsubscribeActiveList: null, // Firestore onSnapshot cleanup function
-  suppressNextSnapshot: false, // avoids re-rendering from our own writes echoing back
+  items: [],                  // items of the active list, from lists/{id}/items
+  purchaseHistory: [],        // recent purchases of the active list, from lists/{id}/history
+  pendingListId: null,        // a list just created or joined, before "my lists" includes it
 };

@@ -27,9 +27,9 @@ test('join failures show a friendly message by error code, not "not found" for e
   await expect(page.locator('#joinListError')).not.toContainText('DEBUG');
 });
 
-test('a failed save tells the user and does not swallow the next remote update', async ({ page }) => {
+test('a failed save tells the user', async ({ page }) => {
   await newUserWithList(page);
-  await page.evaluate(() => { window.FB.updateDoc = () => Promise.reject({ code: 'unavailable' }); });
+  await page.evaluate(() => { window.FB.setDoc = () => Promise.reject({ code: 'unavailable' }); });
   await page.fill('#itemInput', 'חלב');
   await page.click('#addBtn');
   await expect(page.locator('#toast')).toHaveClass(/show/);
@@ -53,8 +53,8 @@ test('create-list failure is shown under the form and the button works again', a
 test('if the lists cannot be loaded the user sees an error with retry, not the "no lists" screen', async ({ page }) => {
   await newUserWithList(page);
   await page.evaluate(() => {
-    window.__realGetDocs = window.FB.getDocs;
-    window.FB.getDocs = () => Promise.reject({ code: 'unavailable' });
+    window.__realOnSnapshot = window.FB.onSnapshot;
+    window.FB.onSnapshot = (...args) => { setTimeout(() => args[args.length - 1]({ code: 'unavailable' })); return () => {}; };
   });
   await page.evaluate(async () => { await window.__fb.auth.signOut(window.FB.auth); });
   await page.evaluate(async () => {
@@ -65,7 +65,7 @@ test('if the lists cannot be loaded the user sees an error with retry, not the "
   await expect(page.locator('#loadErrorText')).toHaveText('אין חיבור לאינטרנט. בדקו את הקליטה ונסו שוב');
   await expect(page.locator('#welcomeScreen')).toBeHidden();
 
-  await page.evaluate(() => { window.FB.getDocs = window.__realGetDocs; });
+  await page.evaluate(() => { window.FB.onSnapshot = window.__realOnSnapshot; });
   await page.click('#retryLoadBtn');
   await expect(page.locator('#loadErrorScreen')).toBeHidden();
   await expect(page.locator('#itemInput')).toBeVisible();

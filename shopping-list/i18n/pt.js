@@ -47,4 +47,5 @@ export default {
   errGeneric: 'Algo deu errado. Tente novamente em instantes',
   errPopupBlocked: 'O navegador bloqueou a janela de login. Permita pop-ups e tente novamente',
   errSaveFailed: 'A alteração não foi salva',
+  offlineNotice: 'Sem conexão · as alterações ficam salvas no aparelho e serão sincronizadas quando a conexão voltar',
 };

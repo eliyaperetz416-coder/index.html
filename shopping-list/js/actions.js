@@ -1,56 +1,28 @@
 // Adding, ticking off, deleting and prioritising items on the active list.
 import { state } from './state.js';
 import { $ } from './util.js';
-import { t } from './i18n.js';
-import { guessCategoryKey, CATEGORY_COLORS } from './category.js';
+import { guessCategoryKey } from './category.js';
 import { newId } from './ids.js';
-import { toggleBought as toggleBoughtState } from './items.js';
-import { render } from './render.js';
-import { save } from './sync.js';
+import { addItemDoc, setBought, setUrgencyDoc, deleteItemDoc } from './sync.js';
 
-function guessCategory(name) {
-  const key = guessCategoryKey(name, state.lang);
-  return { key, name: t().categories[key], color: CATEGORY_COLORS[key] };
-}
-
+// Each action writes one item document; the list re-renders from the live listener
+// (immediately, from the local cache — also offline).
 export function addItem(name) {
   if (!name.trim() || !state.activeListId) return;
-  const cat = guessCategory(name);
-  state.items.push({
-    id: newId(),
-    name: name.trim(),
-    bought: false,
-    catKey: cat.key,
-    catName: cat.name,
-    catColor: cat.color,
-  });
-  save();
-  render();
+  addItemDoc({ id: newId(), name: name.trim(), catKey: guessCategoryKey(name, state.lang) });
 }
 
 function toggleBought(id) {
-  ({ items: state.items, purchaseHistory: state.purchaseHistory } =
-    toggleBoughtState(state.items, state.purchaseHistory, id));
-  save();
-  render();
+  const item = state.items.find(i => i.id === id);
+  if (item) setBought(item, !item.bought);
 }
 
-// purchaseHistory is a separate log of {itemId, name, catKey, catColor, timestamp} for
-// every item marked bought. It is kept even if the item is later deleted from the list,
-// so weekly stats stay accurate; un-marking an item removes the entry that marking added.
-// Capped to the most recent 500 entries (see items.js).
-
 function deleteItem(id) {
-  state.items = state.items.filter(i => i.id !== id);
-  save();
-  render();
+  deleteItemDoc(id);
 }
 
 function setUrgency(id, urgency) {
-  const item = state.items.find(i => i.id === id);
-  if (item) item.urgency = urgency;
-  save();
-  render();
+  setUrgencyDoc(id, urgency);
 }
 
 export function initItemActions() {

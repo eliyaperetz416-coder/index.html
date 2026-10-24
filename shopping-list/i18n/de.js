@@ -47,4 +47,5 @@ export default {
   errGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es gleich noch einmal',
   errPopupBlocked: 'Der Browser hat das Anmeldefenster blockiert. Erlaube Pop-ups und versuche es erneut',
   errSaveFailed: 'Die Änderung wurde nicht gespeichert',
+  offlineNotice: 'Offline · Änderungen werden auf dem Gerät gespeichert und synchronisiert, sobald du wieder online bist',
 };

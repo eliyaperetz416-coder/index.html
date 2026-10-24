@@ -1,5 +1,5 @@
 import { devices } from '@playwright/test';
-import { test, expect, resetEmulators, signInAs, readListDoc, activeListId, routeFirebase } from './fixtures.mjs';
+import { test, expect, resetEmulators, signInAs, readListDoc, activeListId, routeFirebase, serverItems, serverHistory } from './fixtures.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -32,10 +32,10 @@ test('creating the first list from the welcome screen opens it, and items persis
   await expect(page.locator('.item-name', { hasText: 'חלב' })).toBeVisible();
 
   const listId = await activeListId(page);
-  await expect.poll(async () => (await readListDoc(page, listId)).items.length).toBe(1);
-  const doc = await readListDoc(page, listId);
-  expect(doc.items[0].id).toMatch(UUID);
-  expect(doc.items[0].catKey).toBe('dairy');
+  await expect.poll(async () => (await serverItems(listId)).length).toBe(1);
+  const [item] = await serverItems(listId);
+  expect(item.id).toMatch(UUID);
+  expect(item.catKey).toBe('dairy');
 
   // survives a reload
   await page.reload();
@@ -51,7 +51,7 @@ test('marking bought adds one purchase and un-marking removes it again', async (
   await page.click('#addBtn');
   const listId = await activeListId(page);
 
-  const history = async () => (await readListDoc(page, listId)).purchaseHistory.length;
+  const history = async () => (await serverHistory(listId)).length;
 
   await page.locator('.checkbox').first().click();
   await expect.poll(history).toBe(1);

@@ -8,8 +8,9 @@ import {
   getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, writeBatch,
-  collection, query, where, arrayUnion, serverTimestamp
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore,
+  doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch,
+  collection, query, where, documentId, arrayUnion, arrayRemove, deleteField, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,7 +24,15 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+// Keep a copy of the data on the device (IndexedDB), so the app keeps working without a
+// connection and syncs when it comes back. Shared between open tabs.
+let db;
+try {
+  db = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (err) {
+  console.warn('Offline persistence unavailable, continuing without it:', err);
+  db = getFirestore(fbApp);
+}
 const googleProvider = new GoogleAuthProvider();
 
 // Mobile browsers (especially Safari on iOS) frequently fail to complete
@@ -48,8 +57,8 @@ getRedirectResult(auth).catch(err => {
 // Expose what the rest of the app needs via window.FB (the app calls window.FB.x at
 // call time; the end-to-end tests also replace members of it to simulate failures).
 window.FB = {
-  auth, db, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, writeBatch,
-  collection, query, where, arrayUnion, serverTimestamp,
+  auth, db, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch,
+  collection, query, where, documentId, arrayUnion, arrayRemove, deleteField, serverTimestamp,
   signInWithGoogle,
   signOutUser: () => signOut(auth),
   onAuthChange: (cb) => onAuthStateChanged(auth, cb),

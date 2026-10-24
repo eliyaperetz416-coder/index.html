@@ -2,9 +2,15 @@ rules_version = '2';
 
 // Shopping list security rules.
 //
-//   lists/{listId}                 a shared list; only its members can read or edit it
-//   lists/{listId}/joins/{uid}     "I joined with this code" — written by the joiner
-//   joinCodes/{code}               code -> listId; can be looked up one at a time, never listed
+//   lists/{listId}                  a shared list; only its members can read or edit it
+//   lists/{listId}/items/{itemId}   one item on the list (schema version 2)
+//   lists/{listId}/history/{YYYY-MM} purchases of one month (schema version 2)
+//   lists/{listId}/joins/{uid}      "I joined with this code" — written by the joiner
+//   joinCodes/{code}                code -> listId; can be looked up one at a time, never listed
+//
+// Version 1 lists kept items and purchase history as arrays on the list document. Any
+// member's app copies them into items/history, then sets schemaVersion: 2. From then on
+// the old arrays are a read-only backup.
 //
 // Tested in tests/rules/firestore.test.mjs (npm run test:rules).
 service cloud.firestore {
@@ -29,6 +35,30 @@ service cloud.firestore {
     function codePath(code) {
       return /databases/$(database)/documents/joinCodes/$(code);
     }
+    function isListMember(listId) {
+      return signedIn() && me() in get(listPath(listId)).data.members;
+    }
+    function optional(data, key, test) {
+      return !(key in data) || test;
+    }
+    function validEntry(e) {
+      return e is map
+        && e.keys().hasOnly(['itemId', 'name', 'catKey', 'timestamp'])
+        && e.name is string && e.name.size() <= 200
+        && e.catKey is string && e.catKey.size() <= 20
+        && e.timestamp is number;
+    }
+    function validItem(d) {
+      return d.keys().hasOnly(['name', 'catKey', 'bought', 'boughtAt', 'createdAt', 'createdBy', 'urgency', 'purchase'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 200
+        && d.catKey is string && d.catKey.size() <= 20
+        && d.bought is bool
+        && (d.boughtAt == null || d.boughtAt is number)
+        && d.createdAt is number
+        && d.createdBy is string
+        && optional(d, 'urgency', d.get('urgency', null) == null || d.get('urgency', null) in ['high', 'medium', 'low'])
+        && optional(d, 'purchase', validEntry(d.get('purchase', null)));
+    }
 
     match /lists/{listId} {
       function isMember() { return signedIn() && me() in resource.data.members; }
@@ -43,9 +73,23 @@ service cloud.firestore {
           && request.resource.data.members.size() == resource.data.members.size() - 1;
       }
 
+      function migrated() { return resource.data.get('schemaVersion', 1) == 2; }
+
+      // Moving to version 2 happens once, together with a migration time. A second,
+      // late migration (another member's app at the same moment) is refused as a whole.
+      function migrationFlagOk() {
+        return !changed().hasAny(['schemaVersion', 'migratedAt'])
+          || (changed().hasAll(['schemaVersion', 'migratedAt'])
+              && request.resource.data.schemaVersion == 2
+              && request.resource.data.migratedAt == request.time
+              && !migrated());
+      }
+
       function memberEdit() {
         return isMember()
           && !changed().hasAny(['ownerUid', 'createdAt'])
+          && migrationFlagOk()
+          && (!changed().hasAny(['items', 'purchaseHistory']) || !migrated())
           && (!changed().hasAny(['members']) || leavesAlone())
           && (!changed().hasAny(['code']) || (isOwner() && validCode(request.resource.data.code)))
           && (!changed().hasAny(['name']) || validName(request.resource.data.name))
@@ -68,17 +112,40 @@ service cloud.firestore {
       // `list` (queries) works only for "where members array-contains me".
       allow get, list: if isMember();
 
+      // New lists are version 2 (no arrays); the old app version still creates version 1.
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['name', 'code', 'ownerUid', 'members', 'items', 'purchaseHistory', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'code', 'ownerUid', 'members', 'items', 'purchaseHistory', 'createdAt', 'schemaVersion'])
         && request.resource.data.ownerUid == me()
         && request.resource.data.members == [me()]
         && validName(request.resource.data.name)
         && validCode(request.resource.data.code)
-        && smallList(request.resource.data.items)
-        && smallList(request.resource.data.purchaseHistory);
+        && smallList(request.resource.data.get('items', []))
+        && smallList(request.resource.data.get('purchaseHistory', []))
+        && request.resource.data.get('schemaVersion', 1) in [1, 2];
 
       allow update: if memberEdit() || joinsWithCode();
       allow delete: if isOwner();
+
+      match /items/{itemId} {
+        allow read: if isListMember(listId);
+        allow create: if isListMember(listId)
+          && itemId.size() <= 64
+          && validItem(request.resource.data)
+          && request.resource.data.createdBy == me();
+        allow update: if isListMember(listId)
+          && validItem(request.resource.data)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
+        allow delete: if isListMember(listId);
+      }
+
+      match /history/{month} {
+        allow read: if isListMember(listId);
+        allow create, update: if isListMember(listId)
+          && month.matches('^[0-9]{4}-[0-9]{2}$')
+          && request.resource.data.keys().hasOnly(['entries'])
+          && request.resource.data.entries is list
+          && request.resource.data.entries.size() <= 5000;
+      }
 
       match /joins/{uid} {
         allow read: if signedIn() && (uid == me() || me() in get(listPath(listId)).data.members);

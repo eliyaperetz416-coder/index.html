@@ -744,3 +744,28 @@
 
   .toast.show { opacity: 1; transform: none; }
 
+
+  /* Shown while there is no connection; changes keep working from the device cache */
+  .offline-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -8px 0 14px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--surface-dim);
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .offline-bar::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--yellow);
+    flex-shrink: 0;
+  }
+
+  .offline-bar[hidden] { display: none; }

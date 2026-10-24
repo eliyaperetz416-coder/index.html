@@ -22,6 +22,13 @@ export function getAuth(app) {
   return auth;
 }
 
+export function initializeFirestore(app, settings) {
+  const db = fsMod.initializeFirestore(app, settings);
+  fsMod.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  db.__emulator = true;
+  return db;
+}
+
 export function getFirestore(app) {
   const db = fsMod.getFirestore(app);
   if (!db.__emulator) {
