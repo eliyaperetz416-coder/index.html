@@ -85,6 +85,7 @@
 
     <div class="list-toolbar">
       <button type="button" class="chip-btn" id="shopModeBtn" aria-pressed="false">🛍️ <span id="shopModeLabel">מצב קנייה</span></button>
+      <button type="button" class="chip-btn" id="templatesBtn">📑 <span id="templatesLabel">תבניות</span></button>
     </div>
 
     <div class="list" id="list"></div>
@@ -241,6 +242,32 @@
     <button class="text-link-btn danger" id="leaveListBtn">עזוב את הרשימה</button>
     <button class="text-link-btn danger" id="deleteListBtn">מחק את הרשימה</button>
     <button class="close-btn" id="closeManageBtn">סגור</button>
+  </div>
+</div>
+
+<div class="settings-overlay" id="templatesOverlay">
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="templatesTitle">
+    <h2 id="templatesTitle">תבניות לרשימה</h2>
+
+    <div class="setting-group">
+      <label id="saveTemplateLabel" for="templateName">שמירת הרשימה כתבנית</label>
+      <div class="inline-form-row">
+        <input type="text" id="templateName" maxlength="100" autocomplete="off" />
+        <button class="inline-form-btn" id="saveTemplateBtn" aria-label="✓">✓</button>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label id="savedTemplatesLabel">התבניות שלי</label>
+      <ul class="template-list" id="savedTemplates"></ul>
+    </div>
+
+    <div class="setting-group">
+      <label id="builtinTemplatesLabel">תבניות מוכנות</label>
+      <ul class="template-list" id="builtinTemplates"></ul>
+    </div>
+
+    <button class="close-btn" id="closeTemplatesBtn">סגור</button>
   </div>
 </div>
 

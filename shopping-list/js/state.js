@@ -13,5 +13,6 @@ export const state = {
   statsPeriod: localStorage.getItem('statsPeriod') === 'month' ? 'month' : 'week',
   collapsed: new Set(),       // categories folded away in shopping mode
   completedSeen: new Set(),   // categories that were already finished (they fold once, by themselves)
+  templates: [],              // saved templates of the active list, from lists/{id}/templates
   pendingListId: null,        // a list just created or joined, before "my lists" includes it
 };

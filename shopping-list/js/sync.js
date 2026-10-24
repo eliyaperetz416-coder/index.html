@@ -11,6 +11,8 @@ import { showToast, messageFor } from './ui.js';
 import { render, updateHeaderForList } from './render.js';
 import { renderStats } from './stats.js';
 import { generateJoinCode, normalizeJoinCode, isValidJoinCode } from './codes.js';
+import { readTemplate } from './templates.js';
+import { newId } from './ids.js';
 import {
   SCHEMA_VERSION, planMigration, historyStartKey, flattenHistory, sortItems,
   isStaleBought, purchaseEntry, monthKey, REMOVE,
@@ -73,6 +75,29 @@ export function updateItemDoc(itemId, changes) {
 
 export function deleteItemDoc(itemId) {
   write(FB().deleteDoc(itemRef(state.activeListId, itemId)));
+}
+
+// Adds several items at once (a template). Returns the ids of the new items.
+export function addItemDocs(entries) {
+  const listId = state.activeListId;
+  const base = Date.now();
+  const created = [];
+  for (let i = 0; i < entries.length; i += 450) {
+    const batch = FB().writeBatch(FB().db);
+    entries.slice(i, i + 450).forEach((entry, j) => {
+      const id = newId();
+      const data = {
+        name: entry.name, catKey: entry.catKey, bought: false, boughtAt: null,
+        createdAt: base + i + j, createdBy: state.user.uid,
+      };
+      if (entry.quantity) data.quantity = entry.quantity;
+      if (entry.note) data.note = entry.note;
+      batch.set(itemRef(listId, id), data);
+      created.push({ id, ...data });
+    });
+    write(batch.commit());
+  }
+  return created;
 }
 
 // Deletes several items (in batches of at most 450 writes).
@@ -165,6 +190,7 @@ function subscribeToActiveList() {
   appRoot.classList.toggle('no-list', !state.activeListId);
   state.items = [];
   state.purchaseHistory = [];
+  state.templates = [];
   render();
   renderStats();
   updateHeaderForList();
@@ -187,6 +213,11 @@ function subscribeToActiveList() {
     cleanupStaleBoughtItems();
     render();
     renderStats();
+  }, (err) => onListError(listId, err)));
+
+  activeUnsubs.push(FB().onSnapshot(FB().collection(FB().db, 'lists', listId, 'templates'), (snap) => {
+    state.templates = snap.docs.map((d) => readTemplate(d.id, d.data()));
+    document.dispatchEvent(new Event('templates-changed'));
   }, (err) => onListError(listId, err)));
 
   const recent = FB().query(
@@ -398,6 +429,18 @@ async function registerOldJoinCodes() {
       console.error('Registering the join code failed (will retry next time):', list.id, err);
     }
   }
+}
+
+// ============================================================
+// TEMPLATES
+// ============================================================
+export function saveTemplateDoc({ name, items }) {
+  const ref = FB().doc(FB().collection(FB().db, 'lists', state.activeListId, 'templates'));
+  write(FB().setDoc(ref, { name, items, createdBy: state.user.uid, createdAt: Date.now() }));
+}
+
+export function deleteTemplateDoc(templateId) {
+  write(FB().deleteDoc(FB().doc(FB().db, 'lists', state.activeListId, 'templates', templateId)));
 }
 
 // ============================================================

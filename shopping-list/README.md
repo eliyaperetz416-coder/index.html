@@ -15,7 +15,14 @@ ten languages.
 | `js/sync.js` | Lists + Firestore: live listeners, item writes, create / join, migration |
 | `js/model.js` | Data model v2 and the v1 -> v2 migration plan (pure, unit tested) |
 | `js/connection.js` | The quiet "offline" notice |
-| `js/actions.js` | Add / tick off / delete / urgency |
+| `js/actions.js`, `js/undo.js` | Add / tick off / delete / clear bought, and the Undo toast |
+| `js/autocomplete.js`, `js/suggest.js` | The add box with suggestions from past purchases |
+| `js/item-edit.js` | The edit sheet (name, quantity, note, category, urgency) |
+| `js/swipe.js`, `js/gestures.js` | Swipe to tick / delete (logic is pure and tested) |
+| `js/shopping.js` | Shopping mode (grouped, big rows, screen kept awake) |
+| `js/list-manage.js`, `js/confirm.js` | List settings: rename, code, members, leave, delete; invitation link |
+| `js/templates.js`, `js/templates-ui.js` | Ready-made and saved templates |
+| `js/stats-calc.js` | The numbers of the stats screen (week / month, most bought) |
 | `js/render.js`, `js/stats.js` | Drawing the list, the stats screen and suggestions |
 | `js/settings.js`, `js/lists-ui.js`, `js/nav.js`, `js/auth.js` | The other screens and sign-in |
 | `js/category.js`, `js/errors.js`, `js/ids.js`, `js/codes.js`, `js/html.js` | Pure logic, unit tested |
@@ -44,6 +51,9 @@ CDN requests are rerouted to a local bundle (see `tests/e2e/fixtures.mjs`).
 - Version-1 lists (arrays on the list document) are copied into the above by the first
   member who opens them, then marked `schemaVersion: 2`; the old arrays stay as a
   read-only backup. A second, simultaneous migration is refused by the rules.
+- `lists/{listId}/templates/{id}`: the list's saved templates (`name`, `items`).
+- Each member publishes their own display name in the list's `memberNames` map (the rules
+  let nobody write anyone else's); it is only used to show who is in the list.
 - Firestore keeps a copy on the device (IndexedDB), so an open app keeps working offline
   and syncs when the connection returns.
 - `joinCodes/{code}`: points a join code at its list. Codes can be looked up one at a

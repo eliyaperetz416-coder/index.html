@@ -11,6 +11,7 @@ import { initToast } from './ui.js';
 import { initSwipe } from './swipe.js';
 import { initShopping } from './shopping.js';
 import { initListManage, captureInvite } from './list-manage.js';
+import { initTemplatesUi } from './templates-ui.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
@@ -33,6 +34,7 @@ async function main() {
   initNav();
   initListUi();
   initListManage();
+  initTemplatesUi();
   initAuth();
   initConnection();
 

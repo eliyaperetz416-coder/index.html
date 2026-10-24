@@ -362,3 +362,34 @@ test('with the old code gone, joining with it fails and joining with the new one
   await assertFails(joinBatch(as(STRANGER), STRANGER, LIST, CODE));
   await assertSucceeds(joinBatch(as(STRANGER), STRANGER, LIST, 'NEWC2345'));
 });
+
+// ======================= templates =======================
+const template = (over = {}) => ({ name: 'קניות שבת', items: [{ name: 'חלה', catKey: 'bakery' }], createdBy: MEMBER, createdAt: 1, ...over });
+const tplRef = (db, id = 't1', listId = LIST) => doc(db, 'lists', listId, 'templates', id);
+
+test('members can save, read, change and delete templates', async () => {
+  const db = as(MEMBER);
+  await assertSucceeds(setDoc(tplRef(db), template()));
+  await assertSucceeds(getDocs(collection(as(OWNER), 'lists', LIST, 'templates')));
+  await assertSucceeds(updateDoc(tplRef(as(OWNER)), { name: 'שם חדש' }));
+  await assertSucceeds(deleteDoc(tplRef(as(OWNER))));
+});
+
+test('strangers cannot touch the templates of a list', async () => {
+  await env.withSecurityRulesDisabled((ctx) => setDoc(tplRef(ctx.firestore()), template()));
+  await assertFails(getDoc(tplRef(as(STRANGER))));
+  await assertFails(setDoc(tplRef(as(STRANGER), 'x'), template({ createdBy: STRANGER })));
+  await assertFails(deleteDoc(tplRef(as(STRANGER))));
+});
+
+test('templates must have a sane shape and cannot change who created them', async () => {
+  const db = as(MEMBER);
+  await assertFails(setDoc(tplRef(db, 'a'), template({ name: '' })));
+  await assertFails(setDoc(tplRef(db, 'b'), template({ name: 'x'.repeat(101) })));
+  await assertFails(setDoc(tplRef(db, 'c'), template({ items: 'no' })));
+  await assertFails(setDoc(tplRef(db, 'd'), template({ items: Array.from({ length: 201 }, () => ({ name: 'x', catKey: 'other' })) })));
+  await assertFails(setDoc(tplRef(db, 'e'), template({ extra: 1 })));
+  await assertFails(setDoc(tplRef(db, 'f'), template({ createdBy: OWNER })));
+  await assertSucceeds(setDoc(tplRef(db, 'g'), template()));
+  await assertFails(updateDoc(tplRef(as(OWNER), 'g'), { createdBy: OWNER }));
+});

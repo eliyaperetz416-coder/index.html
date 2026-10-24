@@ -7,6 +7,7 @@ import { renderStats } from './stats.js';
 import { renderConnection } from './connection.js';
 import { applyItemEditLanguage } from './item-edit.js';
 import { applyListManageLanguage } from './list-manage.js';
+import { applyTemplatesLanguage } from './templates-ui.js';
 
 export function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
@@ -56,6 +57,7 @@ export function applyLanguage() {
   $('retryLoadBtn').textContent = dict.retryLabel;
   $('shopModeLabel').textContent = dict.shopModeLabel;
   applyListManageLanguage();
+  applyTemplatesLanguage();
   applyItemEditLanguage();
   $('langSelect').value = state.lang;
   renderConnection();
