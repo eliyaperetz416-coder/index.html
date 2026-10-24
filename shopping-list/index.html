@@ -75,7 +75,11 @@
 
   <div class="screen active" id="listScreen">
     <div class="add-row">
-      <input type="text" id="itemInput" />
+      <div class="add-field">
+        <input type="text" id="itemInput" autocomplete="off" enterkeyhint="done"
+               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestBox" />
+        <ul class="suggest-box" id="suggestBox" role="listbox" hidden></ul>
+      </div>
       <button id="addBtn" aria-label="הוסף">+</button>
     </div>
 

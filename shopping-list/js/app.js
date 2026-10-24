@@ -5,6 +5,7 @@ import { render } from './render.js';
 import { initStats, renderStats } from './stats.js';
 import { initNav } from './nav.js';
 import { initItemActions, addItem } from './actions.js';
+import { initAutocomplete } from './autocomplete.js';
 import { initSettings, applyTheme, applyLanguage } from './settings.js';
 import { initListUi } from './lists-ui.js';
 import { initAuth, connectFirebase } from './auth.js';
@@ -17,6 +18,7 @@ async function main() {
 
   initSettings();
   initItemActions();
+  initAutocomplete(addItem);
   initStats(addItem);
   initNav();
   initListUi();

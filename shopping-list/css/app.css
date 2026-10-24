@@ -86,7 +86,7 @@
   }
 
   .add-row input {
-    flex: 1;
+    width: 100%;
     height: 50px;
     border-radius: var(--radius);
     border: none;
@@ -769,3 +769,43 @@
   }
 
   .offline-bar[hidden] { display: none; }
+
+  /* Autocomplete under the add box */
+  .add-field { position: relative; flex: 1; }
+
+  .suggest-box {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + 4px);
+    z-index: 6;
+    list-style: none;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .suggest-box[hidden] { display: none; }
+
+  .suggest-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .suggest-option .suggest-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--cat-color, var(--purple));
+    flex-shrink: 0;
+  }
+
+  .suggest-option[aria-selected="true"], .suggest-option:hover { background: var(--surface-dim); }

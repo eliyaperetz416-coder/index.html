@@ -1,15 +1,18 @@
 // Adding, ticking off, deleting and prioritising items on the active list.
 import { state } from './state.js';
 import { $ } from './util.js';
-import { guessCategoryKey } from './category.js';
+import { guessCategoryKey, safeCategoryKey } from './category.js';
 import { newId } from './ids.js';
 import { addItemDoc, setBought, setUrgencyDoc, deleteItemDoc } from './sync.js';
 
 // Each action writes one item document; the list re-renders from the live listener
 // (immediately, from the local cache — also offline).
-export function addItem(name) {
+// `catKey` comes from an autocomplete suggestion (the category used the last time);
+// without one the category is guessed from the name.
+export function addItem(name, catKey) {
   if (!name.trim() || !state.activeListId) return;
-  addItemDoc({ id: newId(), name: name.trim(), catKey: guessCategoryKey(name, state.lang) });
+  const key = catKey && catKey !== 'other' ? safeCategoryKey(catKey) : guessCategoryKey(name, state.lang);
+  addItemDoc({ id: newId(), name: name.trim(), catKey: key });
 }
 
 function toggleBought(id) {
@@ -33,14 +36,8 @@ export function initItemActions() {
   addBtn.addEventListener('click', () => {
     addItem(itemInput.value);
     itemInput.value = '';
+    itemInput.dispatchEvent(new Event('input')); // closes the suggestions
     itemInput.focus();
-  });
-
-  itemInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      addItem(itemInput.value);
-      itemInput.value = '';
-    }
   });
 
   listEl.addEventListener('click', (e) => {
