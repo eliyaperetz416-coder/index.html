@@ -64,6 +64,13 @@ input,textarea{font:inherit;color:inherit}
 .todaybtn:active{background:var(--s3)}
 .todaybtn[disabled]{opacity:.35;pointer-events:none}
 
+.nn{display:flex;align-items:center;gap:8px;width:100%;min-height:32px;margin-top:6px;padding:5px 10px;border-radius:12px;background:var(--s2);font-size:13.5px;cursor:pointer;min-width:0}
+.nn:active{background:var(--s3)}
+.nn .nd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,var(--mut2))}
+.nn .nt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nn .nt b{font-weight:700}
+.nn .miss{color:#ffb454}
+.nn .prog{flex:none;background:var(--s3)}
 .strip{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:6px -6px 0;padding-bottom:8px}
 .week .strip{margin-inline:var(--gut) 0}
 .dchip{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0 4px;border-radius:13px;color:var(--mut);transition:background .2s,color .2s,transform .1s}
@@ -199,7 +206,11 @@ main.slide-r{animation:slR .22s var(--ease)}
 .fab:active{transform:scale(.92)}
 .fab svg{width:28px;height:28px;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;fill:none;transition:transform .35s var(--ease)}
 .fab:hover svg{transform:rotate(90deg)}
-body.sheet-open .fab{transform:scale(.6);opacity:0;pointer-events:none}
+body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer-events:none}
+.vbtn{position:fixed;z-index:30;inset-inline-end:calc(max(20px,calc(50% - 390px)) + 7px);bottom:calc(22px + 62px + 14px + var(--safe-b));width:48px;height:48px;border-radius:50%;background:var(--s3);border:1px solid var(--line2);display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.5);transition:transform .35s var(--ease),opacity .25s}
+.vbtn:active{transform:scale(.92)}
+.vbtn svg,.mic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vbtn{color:var(--tx)}
 
 /* ───────── חלונית (Sheet) ───────── */
 .ov{touch-action:none;position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;
@@ -266,6 +277,44 @@ body.sheet-open .fab{transform:scale(.6);opacity:0;pointer-events:none}
 .nxt{font-size:13px;color:var(--mut);margin-top:-6px}
 .nxt:empty{display:none}
 .dels{display:grid;gap:8px;margin-top:2px}
+.swrow{display:flex;align-items:center;gap:12px;background:var(--s2);border-radius:14px;padding:11px 14px;cursor:pointer;font-size:15px;font-weight:600}
+.swrow input{position:absolute;opacity:0;pointer-events:none}
+.swrow .sw{flex:none;width:42px;height:26px;border-radius:13px;background:var(--s3);position:relative;transition:background .2s}
+.swrow .sw::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:20px;height:20px;border-radius:50%;background:var(--tx);transition:transform .25s var(--ease)}
+.swrow input:checked+.sw{background:var(--ok)}
+.swrow input:checked+.sw::after{transform:translateX(-16px)}
+.swrow input:focus-visible+.sw{outline:2px solid var(--tx);outline-offset:2px}
+.swrow small{display:block;color:var(--mut);font-weight:400;font-size:12.5px}
+.vwrap{display:grid;gap:12px;padding-top:4px}
+.mic{width:84px;height:84px;border-radius:50%;background:var(--tx);color:#0a0a0d;display:grid;place-items:center;margin:6px auto 0;transition:background .2s,transform .12s}
+.mic svg{width:34px;height:34px;stroke-width:2}
+.mic:active{transform:scale(.94)}
+.mic[disabled]{opacity:.35}
+.mic.rec{background:var(--danger);color:#fff;animation:micpulse 1.4s ease-out infinite}
+@keyframes micpulse{0%{box-shadow:0 0 0 0 rgba(255,107,107,.55)}100%{box-shadow:0 0 0 26px rgba(255,107,107,0)}}
+.vstat{text-align:center;color:var(--mut);font-size:14px;min-height:21px}
+.vstat.err{color:#ffb454}
+.vtxt{width:100%;background:var(--s2);border:0;outline:0;border-radius:14px;padding:12px 14px;font-size:17px;line-height:1.4;resize:none;min-height:66px;color:var(--tx)}
+.vtxt:focus{box-shadow:0 0 0 1.5px var(--mut2)}
+.vtxt::placeholder{color:var(--mut2)}
+.pv{background:var(--s2);border-radius:16px;padding:12px 14px;display:grid;gap:7px}
+.pv-h{display:flex;align-items:center;gap:8px;min-width:0}
+.pv-h i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.pv-h b{font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-h span{margin-inline-start:auto;flex:none;font-size:12.5px;color:var(--mut)}
+.pv-r{display:flex;justify-content:space-between;gap:12px;font-size:14.5px}
+.pv-r span{color:var(--mut)}
+.pv-r b{font-weight:600;text-align:end}
+.pv-n{font-size:13px;color:#ffb454}
+.vact{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vact .btn{padding:12px;font-size:15px}
+.vact .btn[disabled]{opacity:.35;pointer-events:none}
+.vnote{margin:2px 0 0;color:var(--mut2);font-size:12.5px;text-align:center}
+.blk.routine{background:linear-gradient(rgba(255,255,255,.03),rgba(255,255,255,.03)),var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.blk.routine::before{opacity:.55;width:2.5px}
+.blk.routine .bt b{font-weight:500;color:var(--mut)}
+.blk.routine .bt .sub{opacity:.8}
+.wb.routine{opacity:.6;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line)}
 .dels .btn{width:100%;padding:12px}
 
 /* הגדרות */
@@ -306,13 +355,14 @@ body.sheet-open .fab{transform:scale(.6);opacity:0;pointer-events:none}
 <div id="app">
   <header class="top" id="top">
     <div class="r1">
-      <div class="ttl"><h1 id="h1"></h1><p><span id="h2t"></span><span class="prog" id="prog" hidden></span></p></div>
+      <div class="ttl"><h1 id="h1"></h1><p><span id="h2t"></span></p></div>
       <button class="ib" id="prev" aria-label="הקודם"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="ib" id="next" aria-label="הבא"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
       <button class="ib" id="gear" aria-label="הגדרות וקטגוריות">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </div>
+    <div class="nn" id="nn" role="button" tabindex="0" aria-label="עכשיו והבא"><i class="nd" id="nnd"></i><span class="nt" id="nnt"></span><span class="prog" id="prog" hidden></span></div>
     <div class="strip" id="strip"></div>
   </header>
   <main id="main"></main>
@@ -323,6 +373,7 @@ body.sheet-open .fab{transform:scale(.6);opacity:0;pointer-events:none}
     </div>
     <button class="todaybtn" id="todayBtn">היום</button>
   </nav>
+  <button class="vbtn" id="vbtn" aria-label="הוספה בדיבור"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
   <button class="fab" id="fab" aria-label="משימה חדשה"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
 <div id="layer"></div>
@@ -383,7 +434,7 @@ function clean(raw) {
     const out = {
       id, title: String(t.title == null ? '' : t.title).trim().slice(0, 80) || cats.find(c => c.id === cat).name, cat,
       start: t.start, end: t.end, date: t.date, notes: typeof t.notes === 'string' ? t.notes.slice(0, 300) : '',
-      done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }
+      done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }, routine: !!t.routine
     };
     if (validDate(t.until)) out.until = t.until;
     tasks.push(out);
@@ -502,16 +553,17 @@ function renderHeader() {
   const ws = startOfWeek(d), tk = todayKey();
   $('#strip').innerHTML = Array.from({ length: 7 }, (_, i) => {
     const dd = addDays(ws, i), k = keyOf(dd);
-    const cs = [...new Set(segs(k).map(g => g.t.cat))].slice(0, 3);
+    const cs = [...new Set(segs(k).filter(g => !g.t.routine).map(g => g.t.cat))].slice(0, 3);
     return `<button class="dchip${k === tk ? ' today' : ''}${S.view === 'day' && k === ui.date ? ' sel' : ''}" data-date="${k}" aria-label="יום ${DAYS[i]} ${dd.getDate()}">
       <small>${DL[i]}׳</small><b>${dd.getDate()}</b><i>${cs.map(c => `<s style="--c:${cat(c).color}"></s>`).join('')}</i></button>`;
   }).join('');
   updateRing();
+  updateNowNext();
 }
 
 function updateRing() {
   let total = 0, done = 0;
-  rangeKeys().forEach(k => occ(k).forEach(t => { total++; if (isDone(t, k)) done++; }));
+  rangeKeys().forEach(k => occ(k).forEach(t => { if (t.routine) return; total++; if (isDone(t, k)) done++; }));
   const pr = $('#prog');
   pr.hidden = total === 0;
   pr.classList.toggle('full', total > 0 && done === total);
@@ -519,16 +571,16 @@ function updateRing() {
 }
 
 function blockHTML(it, k, ppm) {
-  const t = it.t, c = cat(t.cat), done = isDone(t, it.k0);
+  const t = it.t, c = cat(t.cat), done = !t.routine && isDone(t, it.k0);
   const top = TOP + it.s * ppm + 1;
   const h = Math.max(it.e - it.s, 1) * ppm - 2;
   const cls = h < 30 ? 'tiny' : h < 50 ? 'short' : '';
   const dense = it.n >= 4 ? ' xdense' : it.n === 3 ? ' dense' : '';
   const w = 100 / it.n;
   const sub = `<span class="tm">${t.start}–${t.end}</span>${h >= 50 && it.n === 1 ? ' · ' + esc(c.name) : ''}${(t.repeat && t.repeat.type !== 'none') ? ' ↻' : ''}${it.cont ? ' · המשך' : ''}`;
-  return `<div class="blk ${cls}${dense}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}"
+  return `<div class="blk ${cls}${dense}${t.routine ? ' routine' : ''}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}"
       style="--c:${c.color};--cb:${rgba(c.color, .17)};top:${top}px;height:${h}px;inset-inline-start:calc(${it.col * w}% + 2px);width:calc(${w}% - 4px)">
-    <div class="bi">${it.n >= 4 ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>`}
+    <div class="bi">${it.n >= 4 || t.routine ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>`}
     <button type="button" class="bt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}"><b>${esc(t.title)}</b><span class="sub">${sub}</span></button></div>
     ${!it.cont && !span(t).over ? '<span class="rz rz-t" data-rz="t"></span><span class="rz rz-b" data-rz="b"></span>' : ''}
   </div>`;
@@ -540,14 +592,14 @@ function nowLine(ppm, withLabel) {
 }
 
 function renderDay(opts) {
-  const ppm = PPM(), k = ui.date, list = segs(k);
+  const ppm = PPM(), k = ui.date, list = segs(k), real = list.filter(g => !g.t.routine);
   let h = '';
-  const hint = list.length ? '' : `<div class="hintw"><div class="hint"><b>${k === todayKey() ? 'היום פנוי' : 'אין משימות ביום הזה'}</b>לחצו על + או החזיקו לחיצה על שעה בקו הזמן.
+  const hint = real.length ? '' : `<div class="hintw"><div class="hint"><b>${k === todayKey() ? 'היום פנוי' : 'אין משימות ביום הזה'}</b>לחצו על + או החזיקו לחיצה על שעה בקו הזמן.
       <div class="row"><button class="btn pri" data-act="add">הוסף משימה</button>${S.tasks.length ? '' : '<button class="btn" data-act="examples">טען דוגמאות</button>'}</div></div></div>`;
   let lines = '';
   for (let i = 0; i < 24; i++) lines += `<div class="hl" style="top:${TOP + i * 60 * ppm}px"><span>${pad(i)}:00</span></div>`;
   lines += `<div class="hl" style="top:${TOP + 1440 * ppm}px"></div>`;
-  const items = layout(list, ppm, 26);
+  const items = [...layout(list.filter(g => g.t.routine), ppm, 26), ...layout(real, ppm, 26)];   // שגרה ברקע, משימות מעליה
   h += `<div class="tl" id="tl" data-date="${k}" style="height:${TOP * 2 + 1440 * ppm}px">${hint}${lines}
     <div class="lane" id="lane">${items.map(it => blockHTML(it, k, ppm)).join('')}</div>
     ${k === todayKey() ? nowLine(ppm, true) : ''}</div>`;
@@ -563,10 +615,10 @@ function renderWeek(opts) {
   let cols = '';
   for (let i = 0; i < 7; i++) {
     const k = keyOf(addDays(ws, i));
-    const items = layout(segs(k), ppm, 16);
+    const sg = segs(k), items = [...layout(sg.filter(g => g.t.routine), ppm, 16), ...layout(sg.filter(g => !g.t.routine), ppm, 16)];
     cols += `<div class="wcol${k === tk ? ' today' : ''}" data-date="${k}">${items.map(it => {
-      const t = it.t, c = cat(t.cat), w = 100 / it.n, done = isDone(t, it.k0), hpx = Math.max((it.e - it.s) * ppm - 2, 14);
-      return `<div class="wb${done ? ' done' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
+      const t = it.t, c = cat(t.cat), w = 100 / it.n, done = !t.routine && isDone(t, it.k0), hpx = Math.max((it.e - it.s) * ppm - 2, 14);
+      return `<div class="wb${done ? ' done' : ''}${t.routine ? ' routine' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 && !t.routine ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
     }).join('')}${k === tk ? nowLine(ppm, false) : ''}</div>`;
   }
   main.innerHTML = `<div class="wk" id="tl" style="height:${TOP * 2 + 1440 * ppm}px">${lines}<div class="wcols">${cols}</div></div>`;
@@ -577,7 +629,7 @@ function scrollToRelevant(ppm, k, list) {
   const isToday = k === todayKey() || (S.view === 'week' && rangeKeys().includes(todayKey()));
   let m;
   if (isToday) { const n = new Date(); m = n.getHours() * 60 + n.getMinutes() - 60; }
-  else if (list.length) m = list[0].s - 45;
+  else if (list.some(g => !g.t.routine)) m = list.find(g => !g.t.routine).s - 45;
   else m = 7 * 60;
   const top = $('#top').offsetHeight;
   const y = main.getBoundingClientRect().top + window.scrollY + TOP + Math.max(m, 0) * ppm - top - 6;
@@ -609,7 +661,7 @@ function toggleDone(id, k, btn) {
   blk.classList.toggle('done', now);
   btn.setAttribute('aria-checked', now);
   if (now) { btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); vib(10); }
-  updateRing();
+  updateRing(); updateNowNext();
 }
 
 main.addEventListener('animationend', e => { if (e.target.classList.contains('chk')) e.target.classList.remove('pop'); });
@@ -777,7 +829,7 @@ function finishDrag(commit) {
 /* שמירת שעות חדשות. במשימה חוזרת שואלים מה לשנות */
 async function commitTimes(i, start, end, toDate) {
   const t = i.t, snap = JSON.stringify(S.tasks), rec = t.repeat && t.repeat.type !== 'none';
-  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', repeat: t.repeat };
+  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', routine: !!t.routine, repeat: t.repeat };
   let res = t;
   if (!rec) { t.start = start; t.end = end; t.date = toDate; }
   else if (toDate !== i.k0) res = applyEdit(t, data, 'one', i.k0, toDate);     // העברה ליום אחר = רק המופע הזה
@@ -933,7 +985,7 @@ function nextSlot(k) {
 /* שינוי משימה חוזרת: רק יום אחד, מהיום והלאה, או כל הסדרה */
 function applyEdit(task, data, scope, k, to = k) {
   if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); return task; }
-  const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes };
+  const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes, routine: !!data.routine };
   if (scope === 'one') {
     const clone = { id: uid(), ...base, date: to, repeat: { type: 'none', days: [] }, done: {}, skip: [] };
     if (task.done && task.done[k]) { clone.done[to] = task.done[k]; delete task.done[k]; }
@@ -948,10 +1000,10 @@ function applyEdit(task, data, scope, k, to = k) {
   S.tasks.push(clone);
   return clone;
 }
-function openTask({ task, date, start }) {
+function openTask({ task, date, start, prefill }) {
   const edit = !!task;
   const defCat = S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id;
-  const t = task || { title: '', cat: defCat, date: date || ui.date, start: start || nextSlot(date || ui.date), end: '', repeat: { type: 'none', days: [] }, notes: '' };
+  const t = task || { title: prefill ? prefill.title : '', cat: prefill ? prefill.cat : defCat, date: date || ui.date, start: start || nextSlot(date || ui.date), end: prefill ? prefill.end : '', repeat: prefill ? prefill.repeat : { type: 'none', days: [] }, notes: '', routine: prefill ? prefill.routine : false };
   if (!t.end) t.end = fmt(Math.min(mins(t.start) + 60, 1440) % 1440);
   const rep = t.repeat || { type: 'none', days: [] };
   const viewDate = date || t.date;
@@ -966,9 +1018,10 @@ function openTask({ task, date, start }) {
       <h2>${edit ? 'עריכת משימה' : 'משימה חדשה'}</h2>
       <button type="submit" class="lnk st">${edit ? 'שמור' : 'הוסף'}</button></div></div>
     <input class="tin" name="title" placeholder="מה מתוכנן?" value="${esc(t.title)}" autocomplete="off" enterkeyhint="done" maxlength="80">
-    ${edit ? `<button type="button" class="donebtn${isDone(task, viewDate) ? ' done' : ''}" id="doneBtn" style="--c:${cat(t.cat).color}" aria-pressed="${isDone(task, viewDate)}"><span class="chk" aria-hidden="true">${CHECK}</span><span id="doneTx">${isDone(task, viewDate) ? 'בוצע · לחצו לביטול' : 'סמן כבוצע'}</span></button>` : ''}
+    ${edit && !t.routine ? `<button type="button" class="donebtn${isDone(task, viewDate) ? ' done' : ''}" id="doneBtn" style="--c:${cat(t.cat).color}" aria-pressed="${isDone(task, viewDate)}"><span class="chk" aria-hidden="true">${CHECK}</span><span id="doneTx">${isDone(task, viewDate) ? 'בוצע · לחצו לביטול' : 'סמן כבוצע'}</span></button>` : ''}
     <div><span class="lbl">קטגוריה</span><div class="chips">${S.cats.map(c => `
       <label class="chip" style="--c:${c.color};--cb:${rgba(c.color, .18)}"><input type="radio" name="cat" value="${c.id}"${c.id === t.cat ? ' checked' : ''}><span>${esc(c.name)}</span></label>`).join('')}</div></div>
+    <label class="swrow"><input type="checkbox" name="routine"${t.routine ? ' checked' : ''}><span class="sw"></span><span>שגרה ברקע<small>שינה, ארוחות. לא נספרת בהתקדמות</small></span></label>
     <div class="two">
       <div class="fld"><label class="lbl" for="fs">התחלה</label><input id="fs" type="time" name="start" value="${t.start}" required></div>
       <div class="fld"><label class="lbl" for="fe">סיום</label><input id="fe" type="time" name="end" value="${t.end}" required></div>
@@ -1037,12 +1090,12 @@ function openTask({ task, date, start }) {
     const type = $f('rep').value;
     const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
     if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
-    const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), repeat: { type, days: type === 'weekly' ? dsel : [] } };
+    const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
     const snap = JSON.stringify(S.tasks);
     if (edit) {
       const r0 = task.repeat || { type: 'none', days: [] };
       const sameSchedule = r0.type !== 'none' && type === r0.type && JSON.stringify(r0.days || []) === JSON.stringify(data.repeat.days) && d === task.date;
-      const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '');
+      const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '') || data.routine !== !!task.routine;
       let scope = 'all';
       if (sameSchedule && changed) {
         scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
@@ -1134,6 +1187,282 @@ function openSettings() {
   };
 }
 
+/* ═════════ הבנת משפט בעברית ═════════
+   "אימון חדר כושר מחר בחמש וחצי לשעה וחצי" → כותרת, קטגוריה, תאריך, שעות, חזרה.
+   כללים בלבד (בלי שרת). תמיד מציגים את מה שהובן לפני ההוספה, ואפשר לתקן. */
+const V_HW = 'אחת עשרה|אחד עשר|שתים עשרה|שתיים עשרה|שנים עשר|שתיים|שניים|שתים|שלוש|ארבע|חמש|שמונה|שבע|תשע|עשר|אחת|אחד|שש|חצות';
+const V_HWMAP = { 'אחת עשרה': 11, 'אחד עשר': 11, 'שתים עשרה': 12, 'שתיים עשרה': 12, 'שנים עשר': 12, 'שתיים': 2, 'שניים': 2, 'שתים': 2, 'שלוש': 3, 'ארבע': 4, 'חמש': 5, 'שמונה': 8, 'שבע': 7, 'תשע': 9, 'עשר': 10, 'אחת': 1, 'אחד': 1, 'שש': 6, 'חצות': 0 };
+const V_WD = 'ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת';
+const V_WDMAP = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5, 'שבת': 6 };
+const V_MINMAP = { 'חצי': 30, 'רבע': 15, 'עשרה': 10, 'עשרים': 20, 'חמש': 5, 'עשרים וחמש': 25 };
+const V_NUMW = { 'אחת': 1, 'אחד': 1, 'שתי': 2, 'שני': 2, 'שלוש': 3, 'שלושה': 3, 'ארבע': 4, 'ארבעה': 4, 'חמש': 5, 'חמישה': 5, 'שש': 6, 'שישה': 6, 'שבע': 7, 'שבעה': 7, 'שמונה': 8, 'תשע': 9, 'תשעה': 9, 'עשר': 10, 'עשרה': 10 };
+const V_CATWORDS = {
+  'אימון': ['אימון', 'אימונים', 'חדר כושר', 'כושר', 'ריצה', 'ספורט', 'קרוספיט', 'כדורסל', 'כדורגל', 'שחייה', 'משקולות', 'אופניים', 'טניס', 'קראטה', 'התעמלות'],
+  'התאוששות': ['מתיחות', 'התאוששות', 'מנוחה', 'עיסוי', 'יוגה', 'פילאטיס', 'שינה', 'אמבט קרח', 'ספא'],
+  'בית ספר': ['בית ספר', 'בית הספר', 'ביה"ס', 'שיעור', 'שיעורים', 'שיעורי בית', 'מבחן', 'בוחן', 'לימודים', 'תגבור', 'פרויקט', 'מטלה', 'מתמטיקה', 'אנגלית', 'פיזיקה', 'היסטוריה', 'ספרות', 'כימיה', 'ביולוגיה'],
+  'אישי': ['ארוחה', 'ארוחת', 'קניות', 'רופא', 'תור', 'חברים', 'פגישה', 'טיול', 'סרט', 'קריאה', 'כביסה', 'ניקיון']
+};
+
+function parseVoice(raw, ctx) {
+  const now = ctx.now || new Date();
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const dkey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const plus = n => { const x = new Date(base); x.setDate(x.getDate() + n); return x; };
+  const hhmm = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  let t = ' ' + String(raw || '').replace(/[־–—]/g, '-').replace(/[”“״]/g, '"').replace(/[’‘׳]/g, "'").replace(/\s+/g, ' ') + ' ';
+  const orig = t;
+  const B = '(^|[^א-ת\\d])', E = '(?![א-ת])';
+  const cut = re => {
+    const m = t.match(re); if (!m) return null;
+    t = t.slice(0, m.index) + (m[1] || '') + ' ' + t.slice(m.index + m[0].length);
+    return m;
+  };
+  const res = { text: String(raw || '').trim(), title: '', cat: null, date: null, start: null, end: null, repeat: { type: 'none', days: [] }, guessed: false };
+
+  /* חזרה */
+  const WDT = `[ובלמ]?(?:${V_WD})${E}`;
+  const wdList = s => [...s.matchAll(new RegExp(`[ובלמ]?(${V_WD})`, 'g'))].map(x => V_WDMAP[x[1]]);
+  const range = (a, b) => { const out = [a]; let i = a; while (i !== b && out.length < 8) { i = (i + 1) % 7; out.push(i); } return out; };
+  let m;
+  if (cut(new RegExp(`${B}(?:כל|בכל|מדי)\\s+(?:יום|יום ביומו)${E}(?!\\s+[בול]?(?:${V_WD})${E})`))) res.repeat = { type: 'daily', days: [] };
+  else if ((m = cut(new RegExp(`${B}כל\\s+(בוקר|ערב|לילה)${E}`)))) { res.repeat = { type: 'daily', days: [] }; res._part = { 'בוקר': 'am', 'ערב': 'eve', 'לילה': 'night' }[m[2]]; }
+  else if (cut(new RegExp(`${B}(?:ב|כל\\s+)?ימי\\s+חול${E}`))) res.repeat = { type: 'weekly', days: [0, 1, 2, 3, 4] };
+  else if (cut(new RegExp(`${B}(?:ב|כל\\s+)?סופי?\\s+שבוע${E}`))) res.repeat = { type: 'weekly', days: [5, 6] };
+  else if ((m = cut(new RegExp(`${B}(?:כל|בכל|בימי|בימים|ימי|ימים)\\s+(?:יום\\s+)?((?:${WDT}[\\s,]*(?:עד\\s+(?=${WDT})|-\\s*(?=${WDT}))?)+)`)))) {
+    const days = wdList(m[2]);
+    res.repeat = { type: 'weekly', days: /עד|-/.test(m[2]) && days.length === 2 ? range(days[0], days[1]) : [...new Set(days)] };
+  } else if (cut(new RegExp(`${B}כל\\s+שבוע${E}`))) res.repeat = { type: 'weekly', days: [] };
+  else if ((m = cut(new RegExp(`${B}מ?(${V_WD})\\s+עד\\s+(${V_WD})${E}`)))) res.repeat = { type: 'weekly', days: range(V_WDMAP[m[2]], V_WDMAP[m[3]]) };
+
+  /* משך */
+  let dur = null;
+  if ((m = cut(new RegExp(`${B}(?:ל|למשך\\s+)?(שעתיים וחצי|שעתיים|שעה וחצי|שעה ורבע|חצי שעה|רבע שעה|שלושת רבעי שעה|שלושה רבעי שעה)${E}`)))) dur = { 'שעתיים וחצי': 150, 'שעתיים': 120, 'שעה וחצי': 90, 'שעה ורבע': 75, 'חצי שעה': 30, 'רבע שעה': 15, 'שלושת רבעי שעה': 45, 'שלושה רבעי שעה': 45 }[m[2]];
+  else if ((m = cut(new RegExp(`${B}(?:ל|למשך\\s+)?(\\d+(?:[.,]\\d+)?)\\s*(שעות|שעה|דקות|דקה|דק')${E}`)))) { const n = parseFloat(m[2].replace(',', '.')); dur = Math.round(/^ש/.test(m[3]) ? n * 60 : n); }
+  else if ((m = cut(new RegExp(`${B}(?:ל|למשך\\s+)?(${Object.keys(V_NUMW).join('|')})\\s+(שעות|דקות)${E}`)))) dur = V_NUMW[m[2]] * (m[3] === 'שעות' ? 60 : 1);
+  else if ((m = cut(new RegExp(`${B}(?:ל|למשך\\s+)?(עשרים וחמש|עשרים|שלושים|ארבעים וחמש|ארבעים|חמישים|חמש עשרה)\\s+דקות${E}`)))) dur = { 'עשרים וחמש': 25, 'עשרים': 20, 'שלושים': 30, 'ארבעים וחמש': 45, 'ארבעים': 40, 'חמישים': 50, 'חמש עשרה': 15 }[m[2]];
+  else if ((m = cut(new RegExp(`${B}(?:ל|למשך\\s+)?שעה${E}(?!\\s+(?:\\d|(?:${V_HW})${E}|ו))`)))) dur = 60;
+
+  /* תאריך */
+  let dateOff = null, wd = null, absDate = null;
+  if ((m = cut(new RegExp(`${B}ה(ערב|לילה)${E}`)))) { res._part = m[2] === 'ערב' ? 'eve' : 'night'; dateOff = 0; }
+  if ((m = cut(new RegExp(`${B}(היום|מחר|מחרתיים|מחרתים)${E}`)))) dateOff = { 'היום': 0, 'מחר': 1, 'מחרתיים': 2, 'מחרתים': 2 }[m[2]];
+  else if ((m = cut(new RegExp(`${B}בעוד\\s+(\\d+|יומיים|שבוע|שבועיים)(?:\\s+ימים)?${E}`)))) dateOff = { 'יומיים': 2, 'שבוע': 7, 'שבועיים': 14 }[m[2]] ?? parseInt(m[2], 10);
+  else if ((m = cut(new RegExp(`${B}(?:ב-?|ל-?)?(\\d{1,2})[/.](\\d{1,2})(?:[/.](\\d{2,4}))?(?![\\d:])`))) && +m[3] >= 1 && +m[3] <= 12 && +m[2] >= 1 && +m[2] <= 31) {
+    let y = m[4] ? (+m[4] < 100 ? 2000 + +m[4] : +m[4]) : base.getFullYear();
+    let d = new Date(y, +m[3] - 1, +m[2]); if (!m[4] && d < base) d = new Date(y + 1, +m[3] - 1, +m[2]); absDate = d;
+  } else if ((m = cut(new RegExp(`${B}(?:(?:ב|ל)?יום\\s+|ב|ל)(${V_WD})(?:\\s+הקרוב)?${E}`)))) wd = V_WDMAP[m[2]];
+
+  /* חלקי יום (בוקר/ערב...): נאספים עם המיקום, וכל שעה מקבלת את החלק הקרוב אליה */
+  const partDefs = [
+    [`${B}(?:אחר|אחרי)\\s+הצהריים${E}`, 'pm'], [`${B}אחה["']?צ${E}`, 'pm'],
+    [`${B}(?:לפנות\\s+בוקר|לפני\\s+הצהריים)${E}`, 'am'], [`${B}ב(?:צהריים|צהרים)${E}`, 'noon'],
+    [`${B}בבוקר${E}`, 'am'], [`${B}בערב${E}`, 'eve'], [`${B}בלילה${E}`, 'night']
+  ];
+  const parts = [];
+  for (const [src, val] of partDefs) for (const k of t.matchAll(new RegExp(src, 'g'))) parts.push({ idx: k.index + (k[1] || '').length, len: k[0].length - (k[1] || '').length, val });
+  parts.sort((x, y) => x.idx - y.idx);
+  const globalPart = res._part || null;
+
+  /* שעות */
+  const hv = (d, w) => d !== undefined ? parseInt(d, 10) : V_HWMAP[w];
+  const clkRe = new RegExp(`${B}(עד(?:\\s+השעה)?\\s+|בשעה\\s+|משעה\\s+|שעה\\s+|[במל]-?\\s*)?(?:(רבע|עשרה|חמישה|עשרים)\\s+ל-?(?:(\\d{1,2})|(${V_HW}))|(?:(\\d{1,2}):(\\d{2})|(\\d{1,2})|(${V_HW}))(?:\\s+ו-?(עשרים וחמש|עשרים|חצי|רבע|עשרה|חמש))?)(?![א-ת\\d:])`, 'g');
+  const clocks = [];
+  for (const k of t.matchAll(clkRe)) {
+    const prefix = (k[2] || '').trim(), colon = k[6] !== undefined;
+    if (!prefix && !colon && !k[3]) continue;                                   // מספר בלי "ב"/"מ"/"עד" אינו שעה (למשל "3 סטים")
+    let h, mi = 0;
+    if (k[3]) { h = hv(k[4], k[5]); mi = 60 - ({ 'רבע': 15, 'עשרה': 10, 'חמישה': 5, 'עשרים': 20 }[k[3]]); h = (h + 23) % 24 || 12; }
+    else if (colon) { h = +k[6]; mi = +k[7]; }
+    else { h = hv(k[8], k[9]); mi = k[10] ? V_MINMAP[k[10]] : 0; }
+    if (h === undefined || isNaN(h) || h > 24 || mi > 59) continue;
+    const lead = (k[1] || '').length;
+    clocks.push({ idx: k.index + lead, len: k[0].length - lead, prefix, h, mi, colon });
+  }
+  clocks.forEach((c, i) => {
+    const end = c.idx + c.len, nextStart = i + 1 < clocks.length ? clocks[i + 1].idx : Infinity, prevEnd = i ? clocks[i - 1].idx + clocks[i - 1].len : -1;
+    const near = parts.find(x => x.idx >= end && x.idx < nextStart) || [...parts].reverse().find(x => x.idx < c.idx && x.idx >= prevEnd);
+    c.part = near ? near.val : (parts.length === 1 ? parts[0].val : globalPart);
+  });
+  for (const x of [...clocks, ...parts].sort((p, q) => q.idx - p.idx)) t = t.slice(0, x.idx) + ' ' + t.slice(x.idx + x.len);
+
+  /* קטגוריה */
+  const low = orig.toLowerCase();
+  let catId = null;
+  for (const c of ctx.cats || []) if (c.name && low.includes(c.name.toLowerCase())) { catId = c.id; break; }
+  if (!catId) for (const [name, words] of Object.entries(V_CATWORDS)) {
+    const c = (ctx.cats || []).find(x => x.name === name);
+    if (c && words.some(w => low.includes(w))) { catId = c.id; break; }
+  }
+  res.cat = catId || ctx.defCat || null;
+  const catName = ((ctx.cats || []).find(c => c.id === res.cat) || {}).name || '';
+  const eveningCat = /אימון|התאוששות|סינדי|אישי/.test(catName) || /ערב|לילה/.test(orig);
+
+  /* פירוש שעה: בוקר/ערב */
+  const resolve = (c, isEnd) => {
+    let h = c.h, mi = c.mi;
+    if (c.colon && (h >= 13 || h === 0)) return h * 60 + mi;                    // 24 שעות מפורש
+    if (h === 24) return 0;
+    const p = c.part;
+    if (p === 'am') h = h === 12 ? 0 : h;
+    else if (p === 'noon') h = h === 12 ? 12 : h <= 5 ? h + 12 : h;
+    else if (p === 'pm' || p === 'eve') h = h < 12 ? h + 12 : h;
+    else if (p === 'night') h = h === 12 ? 0 : h >= 6 ? h + 12 : h;
+    else {
+      res.guessed = true;
+      if (h === 12) h = 12;
+      else if (h >= 1 && h <= 6) h += 12;
+      else if (h >= 7 && h <= 11) {                                             // לא נאמר בוקר/ערב: מנחשים לפי הקטגוריה והשעה עכשיו
+        const today = res.repeat.type === 'none' && (dateOff === 0 || (dateOff == null && wd == null && !absDate));
+        if (eveningCat && !/בית ספר/.test(catName)) h += 12;
+        else if (today && !isEnd && h * 60 + mi <= nowMin) h += 12;
+      }
+    }
+    return h * 60 + mi;
+  };
+  const resolved = clocks.map((c, i) => ({ ...c, min: resolve(c, i > 0 || c.prefix.startsWith('עד')) }));
+  let s = null, e = null;
+  if (resolved.length >= 2) { s = resolved[0].min; e = resolved[1].min; }
+  else if (resolved.length === 1) { if (resolved[0].prefix.startsWith('עד')) e = resolved[0].min; else s = resolved[0].min; }
+  if (s != null && e != null && e <= s) { if (!resolved[1].part && e + 720 > s && e + 720 < 1440) e += 720; }      // "משמונה עד שתיים" → 14:00
+  if (s == null && e != null) s = Math.max(e - (dur || 60), 0);
+  if (s != null && e == null) e = Math.min(s + (dur || 60), 1440);
+  if (s != null && e === s) e = Math.min(s + 60, 1440);
+  if (s != null) { res.start = hhmm(s); res.end = hhmm(e); }
+
+  /* תאריך סופי */
+  let d = null;
+  if (absDate) d = absDate;
+  else if (dateOff != null) d = plus(dateOff);
+  else if (wd != null) { let delta = (wd - base.getDay() + 7) % 7; if (delta === 0 && s != null && s <= nowMin) delta = 7; d = plus(delta); }
+  res.date = dkey(d || base);
+  res.dateGiven = !!d;
+  if (res.repeat.type === 'weekly' && !res.repeat.days.length) res.repeat.days = [new Date(res.date + 'T12:00').getDay()];
+  if (res.repeat.type === 'weekly' && !d) res.dateGiven = false;
+
+  /* כותרת: מה שנשאר אחרי שהוצאנו שעות/תאריכים/חזרה */
+  let title = t.replace(/[,،;!?]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const lead = /^(?:(?:תוסיף|תוסיפי|תקבע|תקבעי|הוסף|הוסיפי|תכניס|תרשום|תכתוב)(?:\s+לי)?|תזכיר לי|תזכירי לי|יש לי|אני (?:צריך|צריכה|רוצה)|צריך|צריכה|רוצה|משימה חדשה|משימה)\s+/;
+  const dangling = /(?:^|\s)(?:ב|ל|מ|ו|כל|עד|בשעה|ביום|בימי|ב-|ל-|מ-|את|ה)$/;
+  const danglingStart = /^(?:ב|ל|מ|ו|כל|עד|בשעה|ביום|ב-|ל-)\s+/;
+  for (let i = 0; i < 4; i++) { title = title.replace(lead, '').replace(danglingStart, '').replace(dangling, '').trim(); }
+  res.title = title.replace(/^[\s\-:]+|[\s\-:]+$/g, '');
+  if (dur != null) res.dur = dur;
+  res.routine = /שינה|ארוחת|ארוחה|מקלחת/.test(orig);
+  delete res._part;
+  return res;
+}
+
+/* ═════════ פס "עכשיו / הבא" ═════════ */
+const fmtDur = m => m < 60 ? `${m} דק׳` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} שע׳`;
+function updateNowNext() {
+  const txt = $('#nnt'), dot = $('#nnd'); if (!txt) return;
+  const tk = todayKey();
+  let html = '', color = '';
+  if (S.view === 'day' && ui.date === tk) {
+    const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
+    const list = segs(tk).filter(g => !g.t.routine);
+    const cur = list.find(g => g.s <= m && m < g.e), nxt = list.find(g => g.s > m);
+    const missed = list.filter(g => !g.cont && g.e <= m && !isDone(g.t, g.k0)).length;
+    if (cur) {
+      color = cat(cur.t.cat).color;
+      html = `<b>עכשיו</b> ${esc(cur.t.title)} · עוד ${fmtDur(cur.e - m)}${nxt ? ` · הבא ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi>` : ''}`;
+    } else if (nxt) {
+      color = cat(nxt.t.cat).color;
+      html = `<b>הבא</b> ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi> · בעוד ${fmtDur(nxt.s - m)}`;
+    } else html = list.length ? '<b>סיימתם להיום</b>' : '<b>היום פנוי</b>';
+    if (missed) html += ` · <span class="miss">${missed} לא סומנו</span>`;
+  } else {
+    let cnt = 0, total = 0;
+    rangeKeys().forEach(k => occ(k).forEach(t => { if (t.routine) return; cnt++; const p = span(t); total += (p.e - p.s + 1440) % 1440 || 1440; }));
+    const h = Math.floor(total / 60), r = total % 60;
+    html = cnt ? `${cnt} משימות · ${h}${r ? ':' + String(r).padStart(2, '0') : ''} שע׳ מתוכננות` : 'אין משימות מתוכננות';
+  }
+  txt.innerHTML = html;
+  dot.style.setProperty('--c', color || 'var(--mut2)');
+}
+$('#nn').onclick = () => {
+  const tk = todayKey();
+  if (S.view === 'day' && ui.date === tk) scrollToRelevant(PPM(), tk, segs(tk));
+  else go(tk, tk > ui.date ? 1 : -1, true);
+};
+$('#nn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#nn').click(); } });
+
+/* ═════════ הוספה בדיבור ═════════ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const dateLabel = k => { const d = parseKey(k), nm = `יום ${DAYS[d.getDay()]}`, r = relTitle(k); return `${r !== nm ? r + ' · ' : ''}${nm} ${d.getDate()}/${d.getMonth() + 1}`; };
+const repeatLabel = r => r.type === 'daily' ? 'כל יום' : `ימים ${r.days.map(i => DL[i] + '׳').join(' ')}`;
+function voiceTask(r) {                                    // ממשפט שהובן למשימה מוכנה
+  const defCat = S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id;
+  const catId = S.cats.some(c => c.id === r.cat) ? r.cat : defCat;
+  const start = r.start || nextSlot(r.date);
+  return { title: r.title || cat(catId).name, cat: catId, date: r.date, start, end: r.end || fmt(Math.min(mins(start) + 60, 1440) % 1440), notes: '', routine: !!r.routine, repeat: r.repeat };
+}
+function openVoice() {
+  let rec = null, errored = false, last = null;
+  const { sheet, close } = openSheet(`
+    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>ביטול</button><h2>הוספה בדיבור</h2><span style="min-width:56px"></span></div></div>
+    <div class="vwrap">
+      <button type="button" class="mic" id="mic" aria-label="התחל להקליט"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <div class="vstat" id="vstat" aria-live="polite"></div>
+      <textarea class="vtxt" id="vtxt" rows="2" placeholder="או כתבו כאן. למשל: אימון מחר בחמש וחצי לשעה וחצי" aria-label="מה לתכנן"></textarea>
+      <div class="vprev" id="vprev"></div>
+      <div class="vact"><button type="button" class="btn" id="vedit" disabled>עריכה</button><button type="button" class="btn pri" id="vadd" disabled>הוסף</button></div>
+      <p class="vnote">הזיהוי נעשה על ידי הדפדפן או מערכת ההפעלה של הטלפון. בטלפון אפשר גם ללחוץ על המיקרופון במקלדת.</p>
+    </div>`, () => { try { rec && rec.abort(); } catch (e) {} });
+  const $s = s => $(s, sheet);
+  const stat = (m, cls) => { const e = $s('#vstat'); e.textContent = m; e.className = 'vstat ' + (cls || ''); };
+  const ctx = () => ({ now: new Date(), cats: S.cats, defCat: S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id });
+
+  const preview = () => {
+    const txt = $s('#vtxt').value.trim();
+    $s('#vadd').disabled = $s('#vedit').disabled = !txt;
+    if (!txt) { $s('#vprev').innerHTML = ''; last = null; return; }
+    last = parseVoice(txt, ctx());
+    const tk = voiceTask(last), c = cat(tk.cat), isRep = last.repeat.type !== 'none';
+    $s('#vprev').innerHTML = `<div class="pv" style="--c:${c.color}">
+      <div class="pv-h"><i></i><b>${esc(tk.title)}</b><span>${esc(c.name)}</span></div>
+      <div class="pv-r"><span>מתי</span><b>${isRep ? esc(repeatLabel(last.repeat)) : esc(dateLabel(tk.date))}</b></div>
+      ${isRep ? `<div class="pv-r"><span>מתחילה ב</span><b>${esc(dateLabel(tk.date))}</b></div>` : ''}
+      <div class="pv-r"><span>שעה</span><b><bdi>${tk.start}–${tk.end}</bdi>${last.start ? '' : ' (לא נאמרה שעה)'}</b></div>
+      ${tk.routine ? '<div class="pv-r"><span>סוג</span><b>שגרה ברקע, לא נספרת</b></div>' : ''}
+      ${last.guessed && last.start ? `<div class="pv-n">לא נאמר בוקר או ערב, אז הבנתי ${tk.start}. אפשר לתקן בעריכה.</div>` : ''}
+    </div>`;
+  };
+  $s('#vtxt').addEventListener('input', preview);
+  $s('#vtxt').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $s('#vadd').click(); } });
+
+  const msgs = { 'not-allowed': 'אין הרשאה למיקרופון. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'service-not-allowed': 'ההקלטה לא זמינה כאן. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'no-speech': 'לא שמעתי כלום. לחצו על המיקרופון ונסו שוב.', 'audio-capture': 'לא נמצא מיקרופון.', 'network': 'אין חיבור לשירות הזיהוי. אפשר להקליד.', 'language-not-supported': 'עברית לא נתמכת בזיהוי כאן. אפשר להקליד.' };
+  const setRec = on => { const b = $s('#mic'); b.classList.toggle('rec', on); b.setAttribute('aria-label', on ? 'עצור הקלטה' : 'התחל להקליט'); };
+  const start = () => {
+    if (!SR) { stat('ההקלטה לא נתמכת בדפדפן הזה. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'err'); $s('#mic').disabled = true; return; }
+    try {
+      errored = false; rec = new SR(); rec.lang = 'he-IL'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      rec.onstart = () => { setRec(true); stat('מקשיבה… אמרו מה לתכנן'); };
+      rec.onresult = e => { let txt = ''; for (const r of e.results) txt += r[0].transcript + ' '; $s('#vtxt').value = txt.trim(); preview(); };
+      rec.onerror = e => { if (e.error === 'aborted') return; errored = true; stat(msgs[e.error] || 'לא הצלחתי להקליט. אפשר להקליד.', 'err'); };
+      rec.onend = () => { setRec(false); if (errored) return; stat($s('#vtxt').value.trim() ? 'הבנתי. בדקו ולחצו "הוסף"' : 'לא שמעתי. לחצו על המיקרופון ונסו שוב'); };
+      rec.start();
+    } catch (e) { setRec(false); stat('לא ניתן להפעיל הקלטה כאן. אפשר להקליד.', 'err'); }
+  };
+  $s('#mic').onclick = () => { if ($s('#mic').classList.contains('rec')) { try { rec.stop(); } catch (e) {} } else start(); };
+
+  $s('#vadd').onclick = () => {
+    if (!last) return;
+    const tk = voiceTask(last), snap = JSON.stringify(S.tasks);
+    S.tasks.push({ id: uid(), done: {}, skip: [], ...tk });
+    S.lastCat = tk.cat; save(); close();
+    const moved = tk.repeat.type === 'none' && !rangeKeys().includes(tk.date);
+    if (moved) ui.date = tk.date;
+    render({ scroll: moved });
+    vib(8);
+    toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+  };
+  $s('#vedit').onclick = () => { if (!last) return; const tk = voiceTask(last); close(); setTimeout(() => openTask({ date: tk.date, start: tk.start, prefill: tk }), 220); };
+  start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
+}
+$('#vbtn').onclick = openVoice;
+
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
   const d = keyOf(startOfWeek(new Date()));
@@ -1176,6 +1505,7 @@ try {                                                     // טיפ חד-פעמ�
 } catch (e) {}
 let bootDay = todayKey();
 function tickNow() {
+  updateNowNext();
   const n = $('[data-now]'); if (!n) return;
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), ppm = S.view === 'day' ? PPM() : WPPM();
   n.style.top = (TOP + m * ppm) + 'px';
