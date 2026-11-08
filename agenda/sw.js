@@ -1,5 +1,5 @@
 // שירות offline פשוט: רשת קודם (כדי לקבל עדכונים), ואם אין חיבור — מהמטמון.
-const CACHE = 'agenda-v1';
+const CACHE = 'agenda-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-180.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
