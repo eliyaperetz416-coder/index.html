@@ -119,6 +119,20 @@ main.slide-r{animation:slR .22s var(--ease)}
 .blk.short{padding-block:3px;align-items:center}
 .blk.tiny{padding-block:0;align-items:center}
 .short .bi,.tiny .bi{align-items:center}
+.blk,.wb{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.blk.sel,.wb.sel{box-shadow:0 0 0 1.5px var(--c);z-index:7}
+.blk.lift,.wb.lift{transform:scale(1.025);box-shadow:0 16px 36px rgba(0,0,0,.65),0 0 0 1.5px var(--c);z-index:9}
+.blk.drag,.wb.drag{transition:none!important;z-index:9}
+.wb.drag{box-shadow:0 12px 28px rgba(0,0,0,.6),0 0 0 1.5px var(--c)}
+.rz{position:absolute;display:none;width:64px;height:20px;touch-action:none;z-index:6;cursor:ns-resize}
+.rz::after{content:"";position:absolute;left:50%;margin-left:-14px;width:28px;height:4px;border-radius:2px;background:var(--tx);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.rz-t{top:0;inset-inline-end:12px}.rz-t::after{top:5px}
+.rz-b{bottom:0;inset-inline-start:12px}.rz-b::after{bottom:5px}
+.tiny .rz{height:12px}.tiny .rz-b{inset-inline-start:auto;inset-inline-end:12px}.tiny .rz::after{top:50%;bottom:auto;margin-top:-2px}
+.blk.sel .rz,.blk.lift .rz{display:block}
+@media(hover:hover){.blk:hover .rz{display:block}}
+.tip{position:fixed;z-index:75;background:var(--tx);color:#0a0a0d;font-weight:700;font-size:13px;padding:3px 10px;border-radius:9px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.5);direction:ltr;font-variant-numeric:tabular-nums;transform:translate(-50%,-100%)}
+.wcol.dropcol{background:rgba(255,255,255,.08)}
 .bt{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;font:inherit;line-height:1.25;text-align:start;color:inherit;cursor:pointer}
 .dense .bt .sub,.xdense .bt .sub{display:none}
 .dense .bt b,.xdense .bt b{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;width:auto;font-size:13px;line-height:1.2}
@@ -512,10 +526,11 @@ function blockHTML(it, k, ppm) {
   const dense = it.n >= 4 ? ' xdense' : it.n === 3 ? ' dense' : '';
   const w = 100 / it.n;
   const sub = `<span class="tm">${t.start}–${t.end}</span>${h >= 50 && it.n === 1 ? ' · ' + esc(c.name) : ''}${(t.repeat && t.repeat.type !== 'none') ? ' ↻' : ''}${it.cont ? ' · המשך' : ''}`;
-  return `<div class="blk ${cls}${dense}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}"
+  return `<div class="blk ${cls}${dense}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}"
       style="--c:${c.color};--cb:${rgba(c.color, .17)};top:${top}px;height:${h}px;inset-inline-start:calc(${it.col * w}% + 2px);width:calc(${w}% - 4px)">
     <div class="bi">${it.n >= 4 ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>`}
     <button type="button" class="bt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}"><b>${esc(t.title)}</b><span class="sub">${sub}</span></button></div>
+    ${!it.cont && !span(t).over ? '<span class="rz rz-t" data-rz="t"></span><span class="rz rz-b" data-rz="b"></span>' : ''}
   </div>`;
 }
 
@@ -551,7 +566,7 @@ function renderWeek(opts) {
     const items = layout(segs(k), ppm, 16);
     cols += `<div class="wcol${k === tk ? ' today' : ''}" data-date="${k}">${items.map(it => {
       const t = it.t, c = cat(t.cat), w = 100 / it.n, done = isDone(t, it.k0), hpx = Math.max((it.e - it.s) * ppm - 2, 14);
-      return `<div class="wb${done ? ' done' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
+      return `<div class="wb${done ? ' done' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
     }).join('')}${k === tk ? nowLine(ppm, false) : ''}</div>`;
   }
   main.innerHTML = `<div class="wk" id="tl" style="height:${TOP * 2 + 1440 * ppm}px">${lines}<div class="wcols">${cols}</div></div>`;
@@ -599,6 +614,7 @@ function toggleDone(id, k, btn) {
 
 main.addEventListener('animationend', e => { if (e.target.classList.contains('chk')) e.target.classList.remove('pop'); });
 main.addEventListener('click', e => {
+  if (suppressClick) return;
   const act = e.target.closest('[data-act]');
   if (act) {
     const a = act.dataset.act;
@@ -636,6 +652,159 @@ main.addEventListener('pointerup', lpCancel);
 main.addEventListener('pointercancel', lpCancel);
 main.addEventListener('scroll', lpCancel, true);
 main.addEventListener('dblclick', e => { const spot = emptySpot(e); if (spot) openTask({ date: spot.date, start: spot.start }); });
+
+/* ═════════ גרירת בלוקים: הזזה ושינוי משך ═════════
+   נייד: לחיצה ארוכה על בלוק מרימה אותו וגוררים. אחרי ההרמה מופיעות ידיות למעלה ולמטה לשינוי משך.
+   עכבר: גרירה ישירה. מקלדת: Alt + חצים (עם Shift משנים משך). */
+const SNAP = 5, MIN_DUR = 15;
+const snapMin = m => Math.round(m / SNAP) * SNAP;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+let drag = null, suppressClick = false, scrollRaf = 0;
+
+function clearSel() { document.querySelectorAll('.blk.sel,.wb.sel').forEach(b => b.classList.remove('sel')); }
+function select(blk) { clearSel(); if (blk) blk.classList.add('sel'); }
+function reselect(id, date) { const b = document.querySelector(`[data-id="${id}"][data-date="${date}"]`); if (b) select(b); }
+function dragInfo(blk) {
+  const t = findTask(blk.dataset.id); if (!t) return null;
+  const p = span(t);
+  return { t, k0: blk.dataset.date, s: p.s, e: p.e, over: p.over, dur: (p.e - p.s + 1440) % 1440 };
+}
+
+main.addEventListener('contextmenu', e => { if (e.target.closest('.blk,.wb')) e.preventDefault(); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.blk.sel,.wb.sel')) clearSel(); }, true);   // נגיעה מחוץ לבלוק הנבחר מבטלת בחירה
+main.addEventListener('pointerdown', e => {
+  const blk = e.target.closest('.blk,.wb');
+  if (!blk) return;
+  if (e.target.closest('.chk') || blk.dataset.cont === '1' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const info = dragInfo(blk); if (!info) return;
+  const rz = e.target.closest('.rz'), week = S.view === 'week';
+  drag = { blk, info, id: e.pointerId, touch: e.pointerType !== 'mouse', mode: rz ? (rz.dataset.rz === 't' ? 'rt' : 'rb') : 'move',
+    week, ppm: week ? WPPM() : PPM(), cx: e.clientX, cy: e.clientY, lx: e.clientX, ly: e.clientY, active: false, timer: 0, res: null };
+  if (drag.mode !== 'move') beginDrag();
+  else if (drag.touch) drag.timer = setTimeout(() => {      // לחיצה ארוכה: הרמה
+    if (!drag || drag.active) return;
+    beginDrag(); select(drag.blk); drag.blk.classList.add('lift'); vib(15);
+  }, 380);
+});
+
+function beginDrag() {
+  const d = drag; clearTimeout(d.timer); d.active = true; suppressClick = true;
+  d.sy = (d.touch && d.mode === 'move' ? d.ly : d.cy) + scrollY;
+  d.blk.classList.add('drag');
+  d.tip = document.createElement('div'); d.tip.className = 'tip'; document.body.appendChild(d.tip);
+  try { d.blk.setPointerCapture(d.id); } catch (e) {}
+  d.cols = d.week ? [...document.querySelectorAll('.wcol')] : null;
+  d.col0 = d.week ? d.blk.closest('.wcol') : null;
+  d.toDate = d.info.k0;
+  updateDrag(); scrollLoop();
+}
+
+function updateDrag() {
+  const d = drag, i = d.info, blk = d.blk, ppm = d.ppm;
+  const dy = (d.ly + scrollY - d.sy) / ppm;
+  let ns = i.s, ne = i.e;
+  if (d.mode === 'move') {
+    ns = clamp(snapMin(i.s + dy), 0, i.over ? 1440 - SNAP : 1440 - i.dur); ne = ns + i.dur;
+    blk.style.top = (TOP + ns * ppm + 1) + 'px';
+    if (d.week) {
+      const col = d.cols.find(c => { const r = c.getBoundingClientRect(); return d.lx >= r.left && d.lx < r.right; }) || d.col0;
+      d.cols.forEach(c => c.classList.toggle('dropcol', c === col && col !== d.col0));
+      blk.style.transform = `translateX(${col.getBoundingClientRect().left - d.col0.getBoundingClientRect().left}px) scale(1.04)`;
+      d.toDate = col.dataset.date;
+    }
+  } else {
+    if (d.mode === 'rb') ne = clamp(snapMin(i.e + dy), i.s + MIN_DUR, 1440);
+    else { ns = clamp(snapMin(i.s + dy), 0, i.e - MIN_DUR); blk.style.top = (TOP + ns * ppm + 1) + 'px'; }
+    const h = Math.max((ne - ns) * ppm - 2, 14);
+    blk.style.height = h + 'px';
+    blk.classList.toggle('tiny', h < 30); blk.classList.toggle('short', h >= 30 && h < 50);
+  }
+  d.res = { start: fmt(ns), end: fmt(ne % 1440), toDate: d.toDate };
+  const tm = blk.querySelector('.tm'); if (tm) tm.textContent = `${d.res.start}–${d.res.end}`;
+  const r = blk.getBoundingClientRect();
+  d.tip.textContent = `${d.week && d.toDate !== i.k0 ? DL[parseKey(d.toDate).getDay()] + '׳ ' : ''}${d.res.start}–${d.res.end}`;
+  d.tip.style.left = clamp(r.left + r.width / 2, 50, innerWidth - 50) + 'px';
+  d.tip.style.top = Math.max(r.top - 8, $('#top').offsetHeight + 34) + 'px';
+}
+
+/* גלילה אוטומטית כשגוררים לקצה המסך */
+function scrollLoop() {
+  cancelAnimationFrame(scrollRaf);
+  const step = () => {
+    if (!drag || !drag.active) return;
+    const top = $('#top').offsetHeight + 40, bot = innerHeight - 120;
+    const inEdge = (drag.ly > bot || drag.ly < top) && Math.hypot(drag.lx - drag.cx, drag.ly - drag.cy) > 8;
+    drag.edgeAt = inEdge ? (drag.edgeAt || performance.now()) : 0;          // גולל רק אחרי שהות קצרה בקצה, כדי שלא יברח
+    let v = 0;
+    if (drag.edgeAt && performance.now() - drag.edgeAt > 350) {
+      if (drag.ly > bot) v = Math.min((drag.ly - bot) / 60, 1) * 16;
+      else v = -Math.min((top - drag.ly) / 50, 1) * 16;
+    }
+    if (v) { const before = scrollY; window.scrollBy(0, v); if (scrollY !== before) updateDrag(); }
+    scrollRaf = requestAnimationFrame(step);
+  };
+  scrollRaf = requestAnimationFrame(step);
+}
+
+addEventListener('pointermove', e => {
+  const d = drag; if (!d || e.pointerId !== d.id) return;
+  d.lx = e.clientX; d.ly = e.clientY;
+  if (!d.active) {
+    const moved = Math.hypot(d.lx - d.cx, d.ly - d.cy);
+    if (d.touch) { if (moved > 9) { clearTimeout(d.timer); drag = null; } return; }   // זז לפני ההרמה = גלילה רגילה
+    if (moved < 5) return;
+    beginDrag();
+  }
+  updateDrag();
+});
+const endDrag = e => { const d = drag; if (d && e.pointerId === d.id) finishDrag(e.type === 'pointerup'); };
+addEventListener('pointerup', endDrag);
+addEventListener('pointercancel', endDrag);
+document.addEventListener('touchmove', e => { if (drag && drag.active && e.cancelable) e.preventDefault(); }, { passive: false });
+
+function finishDrag(commit) {
+  const d = drag; drag = null; clearTimeout(d.timer); cancelAnimationFrame(scrollRaf);
+  if (!d.active) return;
+  d.tip.remove();
+  if (d.cols) d.cols.forEach(c => c.classList.remove('dropcol'));
+  d.blk.classList.remove('drag', 'lift');
+  setTimeout(() => { suppressClick = false; }, 400);
+  const r = d.res, i = d.info, t = i.t;
+  if (commit && r && (r.start !== t.start || r.end !== t.end || r.toDate !== i.k0)) commitTimes(i, r.start, r.end, r.toDate);
+  else { render(); reselect(t.id, i.k0); }                 // לא השתנה: חוזר למקום, והבלוק נשאר מסומן עם הידיות
+}
+
+/* שמירת שעות חדשות. במשימה חוזרת שואלים מה לשנות */
+async function commitTimes(i, start, end, toDate) {
+  const t = i.t, snap = JSON.stringify(S.tasks), rec = t.repeat && t.repeat.type !== 'none';
+  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', repeat: t.repeat };
+  let res = t;
+  if (!rec) { t.start = start; t.end = end; t.date = toDate; }
+  else if (toDate !== i.k0) res = applyEdit(t, data, 'one', i.k0, toDate);     // העברה ליום אחר = רק המופע הזה
+  else {
+    const scope = await choose(`לשנות ל־${start}–${end}. מה לשנות?`, [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
+    if (!scope) { render(); reselect(t.id, i.k0); return; }
+    res = applyEdit(t, data, scope, i.k0);
+  }
+  save(); render(); reselect(res.id, toDate);
+  vib(8);
+  toast(`עודכן · ${start}–${end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+}
+
+/* מקלדת: Alt+חצים מזיז ב־15 דקות, עם Shift משנה את הסיום */
+main.addEventListener('keydown', e => {
+  if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+  const blk = e.target.closest('.blk'); if (!blk || blk.dataset.cont === '1') return;
+  const i = dragInfo(blk); if (!i) return;
+  e.preventDefault();
+  const d = e.key === 'ArrowUp' ? -15 : 15;
+  let ns = i.s, ne = i.e;
+  if (e.shiftKey) { if (i.over) return; ne = clamp(i.e + d, i.s + MIN_DUR, 1440); }
+  else { ns = clamp(i.s + d, 0, i.over ? 1440 - SNAP : 1440 - i.dur); ne = ns + i.dur; }
+  const start = fmt(ns), end = fmt(ne % 1440);
+  if (start !== i.t.start || end !== i.t.end) commitTimes(i, start, end, i.k0);
+});
+
 const slotAt = m => fmt(Math.max(0, Math.min(Math.floor(m / 15) * 15, 23 * 60 + 30)));
 
 $('#strip').addEventListener('click', e => {
@@ -762,14 +931,14 @@ function nextSlot(k) {
   return fmt(Math.min(m, 22 * 60 + 30));
 }
 /* שינוי משימה חוזרת: רק יום אחד, מהיום והלאה, או כל הסדרה */
-function applyEdit(task, data, scope, k) {
-  if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); return; }
+function applyEdit(task, data, scope, k, to = k) {
+  if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); return task; }
   const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes };
   if (scope === 'one') {
-    const clone = { id: uid(), ...base, date: k, repeat: { type: 'none', days: [] }, done: {}, skip: [] };
-    if (task.done && task.done[k]) { clone.done[k] = task.done[k]; delete task.done[k]; }
+    const clone = { id: uid(), ...base, date: to, repeat: { type: 'none', days: [] }, done: {}, skip: [] };
+    if (task.done && task.done[k]) { clone.done[to] = task.done[k]; delete task.done[k]; }
     task.skip = [...(task.skip || []), k];
-    S.tasks.push(clone); return;
+    S.tasks.push(clone); return clone;
   }
   const clone = { id: uid(), ...base, date: k, repeat: { type: task.repeat.type, days: [...(task.repeat.days || [])] }, done: {}, skip: (task.skip || []).filter(x => x >= k) };
   if (task.until) clone.until = task.until;
@@ -777,6 +946,7 @@ function applyEdit(task, data, scope, k) {
   task.skip = (task.skip || []).filter(x => x < k);
   task.until = prevKey(k);
   S.tasks.push(clone);
+  return clone;
 }
 function openTask({ task, date, start }) {
   const edit = !!task;
@@ -997,6 +1167,12 @@ if (DEMO && !S.tasks.length && !hadStore) loadExamples();
 else if (restored) { render({ scroll: true }); window.scrollTo({ top: restored.y, behavior: 'instant' }); }
 else render({ scroll: true });
 setInterval(tickNow, 30000);
+try {                                                     // טיפ חד-פעמי בנייד: איך מזיזים בלוק
+  if (S.tasks.length && matchMedia('(pointer:coarse)').matches && !localStorage.getItem('agenda.tip1')) {
+    localStorage.setItem('agenda.tip1', '1');
+    setTimeout(() => toast('טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו'), 1200);
+  }
+} catch (e) {}
 let bootDay = todayKey();
 function tickNow() {
   const n = $('[data-now]'); if (!n) return;
