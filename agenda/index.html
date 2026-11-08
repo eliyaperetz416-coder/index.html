@@ -278,6 +278,36 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .nxt:empty{display:none}
 .fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
+.nn .warn{color:#ffb454}
+.sm-nav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px}
+.sm-nav b{font-size:15px;font-weight:600}
+.sm-big{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.sm-big b{font-size:44px;line-height:1;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.sm-big span{color:var(--mut);font-size:14px;flex:1}
+.sm-big em{font-style:normal;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:4px;background:var(--s3);overflow:hidden;margin:10px 0 8px}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .6s var(--ease)}
+.sm-sub{margin:0;color:var(--mut);font-size:13.5px}
+.cr{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:8px 0}
+.cr i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.cn{font-weight:600;font-size:15px}
+.ch{color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}
+.ch b{color:var(--tx)}
+.cb{grid-column:1/-1;height:6px;border-radius:3px;background:var(--s2);overflow:hidden}
+.cb u,.cb s{display:block;height:100%;text-decoration:none}
+.cb u{background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.cb s{background:var(--c)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px}
+.dc{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dbar{width:100%;max-width:34px;height:84px;display:flex;align-items:flex-end;background:var(--s2);border-radius:8px;overflow:hidden}
+.dbar u{display:flex;align-items:flex-end;width:100%;background:rgba(255,255,255,.14);text-decoration:none}
+.dbar s{display:block;width:100%;background:var(--tx);text-decoration:none}
+.dc.heavy .dbar u{background:rgba(255,180,84,.35)}
+.dc.heavy .dbar s{background:#ffb454}
+.dc small{font-size:12px;color:var(--mut)}
+.dc.today small:first-of-type{color:var(--tx);font-weight:700}
+.dc .dh{font-size:10.5px;min-height:13px;color:var(--mut2)}
+.sm-warn{margin:8px 0 0;color:#ffb454;font-size:13px}
 #tray{position:relative}
 .bdg{position:absolute;top:1px;inset-inline-end:0;min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:#0a0a0d;font-size:10.5px;font-weight:800;display:grid;place-items:center;padding:0 4px;pointer-events:none}
 .qa{display:flex;gap:8px;margin:6px 0 4px}
@@ -1161,6 +1191,7 @@ function openSettings() {
     <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
     <div class="sec">נתונים</div>
     <div class="list">
+      <button class="btn" id="sm">סיכום שבועי <span>▤</span></button>
       <button class="btn" id="ics">ייצוא משימות עתידיות ליומן <span>↗</span></button>
       <button class="btn" id="ex">ייצוא גיבוי <span>⬇</span></button>
       <button class="btn" id="im">ייבוא מגיבוי <span>⬆</span></button>
@@ -1197,6 +1228,7 @@ function openSettings() {
     $('#nn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
   };
   $('#ex', sheet).onclick = async () => { const how = await deliverFile(`agenda-backup-${todayKey()}.json`, 'application/json', JSON.stringify(S, null, 1)); if (how === 'download') toast('הגיבוי ירד למכשיר'); };
+  $('#sm', sheet).onclick = () => { close(); setTimeout(openSummary, 220); };
   $('#ics', sheet).onclick = () => exportICS(upcomingTasks(), 'הקובץ מוכן');
   $('#rd', sheet).onchange = e => { S.remindDefault = e.target.value === 'n' ? 'n' : +e.target.value; save(); };
   $('#im', sheet).onclick = () => $('#file', sheet).click();
@@ -1406,12 +1438,16 @@ function updateNowNext() {
     rangeKeys().forEach(k => occ(k).forEach(t => { if (t.routine) return; cnt++; const p = span(t); total += (p.e - p.s + 1440) % 1440 || 1440; }));
     const h = Math.floor(total / 60), r = total % 60;
     html = cnt ? `${cnt} משימות · ${h}${r ? ':' + String(r).padStart(2, '0') : ''} שע׳ מתוכננות` : 'אין משימות מתוכננות';
+    const heavy = rangeKeys().filter(k => occ(k).reduce((a, t) => a + (t.routine ? 0 : durMin(t)), 0) > OVERLOAD_MIN).length;
+    if (heavy) html += ` · <span class="warn">${S.view === 'day' ? 'יום עמוס' : heavy === 1 ? 'יום עמוס אחד' : heavy + ' ימים עמוסים'}</span>`;
+    if (S.view === 'week') html += ' · <b>סיכום ›</b>';
   }
   txt.innerHTML = html;
   dot.style.setProperty('--c', color || 'var(--mut2)');
 }
 $('#nn').onclick = e => {
   const tk = todayKey();
+  if (S.view === 'week') { openSummary(); return; }
   if (e.target.closest('.miss')) {                          // קופץ לבלוק הראשון שעבר ולא סומן
     const n = new Date(), m = n.getHours() * 60 + n.getMinutes(), g = segs(tk).find(x => !x.t.routine && !x.cont && x.e <= m && !isDone(x.t, x.k0));
     const el = g && document.querySelector(`.blk[data-id="${g.t.id}"][data-date="${g.k0}"]`);
@@ -1615,6 +1651,67 @@ function openTray() {
   });
 }
 $('#tray').onclick = openTray;
+
+/* ═════════ סיכום שבועי ═════════ */
+const OVERLOAD_MIN = 600;                                  // יותר מ־10 שעות מתוכננות ביום = יום עמוס
+const endAt = (t, k) => { const p = span(t), d0 = parseKey(k); return new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, p.over ? p.e + 1440 : p.e); };
+const durMin = t => { const p = span(t); return (p.e - p.s + 1440) % 1440 || 1440; };
+const fmtH = m => { const h = Math.floor(m / 60), r = m % 60; return `${h}${r ? ':' + pad(r) : ''} שע׳`; };
+
+/* משימות רגילות בלבד (שגרה לא נכללת). "מועד" = המשימה הסתיימה או כבר סומנה, ורק עליה מחשבים אחוז ביצוע */
+function weekStats(ws, now = new Date()) {
+  const out = { tasks: 0, planned: 0, done: 0, due: 0, byCat: {}, byDay: [] };
+  for (let i = 0; i < 7; i++) {
+    const k = keyOf(addDays(ws, i)), day = { k, planned: 0, done: 0, n: 0, heavy: false };
+    occ(k).forEach(t => {
+      if (t.routine) return;
+      const d = durMin(t), isD = isDone(t, k), ended = endAt(t, k) <= now;
+      out.tasks++; out.planned += d; day.planned += d; day.n++;
+      const c = out.byCat[t.cat] || (out.byCat[t.cat] = { planned: 0, doneMin: 0, n: 0, doneN: 0 });
+      c.planned += d; c.n++;
+      if (isD) { out.done++; day.done += d; c.doneMin += d; c.doneN++; }
+      if (isD || ended) out.due++;
+    });
+    day.heavy = day.planned > OVERLOAD_MIN; out.byDay.push(day);
+  }
+  return out;
+}
+/* רצף: כמה מופעים אחרונים ברצף (בקטגוריה) בוצעו בלי החמצה. נספרים רק מופעים שהסתיימו, 60 יום אחורה */
+function streaks(now = new Date()) {
+  const tk = keyOf(now), by = {};
+  for (let i = 0; i < 60; i++) {
+    const k = keyOf(addDays(parseKey(tk), -i));
+    occ(k).forEach(t => { if (t.routine || endAt(t, k) > now) return; (by[t.cat] = by[t.cat] || []).push({ k, s: t.start, done: isDone(t, k) }); });
+  }
+  return Object.entries(by).map(([c, list]) => {
+    list.sort((a, b) => b.k.localeCompare(a.k) || b.s.localeCompare(a.s));
+    let n = 0; for (const x of list) { if (!x.done) break; n++; }
+    return { cat: c, n, total: list.length };
+  }).filter(x => x.n >= 2 && x.total >= 3).sort((a, b) => b.n - a.n).slice(0, 4);
+}
+function openSummary() {
+  let ws = startOfWeek(parseKey(ui.date));
+  const { sheet } = openSheet(`
+    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>סגור</button><h2>סיכום שבועי</h2><span style="min-width:56px"></span></div></div>
+    <div class="sm-nav"><button type="button" class="ib" data-d="-1" aria-label="שבוע קודם"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><b id="smr"></b><button type="button" class="ib" data-d="1" aria-label="שבוע הבא"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+    <div id="smBody"></div>`);
+  const draw = () => {
+    const st = weekStats(ws), tk = todayKey(), pct = st.due ? Math.round(st.done / st.due * 100) : 0;
+    $('#smr', sheet).textContent = weekRange(ws);
+    let h = st.tasks ? `<div class="sm-big"><b>${st.done}</b><span>מתוך ${st.due} שהגיע זמנן בוצעו</span>${st.due ? `<em>${pct}%</em>` : ''}</div>
+      <div class="bar" role="img" aria-label="${pct} אחוז בוצעו"><i style="width:${pct}%"></i></div>
+      <p class="sm-sub">${st.tasks} משימות בשבוע · ${fmtH(st.planned)} מתוכננות${st.tasks - st.due > 0 ? ` · ${st.tasks - st.due} עוד לפניכם` : ''}</p>` : '<p class="empty">אין משימות בשבוע הזה.</p>';
+    const cats = Object.entries(st.byCat).sort((a, b) => b[1].planned - a[1].planned), maxP = cats.length ? cats[0][1].planned : 1;
+    if (cats.length) h += `<div class="sec">לפי קטגוריה</div>` + cats.map(([id, c]) => `<div class="cr" style="--c:${cat(id).color}"><i></i><span class="cn">${esc(cat(id).name)}</span><span class="ch">${fmtH(c.planned)} · ${c.doneN}/${c.n}</span><div class="cb"><u style="width:${c.planned / maxP * 100}%"><s style="width:${c.doneMin / c.planned * 100}%"></s></u></div></div>`).join('');
+    if (st.tasks) h += `<div class="sec">לפי יום</div><div class="days">` + st.byDay.map((d, i) => `<div class="dc${d.heavy ? ' heavy' : ''}${d.k === tk ? ' today' : ''}"><div class="dbar"><u style="height:${Math.min(d.planned / 840, 1) * 100}%"><s style="height:${d.planned ? d.done / d.planned * 100 : 0}%"></s></u></div><small>${DL[i]}׳</small><small class="dh">${d.planned ? fmtH(d.planned) : ''}</small></div>`).join('') + '</div>' + (st.byDay.some(d => d.heavy) ? `<p class="sm-warn">יום עם יותר מ־${OVERLOAD_MIN / 60} שעות מתוכננות מסומן בכתום. כדאי להקל עליו.</p>` : '');
+    const sk = streaks();
+    if (sk.length) h += `<div class="sec">רצפים</div>` + sk.map(x => `<div class="cr" style="--c:${cat(x.cat).color}"><i></i><span class="cn">${esc(cat(x.cat).name)}</span><span class="ch"><b>${x.n}</b> ברצף ללא החמצה</span></div>`).join('');
+    h += '<p class="vnote" style="margin-top:14px">שגרה (שינה, ארוחות) לא נכללת. משימה שעוד לא הגיע זמנה לא נחשבת החמצה.</p>';
+    $('#smBody', sheet).innerHTML = h;
+  };
+  sheet.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { ws = addDays(ws, 7 * +b.dataset.d); draw(); });
+  draw();
+}
 
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
