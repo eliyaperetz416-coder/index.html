@@ -278,6 +278,23 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .nxt:empty{display:none}
 .fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
+#tray{position:relative}
+.bdg{position:absolute;top:1px;inset-inline-end:0;min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:#0a0a0d;font-size:10.5px;font-weight:800;display:grid;place-items:center;padding:0 4px;pointer-events:none}
+.qa{display:flex;gap:8px;margin:6px 0 4px}
+.qa input{flex:1;min-width:0;background:var(--s2);border:0;outline:0;border-radius:12px;padding:11px 13px;font-size:16px;color:var(--tx)}
+.qa input:focus{box-shadow:0 0 0 1.5px var(--mut2)}
+.qa input::placeholder{color:var(--mut2)}
+.trow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.trow i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tr-t{flex:1;min-width:0}
+.tr-t b{display:block;font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-t small{color:var(--mut);font-size:12.5px}
+.tr-a{display:flex;gap:6px;flex:none}
+.mini{padding:7px 11px;border-radius:10px;background:var(--s2);font-size:13px;font-weight:600}
+.mini:active{background:var(--s3)}
+.mini.dng{color:var(--danger)}
+.empty{text-align:center;color:var(--mut);padding:22px 0}
+.vact .full{grid-column:1/-1}
 .swrow{display:flex;align-items:center;gap:12px;background:var(--s2);border-radius:14px;padding:11px 14px;cursor:pointer;font-size:15px;font-weight:600}
 .swrow input{position:absolute;opacity:0;pointer-events:none}
 .swrow .sw{flex:none;width:42px;height:26px;border-radius:13px;background:var(--s3);position:relative;transition:background .2s}
@@ -359,6 +376,7 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
       <div class="ttl"><h1 id="h1"></h1><p><span id="h2t"></span></p></div>
       <button class="ib" id="prev" aria-label="הקודם"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="ib" id="next" aria-label="הבא"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="ib" id="tray" aria-label="משימות פתוחות"><svg viewBox="0 0 24 24"><path d="M3 13l2.5-7h13L21 13M3 13v6a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6M3 13h5l1 2h6l1-2h5"/></svg><span class="bdg" id="bdg" hidden></span></button>
       <button class="ib" id="gear" aria-label="הגדרות וקטגוריות">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
@@ -438,17 +456,19 @@ function clean(raw) {
       done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }, routine: !!t.routine
     };
     if (validDate(t.until)) out.until = t.until;
+    if (t.dismissed) out.dismissed = true;
     if (t.remind === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(t.remind)) out.remind = t.remind;
     tasks.push(out);
   });
-  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
+  const inbox = (Array.isArray(raw.inbox) ? raw.inbox : []).filter(x => x && typeof x.title === 'string' && x.title.trim()).slice(0, 200).map(x => ({ id: typeof x.id === 'string' && x.id ? x.id : uid(), title: x.title.trim().slice(0, 80), cat: cats.some(c => c.id === x.cat) ? x.cat : cats[0].id }));
+  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', inbox, remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
 }
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE));
     if (s && Array.isArray(s.tasks)) return clean(s).state;
   } catch (e) {}
-  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15 };
+  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15, inbox: [] };
 }
 let S = load();
 let saveWarned = false;
@@ -561,6 +581,7 @@ function renderHeader() {
   }).join('');
   updateRing();
   updateNowNext();
+  updateBadge();
 }
 
 function updateRing() {
@@ -1002,7 +1023,7 @@ function applyEdit(task, data, scope, k, to = k) {
   S.tasks.push(clone);
   return clone;
 }
-function openTask({ task, date, start, prefill }) {
+function openTask({ task, date, start, prefill, inboxId }) {
   const edit = !!task;
   const defCat = S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id;
   const t = task || { title: prefill ? prefill.title : '', cat: prefill ? prefill.cat : defCat, date: date || ui.date, start: start || nextSlot(date || ui.date), end: prefill ? prefill.end : '', repeat: prefill ? prefill.repeat : { type: 'none', days: [] }, notes: '', routine: prefill ? prefill.routine : false };
@@ -1095,7 +1116,7 @@ function openTask({ task, date, start, prefill }) {
     if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
     const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
     const rv = $f('remind').value; if (rv !== '') data.remind = rv === 'n' ? 'n' : +rv;
-    const snap = JSON.stringify(S.tasks);
+    const snap = JSON.stringify(S.tasks), snapI = JSON.stringify(S.inbox);
     if (edit) {
       const r0 = task.repeat || { type: 'none', days: [] };
       const sameSchedule = r0.type !== 'none' && type === r0.type && JSON.stringify(r0.days || []) === JSON.stringify(data.repeat.days) && d === task.date;
@@ -1108,10 +1129,11 @@ function openTask({ task, date, start, prefill }) {
       applyEdit(task, data, scope, viewDate);
     } else S.tasks.push({ id: uid(), done: {}, skip: [], ...data });
     S.lastCat = catId;
+    if (inboxId) S.inbox = S.inbox.filter(q => q.id !== inboxId);
     save(); close();
     if (type === 'none' && !rangeKeys().includes(d)) ui.date = d;
     render();
-    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { S.tasks = JSON.parse(snap); if (inboxId) S.inbox = JSON.parse(snapI); save(); render(); });
   });
 
   f.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
@@ -1190,7 +1212,7 @@ function openSettings() {
   $('#dm', sheet).onclick = () => { close(); loadExamples(); };
   $('#ca', sheet).onclick = async () => {
     if (!S.tasks.length || !(await ask('למחוק את כל המשימות? אי אפשר לבטל.', 'מחק הכול'))) return;
-    S.tasks = []; save(); close(); render(); toast('כל המשימות נמחקו');
+    S.tasks = []; S.inbox = []; save(); close(); render(); toast('כל המשימות נמחקו');
   };
 }
 
@@ -1388,8 +1410,14 @@ function updateNowNext() {
   txt.innerHTML = html;
   dot.style.setProperty('--c', color || 'var(--mut2)');
 }
-$('#nn').onclick = () => {
+$('#nn').onclick = e => {
   const tk = todayKey();
+  if (e.target.closest('.miss')) {                          // קופץ לבלוק הראשון שעבר ולא סומן
+    const n = new Date(), m = n.getHours() * 60 + n.getMinutes(), g = segs(tk).find(x => !x.t.routine && !x.cont && x.e <= m && !isDone(x.t, x.k0));
+    const el = g && document.querySelector(`.blk[data-id="${g.t.id}"][data-date="${g.k0}"]`);
+    if (el) window.scrollTo({ top: Math.max(el.getBoundingClientRect().top + scrollY - $('#top').offsetHeight - 24, 0), behavior: 'smooth' });
+    return;
+  }
   if (S.view === 'day' && ui.date === tk) scrollToRelevant(PPM(), tk, segs(tk));
   else go(tk, tk > ui.date ? 1 : -1, true);
 };
@@ -1414,7 +1442,7 @@ function openVoice() {
       <div class="vstat" id="vstat" aria-live="polite"></div>
       <textarea class="vtxt" id="vtxt" rows="2" placeholder="או כתבו כאן. למשל: אימון מחר בחמש וחצי לשעה וחצי" aria-label="מה לתכנן"></textarea>
       <div class="vprev" id="vprev"></div>
-      <div class="vact"><button type="button" class="btn" id="vedit" disabled>עריכה</button><button type="button" class="btn pri" id="vadd" disabled>הוסף</button></div>
+      <div class="vact"><button type="button" class="btn" id="vedit" disabled>עריכה</button><button type="button" class="btn pri" id="vadd" disabled>הוסף</button><button type="button" class="btn full" id="vinbox" hidden>שמור בתיבה (בלי שעה)</button></div>
       <p class="vnote">הזיהוי נעשה על ידי הדפדפן או מערכת ההפעלה של הטלפון. בטלפון אפשר גם ללחוץ על המיקרופון במקלדת.</p>
     </div>`, () => { try { rec && rec.abort(); } catch (e) {} });
   const $s = s => $(s, sheet);
@@ -1423,9 +1451,10 @@ function openVoice() {
 
   const preview = () => {
     const txt = $s('#vtxt').value.trim();
-    $s('#vadd').disabled = $s('#vedit').disabled = !txt;
+    $s('#vadd').disabled = $s('#vedit').disabled = !txt; $s('#vinbox').hidden = true;
     if (!txt) { $s('#vprev').innerHTML = ''; last = null; return; }
     last = parseVoice(txt, ctx());
+    $s('#vinbox').hidden = !(!last.start && !last.dateGiven && last.repeat.type === 'none');
     const tk = voiceTask(last), c = cat(tk.cat), isRep = last.repeat.type !== 'none';
     $s('#vprev').innerHTML = `<div class="pv" style="--c:${c.color}">
       <div class="pv-h"><i></i><b>${esc(tk.title)}</b><span>${esc(c.name)}</span></div>
@@ -1465,6 +1494,7 @@ function openVoice() {
     vib(8);
     toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
   };
+  $s('#vinbox').onclick = () => { if (!last) return; const tk = voiceTask(last), snap = JSON.stringify(S.inbox); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { S.inbox = JSON.parse(snap); save(); updateBadge(); }); };
   $s('#vedit').onclick = () => { if (!last) return; const tk = voiceTask(last); close(); setTimeout(() => openTask({ date: tk.date, start: tk.start, prefill: tk }), 220); };
   start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
 }
@@ -1528,6 +1558,64 @@ async function exportICS(list, label) {
   if (how === 'download') toast(`${label} · פתחו את הקובץ כדי להוסיף ליומן`);
 }
 
+/* ═════════ משימות פתוחות: מה שלא בוצע + תיבה למשימות בלי שעה ═════════ */
+const endDT = t => { const p = span(t), d0 = parseKey(t.date); return new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, p.over ? p.e + 1440 : p.e); };
+function missedList() {                                   // משימות חד־פעמיות שהסתיימו ולא סומנו (עד שבועיים אחורה)
+  const now = new Date(), lim = addDays(parseKey(todayKey()), -14);
+  return S.tasks.filter(t => !t.routine && !t.dismissed && (!t.repeat || t.repeat.type === 'none') && parseKey(t.date) >= lim && !isDone(t, t.date) && endDT(t) <= now)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start));
+}
+function updateBadge() {
+  const n = missedList().length + S.inbox.length, b = $('#bdg');
+  b.hidden = n === 0; b.textContent = n > 99 ? '99+' : n;
+  $('#tray').setAttribute('aria-label', n ? `משימות פתוחות: ${n}` : 'משימות פתוחות');
+}
+function moveToToday(t) {                                 // מעביר להיום: אותה שעה אם היא עוד לפנינו, אחרת למשבצת הקרובה. המשך נשמר
+  const n = new Date(), nowMin = n.getHours() * 60 + n.getMinutes(), p = span(t), dur = (p.e - p.s + 1440) % 1440 || 60;
+  let s = p.s; if (s <= nowMin) s = mins(nextSlot(todayKey()));
+  t.date = todayKey(); t.start = fmt(s); t.end = fmt(Math.min(s + dur, 1440) % 1440); delete t.dismissed;
+}
+function openTray() {
+  const { sheet, close } = openSheet(`
+    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>משימות פתוחות</h2><button type="button" class="lnk st" data-close>סיום</button></div></div>
+    <div class="qa"><input id="qa" placeholder="משימה בלי שעה, למשל: להתקשר לרופא" maxlength="80" enterkeyhint="done" aria-label="משימה חדשה בלי שעה"><button type="button" class="btn pri" id="qab">הוסף</button></div>
+    <div id="trayBody"></div>`);
+  const body = $('#trayBody', sheet);
+  const undoable = (msg, fn) => { const snap = JSON.stringify({ t: S.tasks, i: S.inbox }); fn(); save(); draw(); render(); toast(msg, 'ביטול', () => { const o = JSON.parse(snap); S.tasks = o.t; S.inbox = o.i; save(); draw(); render(); }); };
+  const draw = () => {
+    const miss = missedList();
+    const row = (kind, id, title, catId, label, btns) => `<div class="trow" data-kind="${kind}" data-id="${id}" style="--c:${cat(catId).color}"><i></i><div class="tr-t"><b>${esc(title)}</b><small>${label}</small></div><div class="tr-a">${btns}</div></div>`;
+    let h = '';
+    if (miss.length) h += `<div class="sec">לא בוצעו</div>` + miss.map(t => row('m', t.id, t.title, t.cat, `${esc(dateLabel(t.date))} · <bdi>${t.start}–${t.end}</bdi>`, '<button class="mini" data-a="today">להיום</button><button class="mini" data-a="done">בוצע</button><button class="mini dng" data-a="drop">ויתור</button>')).join('');
+    if (S.inbox.length) h += `<div class="sec">בלי שעה</div>` + S.inbox.map(x => row('i', x.id, x.title, x.cat, esc(cat(x.cat).name), '<button class="mini" data-a="plan">תזמן</button><button class="mini dng" data-a="del">מחק</button>')).join('');
+    body.innerHTML = h || '<p class="empty">אין משימות פתוחות. מה שלא תספיקו יופיע כאן.</p>';
+    updateBadge();
+  };
+  draw();
+  const addQuick = () => {
+    const inp = $('#qa', sheet), title = inp.value.trim(); if (!title) { inp.focus(); return; }
+    const c = S.cats.some(x => x.id === S.lastCat) ? S.lastCat : S.cats[0].id;
+    S.inbox.unshift({ id: uid(), title: title.slice(0, 80), cat: c }); save(); inp.value = ''; draw(); vib(8);
+  };
+  $('#qab', sheet).onclick = addQuick;
+  $('#qa', sheet).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addQuick(); } });
+  body.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const r = b.closest('.trow'), id = r.dataset.id, a = b.dataset.a;
+    if (r.dataset.kind === 'm') {
+      const t = findTask(id); if (!t) return;
+      if (a === 'today') undoable('הועבר להיום', () => moveToToday(t));
+      else if (a === 'done') undoable('סומן כבוצע', () => setDone(t, t.date, true));
+      else undoable('בוטל', () => { t.dismissed = true; });
+    } else {
+      const x = S.inbox.find(q => q.id === id); if (!x) return;
+      if (a === 'del') undoable('נמחק מהתיבה', () => { S.inbox = S.inbox.filter(q => q.id !== id); });
+      else { close(); setTimeout(() => openTask({ date: todayKey(), start: nextSlot(todayKey()), prefill: { title: x.title, cat: x.cat, end: '', repeat: { type: 'none', days: [] }, routine: false }, inboxId: id }), 220); }
+    }
+  });
+}
+$('#tray').onclick = openTray;
+
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
   const d = keyOf(startOfWeek(new Date()));
@@ -1570,7 +1658,7 @@ try {                                                     // טיפ חד-פעמ�
 } catch (e) {}
 let bootDay = todayKey();
 function tickNow() {
-  updateNowNext();
+  updateNowNext(); updateBadge();
   const n = $('[data-now]'); if (!n) return;
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), ppm = S.view === 'day' ? PPM() : WPPM();
   n.style.top = (TOP + m * ppm) + 'px';
