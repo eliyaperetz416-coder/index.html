@@ -592,15 +592,15 @@ document.addEventListener('touchend', e => {
   st = 0;
 }, { passive: true });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && activeClose) activeClose();
+  if (e.key === 'Escape' && sheetStack.length) sheetStack[sheetStack.length - 1]();
   else if (!document.body.classList.contains('sheet-open') && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
     if (e.key === 'ArrowRight') step(-1); else if (e.key === 'ArrowLeft') step(1); else if (e.key === 'n') openTask({ date: ui.date });
   }
 });
 
 /* ═════════ חלוניות ═════════ */
-let activeClose = null;
-function openSheet(html) {
+const sheetStack = [];
+function openSheet(html, onClose) {
   const ov = document.createElement('div');
   ov.className = 'ov';
   ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
@@ -612,11 +612,12 @@ function openSheet(html) {
   const close = () => {
     if (closed) return; closed = true;
     ov.classList.remove('in'); sheet.style.transform = '';
-    document.body.classList.remove('sheet-open');
-    if (activeClose === close) activeClose = null;
+    const i = sheetStack.indexOf(close); if (i >= 0) sheetStack.splice(i, 1);
+    if (!sheetStack.length) document.body.classList.remove('sheet-open');
     setTimeout(() => ov.remove(), 450);
+    if (onClose) onClose();
   };
-  activeClose = close;
+  sheetStack.push(close);
   ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
   sheet.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
   dragToDismiss(sheet, $('.shh', sheet), close);
@@ -647,6 +648,18 @@ function dragToDismiss(sheet, handle, close) {
   };
   handle.addEventListener('pointerup', end);
   handle.addEventListener('pointercancel', end);
+}
+
+/* אישור בתוך האפליקציה (במקום confirm של הדפדפן) */
+function ask(msg, okLabel) {
+  return new Promise(res => {
+    let yes = false;
+    const { sheet, close } = openSheet(`<div class="shh"><div class="grab"></div></div>
+      <p style="font-size:17px;font-weight:600;margin:10px 0 20px;text-align:center;text-wrap:balance">${esc(msg)}</p>
+      <div class="dels"><button type="button" class="btn dng" id="askYes">${esc(okLabel || 'אישור')}</button><button type="button" class="btn" data-close>ביטול</button></div>`,
+      () => res(yes));
+    $('#askYes', sheet).onclick = () => { yes = true; close(); };
+  });
 }
 
 let toastTimer = 0;
@@ -783,11 +796,11 @@ function openSettings() {
     if (e.target.type === 'color') c.color = e.target.value; else c.name = e.target.value;
     save();
   });
-  cats.addEventListener('click', e => {
+  cats.addEventListener('click', async e => {
     const rm = e.target.closest('[data-rm]'); if (!rm || S.cats.length < 2) return;
     const id = rm.closest('.crow').dataset.id, c = cat(id);
     const used = S.tasks.filter(t => t.cat === id).length;
-    if (used && !confirm(`ל־"${c.name}" יש ${used} משימות. הן יועברו לקטגוריה "${S.cats.find(x => x.id !== id).name}". להמשיך?`)) return;
+    if (used && !(await ask(`ל־"${c.name}" יש ${used} משימות. הן יועברו לקטגוריה "${S.cats.find(x => x.id !== id).name}".`, 'מחק והעבר'))) return;
     const fb = S.cats.find(x => x.id !== id).id;
     S.tasks.forEach(t => { if (t.cat === id) t.cat = fb; });
     S.cats = S.cats.filter(x => x.id !== id); save(); drawCats(); render();
@@ -808,13 +821,13 @@ function openSettings() {
     try {
       const j = JSON.parse(await e.target.files[0].text());
       if (!Array.isArray(j.tasks) || !Array.isArray(j.cats) || !j.cats.length) throw 0;
-      if (!confirm('הייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) return;
+      if (!(await ask('הייבוא יחליף את כל הנתונים הקיימים.', 'ייבא'))) return;
       S = { view: 'day', ...j }; save(); close(); render({ scroll: true }); toast('הגיבוי נטען');
     } catch (err) { toast('הקובץ לא תקין'); }
   };
   $('#dm', sheet).onclick = () => { close(); loadExamples(); };
-  $('#ca', sheet).onclick = () => {
-    if (!S.tasks.length || !confirm('למחוק את כל המשימות? אי אפשר לבטל.')) return;
+  $('#ca', sheet).onclick = async () => {
+    if (!S.tasks.length || !(await ask('למחוק את כל המשימות? אי אפשר לבטל.', 'מחק הכול'))) return;
     S.tasks = []; save(); close(); render(); toast('כל המשימות נמחקו');
   };
 }
@@ -834,7 +847,9 @@ function loadExamples() {
 }
 
 /* ═════════ הפעלה ═════════ */
-render({ scroll: true });
+const DEMO = /*DEMO*/false;
+if (DEMO && !S.tasks.length) { let had = false; try { had = !!localStorage.getItem(STORE); } catch (e) {} if (!had) { loadExamples(); S.tasks.forEach(t => { t.done = {}; }); } }
+else render({ scroll: true });
 setInterval(() => {                      // קו "עכשיו" זז לבד
   const n = $('[data-now]'); if (!n) return;
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), ppm = S.view === 'day' ? PPM() : WPPM();
@@ -846,7 +861,7 @@ document.addEventListener('visibilitychange', () => {   // חזרה לאפליק
     const y = window.scrollY; render(); window.scrollTo(0, y);
   }
 });
-if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+/*SW*/ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>
