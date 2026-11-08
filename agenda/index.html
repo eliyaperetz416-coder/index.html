@@ -1151,6 +1151,7 @@ function loadExamples() {
 }
 
 /* ═════════ הפעלה ═════════ */
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // מבקש מהדפדפן לא למחוק את הנתונים לבד
 const UIKEY = 'agenda.ui';
 let restored = false;
 try {
