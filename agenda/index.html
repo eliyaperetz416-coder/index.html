@@ -276,6 +276,7 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .donebtn .chk::before{display:none}
 .nxt{font-size:13px;color:var(--mut);margin-top:-6px}
 .nxt:empty{display:none}
+.fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
 .swrow{display:flex;align-items:center;gap:12px;background:var(--s2);border-radius:14px;padding:11px 14px;cursor:pointer;font-size:15px;font-weight:600}
 .swrow input{position:absolute;opacity:0;pointer-events:none}
@@ -437,16 +438,17 @@ function clean(raw) {
       done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }, routine: !!t.routine
     };
     if (validDate(t.until)) out.until = t.until;
+    if (t.remind === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(t.remind)) out.remind = t.remind;
     tasks.push(out);
   });
-  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '' }, dropped };
+  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
 }
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE));
     if (s && Array.isArray(s.tasks)) return clean(s).state;
   } catch (e) {}
-  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '' };
+  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15 };
 }
 let S = load();
 let saveWarned = false;
@@ -829,7 +831,7 @@ function finishDrag(commit) {
 /* שמירת שעות חדשות. במשימה חוזרת שואלים מה לשנות */
 async function commitTimes(i, start, end, toDate) {
   const t = i.t, snap = JSON.stringify(S.tasks), rec = t.repeat && t.repeat.type !== 'none';
-  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', routine: !!t.routine, repeat: t.repeat };
+  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', routine: !!t.routine, remind: t.remind, repeat: t.repeat };
   let res = t;
   if (!rec) { t.start = start; t.end = end; t.date = toDate; }
   else if (toDate !== i.k0) res = applyEdit(t, data, 'one', i.k0, toDate);     // העברה ליום אחר = רק המופע הזה
@@ -984,8 +986,8 @@ function nextSlot(k) {
 }
 /* שינוי משימה חוזרת: רק יום אחד, מהיום והלאה, או כל הסדרה */
 function applyEdit(task, data, scope, k, to = k) {
-  if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); return task; }
-  const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes, routine: !!data.routine };
+  if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); if (data.remind === undefined) delete task.remind; return task; }
+  const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes, routine: !!data.routine, remind: data.remind };
   if (scope === 'one') {
     const clone = { id: uid(), ...base, date: to, repeat: { type: 'none', days: [] }, done: {}, skip: [] };
     if (task.done && task.done[k]) { clone.done[to] = task.done[k]; delete task.done[k]; }
@@ -1036,9 +1038,10 @@ function openTask({ task, date, start, prefill }) {
         <label><input type="radio" name="rep" value="weekly"${rep.type === 'weekly' ? ' checked' : ''}><span>ימים בשבוע</span></label>
       </div></div>
     <div class="dsel${rep.type === 'weekly' ? ' open' : ''}" id="dsel">${DL.map((l, i) => `<label><input type="checkbox" name="day" value="${i}"${days.includes(i) ? ' checked' : ''}><span aria-label="יום ${DAYS[i]}">${l}</span></label>`).join('')}</div>
+    <div class="fld"><label class="lbl" for="fr">תזכורת ביומן של הטלפון</label><select id="fr" name="remind"><option value="">ברירת מחדל (${esc(remindLabel(S.remindDefault))})</option><option value="n"${t.remind === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${t.remind === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
     <div class="fld"><label class="lbl" for="fn">הערות</label><textarea id="fn" name="notes" rows="2" maxlength="300" placeholder="אופציונלי">${esc(t.notes || '')}</textarea></div>
     <div class="err" id="err" role="alert"></div>
-    ${edit ? `<div class="dels">${recurring
+    ${edit ? `<div class="dels"><button type="button" class="btn" id="icsOne">הוסף ליומן (קובץ)</button>${recurring
       ? `<button type="button" class="btn dng" data-del="one">מחק רק את ${esc(relTitle(viewDate) === 'היום' ? 'היום' : fullShort(viewDate))}</button>${viewDate > task.date ? '<button type="button" class="btn dng" data-del="fwd">מחק מהיום הזה והלאה</button>' : ''}<button type="button" class="btn dng" data-del="all">מחק את כל הסדרה</button>`
       : `<button type="button" class="btn dng" data-del="all">מחק משימה</button>`}</div>` : ''}
   </form>`);
@@ -1091,11 +1094,12 @@ function openTask({ task, date, start, prefill }) {
     const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
     if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
     const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
+    const rv = $f('remind').value; if (rv !== '') data.remind = rv === 'n' ? 'n' : +rv;
     const snap = JSON.stringify(S.tasks);
     if (edit) {
       const r0 = task.repeat || { type: 'none', days: [] };
       const sameSchedule = r0.type !== 'none' && type === r0.type && JSON.stringify(r0.days || []) === JSON.stringify(data.repeat.days) && d === task.date;
-      const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '') || data.routine !== !!task.routine;
+      const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '') || data.routine !== !!task.routine || (data.remind ?? null) !== (task.remind ?? null);
       let scope = 'all';
       if (sameSchedule && changed) {
         scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
@@ -1118,6 +1122,7 @@ function openTask({ task, date, start, prefill }) {
     save(); close(); render();
     toast('נמחק', 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
   }));
+  const io = $('#icsOne', sheet); if (io) io.onclick = () => exportICS([task], 'האירוע מוכן');
   if (!edit && matchMedia('(pointer:fine)').matches) setTimeout(() => { try { $f('title').focus({ preventScroll: true }); } catch (e) {} }, 380);
 }
 const fullShort = k => { const d = parseKey(k); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; };
@@ -1129,8 +1134,12 @@ function openSettings() {
     <div class="sec">קטגוריות</div>
     <div id="cats"></div>
     <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="nn" placeholder="קטגוריה חדשה…" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
+    <div class="sec">תזכורות</div>
+    <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+    <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
     <div class="sec">נתונים</div>
     <div class="list">
+      <button class="btn" id="ics">ייצוא משימות עתידיות ליומן <span>↗</span></button>
       <button class="btn" id="ex">ייצוא גיבוי <span>⬇</span></button>
       <button class="btn" id="im">ייבוא מגיבוי <span>⬆</span></button>
       <button class="btn" id="dm">הוסף משימות לדוגמה <span>＋</span></button>
@@ -1165,11 +1174,9 @@ function openSettings() {
     S.cats.push({ id: uid(), name: n, color: $('#nc', sheet).value }); save();
     $('#nn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
   };
-  $('#ex', sheet).onclick = () => {
-    const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `agenda-backup-${todayKey()}.json`; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  };
+  $('#ex', sheet).onclick = async () => { const how = await deliverFile(`agenda-backup-${todayKey()}.json`, 'application/json', JSON.stringify(S, null, 1)); if (how === 'download') toast('הגיבוי ירד למכשיר'); };
+  $('#ics', sheet).onclick = () => exportICS(upcomingTasks(), 'הקובץ מוכן');
+  $('#rd', sheet).onchange = e => { S.remindDefault = e.target.value === 'n' ? 'n' : +e.target.value; save(); };
   $('#im', sheet).onclick = () => $('#file', sheet).click();
   $('#file', sheet).onchange = async e => {
     try {
@@ -1462,6 +1469,64 @@ function openVoice() {
   start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
 }
 $('#vbtn').onclick = openVoice;
+
+/* ═════════ ייצוא ליומן של הטלפון (קובץ ICS) — כך מקבלים תזכורות אמיתיות ═════════ */
+const REMIND_OPTS = [[0, 'בזמן ההתחלה'], [5, '5 דקות לפני'], [10, '10 דקות לפני'], [15, '15 דקות לפני'], [30, '30 דקות לפני'], [60, 'שעה לפני'], [120, 'שעתיים לפני'], [1440, 'יום לפני']];
+const remindLabel = v => v === 'n' ? 'בלי תזכורת' : (REMIND_OPTS.find(o => o[0] === v) || [0, `${v} דקות לפני`])[1];
+const remindOf = t => t.remind === undefined ? S.remindDefault : t.remind;                // 'n' או מספר דקות
+const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+function icsFold(line) {                                  // שורה מקסימום 75 בתים, בלי לחתוך אות באמצע
+  const enc = new TextEncoder(); let out = '', cur = '', bytes = 0, limit = 75;
+  for (const ch of line) {
+    const n = enc.encode(ch).length;
+    if (bytes + n > limit) { out += cur + '\r\n '; cur = ''; bytes = 1; limit = 75; }
+    cur += ch; bytes += n;
+  }
+  return out + cur;
+}
+function icsDT(d, m) {                                    // שעה "צפה" (לפי אזור הזמן של הטלפון); m יכול לעבור 1440
+  const x = addDays(d, Math.floor(m / 60 / 24)), mm = m % 1440;
+  return `${x.getFullYear()}${pad(x.getMonth() + 1)}${pad(x.getDate())}T${pad(Math.floor(mm / 60))}${pad(mm % 60)}00`;
+}
+function buildICS(list) {
+  const now = new Date(), stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//HE//', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:סדר יום'];
+  const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  list.forEach(t => {
+    const p = span(t), rep = t.repeat || { type: 'none' };
+    let first = parseKey(t.date);
+    if (rep.type === 'weekly') { let i = 0; while (!rep.days.includes(first.getDay()) && i++ < 7) first = addDays(first, 1); }   // DTSTART חייב להיות המופע הראשון
+    const endAbs = p.over ? p.e + 1440 : p.e;
+    L.push('BEGIN:VEVENT', `UID:${t.id}@agenda.local`, `DTSTAMP:${stamp}`, `DTSTART:${icsDT(first, p.s)}`, `DTEND:${icsDT(first, endAbs)}`, `SUMMARY:${icsEsc(t.title)}`, `CATEGORIES:${icsEsc(cat(t.cat).name)}`);
+    if (t.notes) L.push(`DESCRIPTION:${icsEsc(t.notes)}`);
+    if (rep.type === 'daily') L.push('RRULE:FREQ=DAILY' + (t.until ? `;UNTIL=${t.until.replace(/-/g, '')}T235959` : ''));
+    else if (rep.type === 'weekly') L.push(`RRULE:FREQ=WEEKLY;BYDAY=${rep.days.map(i => BYDAY[i]).join(',')}` + (t.until ? `;UNTIL=${t.until.replace(/-/g, '')}T235959` : ''));
+    if (rep.type !== 'none') (t.skip || []).forEach(k => L.push(`EXDATE:${icsDT(parseKey(k), p.s)}`));
+    const r = remindOf(t);
+    if (r !== 'n') L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(t.title)}`, r === 0 ? 'TRIGGER:PT0S' : `TRIGGER:-PT${r}M`, 'END:VALARM');
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  return L.map(icsFold).join('\r\n') + '\r\n';
+}
+function upcomingTasks() {                                // רק מה שעוד רלוונטי: לא חד־פעמי שעבר, לא סדרה שנגמרה, לא שגרה
+  const tk = todayKey();
+  return S.tasks.filter(t => !t.routine && (t.repeat && t.repeat.type !== 'none' ? !t.until || t.until >= tk : t.date >= tk));
+}
+async function deliverFile(name, mime, text) {            // iPhone: גיליון שיתוף (אפשר לבחור "יומן"). אחרת: הורדה
+  const file = new File([text], name, { type: mime });
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return 'shared'; } }
+  catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+  const url = URL.createObjectURL(file), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  return 'download';
+}
+async function exportICS(list, label) {
+  if (!list.length) { toast('אין משימות עתידיות לייצוא'); return; }
+  const how = await deliverFile(`agenda-${todayKey()}.ics`, 'text/calendar', buildICS(list));
+  if (how === 'download') toast(`${label} · פתחו את הקובץ כדי להוסיף ליומן`);
+}
 
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
