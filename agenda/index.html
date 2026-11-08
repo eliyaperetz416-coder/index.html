@@ -278,6 +278,15 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .nxt:empty{display:none}
 .fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
+.sm-note{margin:8px 0;color:var(--mut);font-size:13px;line-height:1.5}
+.srow{display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 10px}
+.sd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--mut2)}
+.sd.ok{background:var(--ok)}
+.sd.err{background:#ffb454}
+.sd.syn{background:var(--tx);animation:micpulse 1.4s ease-out infinite}
+.keyrow{display:flex;gap:8px;margin:6px 0}
+.keyrow input{flex:1;min-width:0;font:600 14px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.03em;direction:ltr;background:var(--s2);border:0;outline:0;border-radius:12px;padding:11px 12px;color:var(--tx)}
+.keyrow .btn{padding:9px 13px;font-size:13.5px}
 .nn .warn{color:#ffb454}
 .sm-nav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px}
 .sm-nav b{font-size:15px;font-weight:600}
@@ -487,25 +496,29 @@ function clean(raw) {
     };
     if (validDate(t.until)) out.until = t.until;
     if (t.dismissed) out.dismissed = true;
+    if (Number.isFinite(t.u)) out.u = t.u;
     if (t.remind === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(t.remind)) out.remind = t.remind;
     tasks.push(out);
   });
-  const inbox = (Array.isArray(raw.inbox) ? raw.inbox : []).filter(x => x && typeof x.title === 'string' && x.title.trim()).slice(0, 200).map(x => ({ id: typeof x.id === 'string' && x.id ? x.id : uid(), title: x.title.trim().slice(0, 80), cat: cats.some(c => c.id === x.cat) ? x.cat : cats[0].id }));
-  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', inbox, remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
+  const inbox = (Array.isArray(raw.inbox) ? raw.inbox : []).filter(x => x && typeof x.title === 'string' && x.title.trim()).slice(0, 200).map(x => ({ id: typeof x.id === 'string' && x.id ? x.id : uid(), title: x.title.trim().slice(0, 80), cat: cats.some(c => c.id === x.cat) ? x.cat : cats[0].id, ...(Number.isFinite(x.u) ? { u: x.u } : {}) }));
+  const tomb = {};
+  if (raw.tomb && typeof raw.tomb === 'object') Object.entries(raw.tomb).slice(0, 2000).forEach(([id, ts]) => { if (id.length <= 40 && Number.isFinite(ts)) tomb[id] = ts; });
+  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', inbox, tomb, catsU: Number.isFinite(raw.catsU) ? raw.catsU : 0, setU: Number.isFinite(raw.setU) ? raw.setU : 0, remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
 }
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE));
     if (s && Array.isArray(s.tasks)) return clean(s).state;
   } catch (e) {}
-  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15, inbox: [] };
+  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15, inbox: [], tomb: {}, catsU: 0, setU: 0 };
 }
 let S = load();
 let saveWarned = false;
-function save() {
+function persistLocal() {
   try { localStorage.setItem(STORE, JSON.stringify(S)); }
   catch (e) { if (!saveWarned) { saveWarned = true; toast('לא ניתן לשמור בדפדפן הזה — הנתונים לא יישמרו'); } }
 }
+function save() { stamp(); persistLocal(); queueSync(); }
 const cat = id => S.cats.find(c => c.id === id) || { id, name: 'ללא קטגוריה', color: '#8b8b98' };
 const findTask = id => S.tasks.find(t => t.id === id);
 
@@ -1186,6 +1199,7 @@ function openSettings() {
     <div class="sec">קטגוריות</div>
     <div id="cats"></div>
     <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="nn" placeholder="קטגוריה חדשה…" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
+    ${DEMO ? '' : '<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div>'}
     <div class="sec">תזכורות</div>
     <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
     <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
@@ -1199,7 +1213,8 @@ function openSettings() {
       <button class="btn dng" id="ca">מחק את כל המשימות <span>🗑</span></button>
     </div>
     <p style="color:var(--mut2);font-size:12.5px;margin:16px 0 0">הנתונים נשמרים במכשיר הזה בלבד. מומלץ לייצא גיבוי מדי פעם.</p>
-    <input type="file" id="file" accept="application/json" hidden>`);
+    <input type="file" id="file" accept="application/json" hidden>`, () => { syncUI = null; });
+  if (!DEMO) syncSection(sheet);
   const drawCats = () => {
     $('#cats', sheet).innerHTML = S.cats.map(c => `<div class="crow" data-id="${c.id}">
       <input type="color" value="${c.color}" aria-label="צבע ${esc(c.name)}"><input type="text" value="${esc(c.name)}" maxlength="24" aria-label="שם קטגוריה">
@@ -1713,6 +1728,165 @@ function openSummary() {
   draw();
 }
 
+/* ═════════ סנכרון בין מכשירים ═════════
+   אין חשבון וסיסמה: "מפתח סנכרון" אקראי (130 ביט) נוצר במכשיר, והשרת שומר רק גיבוב שלו.
+   המכשיר עובד תמיד מקומית; הסנכרון רץ ברקע, ובמצב לא מקוון פשוט ממתין. */
+const CLOUD = { url: 'https://szhdasydkoqtbmbrmzpi.supabase.co', key: 'sb_publishable_5qaTK9dDcjPd_mMp6jLePQ_DKScPYbS' };
+const SYNCKEY = 'agenda.sync', B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const sync = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem(SYNCKEY)) || {}; } catch (e) {} return { key: o.key || null, base: o.base || 0, last: o.last || 0, status: o.key ? 'idle' : 'off', err: '' }; })();
+const saveSync = () => { try { localStorage.setItem(SYNCKEY, JSON.stringify({ key: sync.key, base: sync.base, last: sync.last })); } catch (e) {} };
+const genKey = () => Array.from(crypto.getRandomValues(new Uint8Array(26)), b => B32[b & 31]).join('');
+const normKey = s => String(s || '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, '');
+const fmtKey = k => (k || '').replace(/(.{4})(?=.)/g, '$1-');
+const canon = o => Array.isArray(o) ? '[' + o.map(canon).join(',') + ']' : o && typeof o === 'object' ? '{' + Object.keys(o).sort().filter(k => o[k] !== undefined).map(k => JSON.stringify(k) + ':' + canon(o[k])).join(',') + '}' : JSON.stringify(o);
+
+async function cloud(name, args, ms = 12000) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
+  let res;
+  try { res = await fetch(`${CLOUD.url}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: CLOUD.key, 'Content-Type': 'application/json' }, body: JSON.stringify(args), signal: ctl.signal }); }
+  catch (e) { throw new Error('offline'); }
+  finally { clearTimeout(t); }
+  const text = await res.text(); let body = null; try { body = text ? JSON.parse(text) : null; } catch (e) {}
+  if (!res.ok) throw new Error((body && body.message) || `http_${res.status}`);
+  return body;
+}
+
+/* מעקב שינויים: כל פריט מקבל חותמת זמן אחרונה (u), ומחיקות נרשמות כ"מצבות" (tomb). כך אפשר למזג שני מכשירים */
+let shadow = null;
+const noU = o => JSON.stringify({ ...o, u: undefined });
+function snapshotShadow() { shadow = { t: new Map(S.tasks.map(t => [t.id, noU(t)])), i: new Map(S.inbox.map(x => [x.id, noU(x)])), c: JSON.stringify(S.cats), s: JSON.stringify([S.lastCat, S.remindDefault]) }; }
+function stamp() {
+  if (!shadow) return;
+  const now = Date.now();
+  S.tomb = S.tomb || {};
+  const run = (list, sh) => {
+    list.forEach(x => { if (sh.get(x.id) !== noU(x) || !x.u) { x.u = now; if (S.tomb[x.id] && S.tomb[x.id] < now) delete S.tomb[x.id]; } });
+    const ids = new Set(list.map(x => x.id));
+    sh.forEach((_, id) => { if (!ids.has(id)) S.tomb[id] = now; });
+  };
+  run(S.tasks, shadow.t); run(S.inbox, shadow.i);
+  if (shadow.c !== JSON.stringify(S.cats)) S.catsU = now;
+  if (shadow.s !== JSON.stringify([S.lastCat, S.remindDefault])) S.setU = now;
+  for (const [id, ts] of Object.entries(S.tomb)) if (now - ts > 60 * 86400000) delete S.tomb[id];
+  snapshotShadow();
+}
+
+const payload = () => JSON.parse(JSON.stringify({ v: 1, tasks: S.tasks, cats: S.cats, inbox: S.inbox, tomb: S.tomb || {}, catsU: S.catsU || 0, setU: S.setU || 0, lastCat: S.lastCat, remindDefault: S.remindDefault }));
+
+/* מיזוג: לכל פריט מנצח העדכני יותר. "בוצע" ו"דילוג" מתאחדים. מחיקה מנצחת פריט ישן ממנה. קטגוריות והגדרות: העדכני מנצח */
+function mergeRemote(raw) {
+  const R = clean({ tasks: raw.tasks, cats: raw.cats, inbox: raw.inbox, lastCat: raw.lastCat, remindDefault: raw.remindDefault, tomb: raw.tomb, catsU: raw.catsU, setU: raw.setU }).state;
+  const tomb = { ...(S.tomb || {}) };
+  for (const [id, ts] of Object.entries(R.tomb || {})) tomb[id] = Math.max(tomb[id] || 0, ts);
+  const items = (a, b, isTask) => {
+    const m = new Map();
+    for (const x of [...a, ...b]) {
+      const c = m.get(x.id);
+      if (!c) { m.set(x.id, x); continue; }
+      const [nw, od] = (x.u || 0) >= (c.u || 0) ? [x, c] : [c, x], r = { ...nw };
+      if (isTask) { r.done = { ...(od.done || {}), ...(nw.done || {}) }; r.skip = [...new Set([...(od.skip || []), ...(nw.skip || [])])]; }
+      m.set(x.id, r);
+    }
+    return [...m.values()].filter(x => !(tomb[x.id] > (x.u || 0)));
+  };
+  S.tasks = items(S.tasks, R.tasks, true);
+  S.inbox = items(S.inbox, R.inbox, false);
+  S.tomb = tomb;
+  if ((R.catsU || 0) > (S.catsU || 0)) { S.cats = R.cats; S.catsU = R.catsU; }
+  if ((R.setU || 0) > (S.setU || 0)) { S.lastCat = R.lastCat; S.remindDefault = R.remindDefault; S.setU = R.setU; }
+}
+
+let syncTimer = 0, syncing = false, again = false, syncUI = null;
+const setStatus = (st, err = '') => { sync.status = st; sync.err = err; if (syncUI) syncUI(); };
+function queueSync(ms = 2500) { if (!sync.key || DEMO) return; clearTimeout(syncTimer); syncTimer = setTimeout(doSync, ms); }
+const MSGS = { offline: 'אין חיבור', bad_key: 'המפתח לא תקין', full: 'השירות מלא כרגע', too_big: 'הנתונים גדולים מדי', bad_data: 'שגיאה בנתונים' };
+
+async function doSync() {
+  if (!sync.key || DEMO) return;
+  if (syncing) { again = true; return; }
+  syncing = true; setStatus('syncing');
+  try {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const r = await cloud('agenda_pull', { p_key: sync.key });
+      if (r.data && r.version !== sync.base) {                   // יש חדש בשרת: ממזגים
+        mergeRemote(r.data); persistLocal(); snapshotShadow(); render();
+      }
+      const mine = payload();
+      if (r.version > 0 && r.data && canon(mine) === canon(r.data)) { sync.base = r.version; break; }   // זהים, אין מה לשלוח
+      const p = await cloud('agenda_push', { p_key: sync.key, p_base: r.version, p_data: mine });
+      if (p.ok) { sync.base = p.version; break; }
+      if (attempt === 3) throw new Error('conflict');          // הגיע שרת עסוק מדי: ננסה שוב מאוחר יותר
+    }
+    sync.last = Date.now(); saveSync(); setStatus('ok');
+    if (typeof queueReminders === 'function') queueReminders();
+  } catch (e) {
+    const m = String(e.message || e);
+    setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? 'ננסה שוב בעוד רגע' : 'שגיאת סנכרון'));
+    if (m !== 'offline' && m !== 'bad_key' && m !== 'full') queueSync(30000);
+  } finally {
+    syncing = false;
+    if (again) { again = false; queueSync(400); }
+  }
+}
+
+async function enableSync() {
+  S.tasks.forEach(t => { t.u = t.u || Date.now(); }); S.inbox.forEach(x => { x.u = x.u || Date.now(); });
+  sync.key = genKey(); sync.base = 0; saveSync(); persistLocal();
+  await doSync();
+  if (sync.status === 'error' && sync.err === MSGS.full) { sync.key = null; saveSync(); setStatus('off'); toast(MSGS.full); return false; }
+  return true;
+}
+async function joinSync(raw) {
+  const key = normKey(raw);
+  if (key.length < 20 || key.length > 64) throw new Error('bad_key');
+  const r = await cloud('agenda_pull', { p_key: key });
+  if (!r || !r.version) throw new Error('not_found');
+  sync.key = key; sync.base = 0; saveSync();
+  await doSync();
+}
+function stopSync() { sync.key = null; sync.base = 0; sync.last = 0; saveSync(); clearTimeout(syncTimer); setStatus('off'); }
+async function deleteCloud() { const k = sync.key; await cloud('agenda_delete_account', { p_key: k }); stopSync(); }
+
+addEventListener('online', () => queueSync(300));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') queueSync(400); });
+setInterval(() => { if (document.visibilityState === 'visible') queueSync(50); }, 90000);
+
+/* ממשק בהגדרות */
+function syncSection(sheet) {
+  const box = $('#syncBox', sheet);
+  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'הרגע' : m < 60 ? `לפני ${m} דק׳` : `לפני ${Math.round(m / 60)} שע׳`; };
+  let shown = false;
+  const draw = () => {
+    if (!sync.key) {
+      box.innerHTML = `<p class="sm-note">שומר את המשימות בענן, כדי שיופיעו בכל מכשיר ולא יאבדו. אין חשבון וסיסמה: מפתח אחד מזהה אתכם, ומי שיש לו אותו יכול לראות את המשימות.</p>
+        <div class="list"><button class="btn" id="sOn">הפעל סנכרון (מפתח חדש)</button><button class="btn" id="sJoin">יש לי מפתח ממכשיר אחר</button></div>
+        <div class="keyrow" id="sJoinBox" hidden><input id="sKeyIn" placeholder="XXXX-XXXX-XXXX-…" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="מפתח סנכרון"><button class="btn pri" id="sKeyGo">התחבר</button></div><div class="vstat err" id="sErr"></div>`;
+      $('#sOn', box).onclick = async () => { $('#sOn', box).disabled = true; const ok = await enableSync(); if (ok) toast('הסנכרון פעיל. שמרו את המפתח במקום בטוח'); draw(); };
+      $('#sJoin', box).onclick = () => { $('#sJoinBox', box).hidden = false; $('#sKeyIn', box).focus(); };
+      const go = async () => {
+        const e = $('#sErr', box); e.textContent = '';
+        try { await joinSync($('#sKeyIn', box).value); toast('מחובר. המשימות מהמכשיר השני נטענו'); draw(); }
+        catch (x) { e.textContent = x.message === 'not_found' ? 'המפתח לא נמצא. בדקו שהעתקתם אותו נכון' : x.message === 'bad_key' ? 'המפתח לא נראה תקין (26 תווים)' : x.message === 'offline' ? 'אין חיבור לשרת' : 'לא הצלחנו להתחבר'; }
+      };
+      $('#sKeyGo', box).onclick = go;
+      $('#sKeyIn', box).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+      return;
+    }
+    const st = sync.status, cls = st === 'ok' ? 'ok' : st === 'syncing' ? 'syn' : st === 'idle' ? '' : 'err';
+    const txt = st === 'ok' ? `מסונכרן · ${ago(sync.last)}` : st === 'syncing' ? 'מסנכרן…' : st === 'offline' ? 'אין חיבור. הכול נשמר במכשיר ויסונכרן כשהחיבור יחזור' : st === 'idle' ? 'ממתין לסנכרון' : sync.err || 'שגיאת סנכרון';
+    box.innerHTML = `<div class="srow"><i class="sd ${cls}"></i><span id="sStat">${esc(txt)}</span></div>
+      <div class="keyrow"><input id="sKey" readonly dir="ltr" aria-label="מפתח הסנכרון שלך" value="${shown ? fmtKey(sync.key) : '••••-••••-••••-••••-••••-••••-••'}"><button class="btn" id="sShow">${shown ? 'הסתר' : 'הצג'}</button><button class="btn" id="sCopy">העתק</button></div>
+      <p class="sm-note">את המפתח הזה מזינים במכשיר חדש כדי לחבר אותו. שמרו אותו במקום בטוח. אם הוא אובד, אי אפשר לחבר מכשיר נוסף.</p>
+      <div class="list"><button class="btn" id="sNow">סנכרן עכשיו</button><button class="btn" id="sOff">הפסק סנכרון במכשיר הזה</button><button class="btn dng" id="sDel">מחק את הנתונים שלי מהענן</button></div>`;
+    $('#sShow', box).onclick = () => { shown = !shown; draw(); };
+    $('#sCopy', box).onclick = async () => { try { await navigator.clipboard.writeText(fmtKey(sync.key)); toast('המפתח הועתק'); } catch (e) { shown = true; draw(); const i = $('#sKey', box); i.select(); toast('סמנו והעתיקו ידנית'); } };
+    $('#sNow', box).onclick = () => doSync();
+    $('#sOff', box).onclick = async () => { if (await ask('המכשיר הזה יפסיק להסתנכרן. הנתונים שבו והנתונים בענן נשארים.', 'הפסק')) { stopSync(); draw(); } };
+    $('#sDel', box).onclick = async () => { if (await ask('כל הנתונים שלכם יימחקו מהענן, ובכל המכשירים המחוברים הסנכרון יפסיק לעבוד. הנתונים שבמכשיר הזה נשארים.', 'מחק מהענן')) { try { await deleteCloud(); toast('נמחק מהענן'); } catch (e) { toast('המחיקה נכשלה, בדקו חיבור'); } draw(); } };
+  };
+  syncUI = draw; draw();
+}
+
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
   const d = keyOf(startOfWeek(new Date()));
@@ -1741,11 +1915,13 @@ let uiTimer = 0;
 const saveUi = () => { clearTimeout(uiTimer); uiTimer = setTimeout(() => { try { localStorage.setItem(UIKEY, JSON.stringify({ date: ui.date, view: S.view, y: window.scrollY, ts: Date.now() })); } catch (e) {} }, 250); };
 addEventListener('scroll', saveUi, { passive: true });
 addEventListener('pagehide', () => { try { localStorage.setItem(UIKEY, JSON.stringify({ date: ui.date, view: S.view, y: window.scrollY, ts: Date.now() })); } catch (e) {} });
+snapshotShadow();
 const DEMO = /*DEMO*/false;
 let hadStore = false; try { hadStore = !!localStorage.getItem(STORE); } catch (e) {}
 if (DEMO && !S.tasks.length && !hadStore) loadExamples();
 else if (restored) { render({ scroll: true }); window.scrollTo({ top: restored.y, behavior: 'instant' }); }
 else render({ scroll: true });
+if (sync.key) queueSync(800);
 setInterval(tickNow, 30000);
 try {                                                     // טיפ חד-פעמי בנייד: איך מזיזים בלוק
   if (S.tasks.length && matchMedia('(pointer:coarse)').matches && !localStorage.getItem('agenda.tip1')) {
