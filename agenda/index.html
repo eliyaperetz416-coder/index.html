@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0d">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="סדר יום">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>סדר יום</title>
+<style>
+:root{
+  --bg:#0a0a0d; --s1:#131318; --s2:#1b1b22; --s3:#26262f;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --tx:#f4f4f7; --mut:#8b8b98; --mut2:#7b7b88;
+  --ok:#3ddc97; --danger:#ff6b6b;
+  --hh:72px;           /* גובה שעה בתצוגה יומית */
+  --whh:46px;          /* גובה שעה בתצוגה שבועית */
+  --gut:46px;          /* רוחב עמודת השעות */
+  --ease:cubic-bezier(.32,.72,0,1);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font:400 16px/1.45 system-ui,-apple-system,"Segoe UI","Heebo","Assistant",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;touch-action:manipulation;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+#app{max-width:820px;margin:0 auto;min-height:100dvh;position:relative}
+
+/* ───────── כותרת עליונה (חומר שקוף) ───────── */
+.top{position:sticky;top:0;z-index:20;padding:calc(var(--safe-t) + 10px) 16px 0;
+  background:rgba(10,10,13,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line)}
+.r1{display:flex;align-items:center;gap:2px}
+.r1 .ib{width:38px;height:38px}
+.r1 .ttl{margin-inline-end:6px}
+.ttl{flex:1;min-width:0}
+.ttl h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.ttl p{margin:2px 0 0;color:var(--mut);font-size:13.5px;letter-spacing:.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prog{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--s3);color:var(--tx);font-variant-numeric:tabular-nums;transition:background .3s,color .3s}
+.prog.full{background:rgba(61,220,151,.18);color:var(--ok)}
+.ib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--mut);transition:background .15s,color .15s,transform .1s}
+.ib:hover{background:var(--s2);color:var(--tx)}
+.ib:active{transform:scale(.92);background:var(--s3)}
+.ib svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.seg{position:relative;display:flex;background:var(--s2);border-radius:11px;padding:2px;isolation:isolate}
+.seg button{position:relative;z-index:1;min-width:64px;padding:6px 14px;font-size:14px;font-weight:600;color:var(--mut);transition:color .2s}
+.seg button[aria-selected=true]{color:var(--tx)}
+.seg::before{content:"";position:absolute;z-index:0;top:2px;bottom:2px;inset-inline-start:2px;width:calc(50% - 2px);
+  background:var(--s3);border-radius:9px;transition:transform .35s var(--ease)}
+.seg[data-v=week]::before{transform:translateX(-100%)}
+.todaybtn{padding:6px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--tx);transition:background .15s,opacity .2s}
+.todaybtn:hover{background:var(--s2)}
+.todaybtn:active{background:var(--s3)}
+.todaybtn[disabled]{opacity:.35;pointer-events:none}
+
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:6px -6px 0;padding-bottom:8px}
+.week .strip{margin-inline:var(--gut) 0}
+.dchip{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0 4px;border-radius:13px;color:var(--mut);transition:background .2s,color .2s,transform .1s}
+.dchip:active{transform:scale(.94);background:var(--s2)}
+.dchip small{font-size:12px;font-weight:500}
+.dchip b{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;color:var(--tx)}
+.dchip.today b{box-shadow:inset 0 0 0 1.5px var(--mut2)}
+.dchip.sel{background:var(--tx);color:#555}
+.dchip.sel b{color:#0a0a0d;box-shadow:none}
+.dchip i{display:flex;gap:3px;height:4px}
+.dchip i s{width:4px;height:4px;border-radius:50%;background:var(--c)}
+.dchip.sel i s{box-shadow:0 0 0 .5px rgba(0,0,0,.3)}
+
+/* ───────── תפריט תחתון ───────── */
+.dock{position:fixed;z-index:30;inset-inline-start:max(20px,calc(50% - 390px));bottom:calc(22px + var(--safe-b));height:62px;display:flex;align-items:center;gap:4px;padding:0 8px;
+  border-radius:31px;background:rgba(27,27,34,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line2);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);transition:transform .35s var(--ease),opacity .25s}
+.dock .seg{background:transparent;padding:0}
+.dock .seg::before{top:0;bottom:0;inset-inline-start:0;width:50%;background:var(--s3);border-radius:999px}
+.dock .seg[data-v=week]::before{transform:translateX(-100%)}
+.dock .seg button{min-width:58px;padding:9px 14px;font-size:15px}
+.dock .todaybtn{min-width:62px;text-align:center;border-radius:999px;padding:9px 12px}
+body.sheet-open .dock{transform:scale(.6);opacity:0;pointer-events:none}
+
+/* ───────── אזור ראשי ───────── */
+main{padding:0 16px calc(130px + var(--safe-b))}
+main.slide-l{animation:slL .22s var(--ease)}
+main.slide-r{animation:slR .22s var(--ease)}
+@keyframes slL{from{opacity:.2;transform:translateX(-12px)}to{opacity:1;transform:none}}
+@keyframes slR{from{opacity:.2;transform:translateX(12px)}to{opacity:1;transform:none}}
+.hintw{position:sticky;top:calc(var(--hdr,130px) + 14px);height:0;z-index:7}
+.hint{position:absolute;inset-inline:0;top:0;padding:20px 18px;border-radius:18px;background:var(--s1);border:1px solid var(--line2);box-shadow:0 14px 40px rgba(0,0,0,.45);text-align:center;color:var(--mut);font-size:14.5px}
+.hint b{display:block;color:var(--tx);font-size:17px;margin-bottom:4px}
+.hint .row{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btn{padding:9px 16px;border-radius:12px;background:var(--s2);color:var(--tx);font-size:14px;font-weight:600;transition:background .15s,transform .1s}
+.btn:hover{background:var(--s3)}
+.btn:active{transform:scale(.96)}
+.btn.pri{background:var(--tx);color:#0a0a0d}
+.btn.pri:hover{background:#fff}
+.btn.dng{color:var(--danger)}
+
+/* ───────── קו זמן יומי ───────── */
+.tl{position:relative;margin-top:6px;cursor:default}
+.hl{position:absolute;inset-inline:0;height:0;border-top:1px solid var(--line);pointer-events:none}
+.hl span{position:absolute;inset-inline-start:0;top:-8px;width:calc(var(--gut) - 8px);font-size:11px;color:var(--mut2);font-variant-numeric:tabular-nums;text-align:start}
+.hl::after{content:"";position:absolute;inset-inline-start:calc(var(--gut) - 8px);top:-1px;width:8px;border-top:1px solid var(--bg)}
+.lane{position:absolute;inset-inline-start:var(--gut);inset-inline-end:0;top:0;bottom:0}
+.blk{position:absolute;border-radius:12px;background:linear-gradient(var(--cb),var(--cb)),var(--bg);overflow:hidden;cursor:pointer;
+  display:flex;align-items:flex-start;padding:8px 10px 8px 12px;
+  transition:background .25s,transform .12s,opacity .3s}
+.bi{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
+.blk::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:3.5px;background:var(--c)}
+.blk.short{padding-block:3px;align-items:center}
+.blk.tiny{padding-block:0;align-items:center}
+.short .bi,.tiny .bi{align-items:center}
+.blk,.wb{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.blk.sel,.wb.sel{box-shadow:0 0 0 1.5px var(--c);z-index:7}
+.blk.lift,.wb.lift{transform:scale(1.025);box-shadow:0 16px 36px rgba(0,0,0,.65),0 0 0 1.5px var(--c);z-index:9}
+.blk.drag,.wb.drag{transition:none!important;z-index:9}
+.wb.drag{box-shadow:0 12px 28px rgba(0,0,0,.6),0 0 0 1.5px var(--c)}
+.rz{position:absolute;display:none;width:64px;height:20px;touch-action:none;z-index:6;cursor:ns-resize}
+.rz::after{content:"";position:absolute;left:50%;margin-left:-14px;width:28px;height:4px;border-radius:2px;background:var(--tx);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.rz-t{top:0;inset-inline-end:12px}.rz-t::after{top:5px}
+.rz-b{bottom:0;inset-inline-start:12px}.rz-b::after{bottom:5px}
+.tiny .rz{height:12px}.tiny .rz-b{inset-inline-start:auto;inset-inline-end:12px}.tiny .rz::after{top:50%;bottom:auto;margin-top:-2px}
+.blk.sel .rz,.blk.lift .rz{display:block}
+@media(hover:hover){.blk:hover .rz{display:block}}
+.tip{position:fixed;z-index:75;background:var(--tx);color:#0a0a0d;font-weight:700;font-size:13px;padding:3px 10px;border-radius:9px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.5);direction:ltr;font-variant-numeric:tabular-nums;transform:translate(-50%,-100%)}
+.wcol.dropcol{background:rgba(255,255,255,.08)}
+.bt{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;font:inherit;line-height:1.25;text-align:start;color:inherit;cursor:pointer}
+.dense .bt .sub,.xdense .bt .sub{display:none}
+.dense .bt b,.xdense .bt b{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;width:auto;font-size:13px;line-height:1.2}
+.xdense .bt b{font-size:12px;-webkit-line-clamp:5}
+.dense .bi{gap:6px}.dense .chk{width:20px;height:20px}.dense .chk svg{width:12px;height:12px}
+.xdense{padding-inline:8px 4px}
+.short .bt,.tiny .bt{flex-direction:row;align-items:center;gap:8px}
+.bt b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:15px;width:fit-content;
+  background:linear-gradient(currentColor,currentColor) no-repeat 100% 55%/0 1.5px;transition:background-size .4s var(--ease),color .3s}
+.tiny .bt b{font-size:13px}
+.bt .sub{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt .tm{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.blk.done{background:linear-gradient(rgba(255,255,255,.045),rgba(255,255,255,.045)),var(--bg)}
+.blk.done::before{opacity:.45}
+.blk.done .bt b{background-size:100% 1.5px;color:var(--mut)}
+.blk.done .bt .sub{opacity:.6}
+
+/* כפתור סימון וי */
+.chk{position:relative;flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--c);display:grid;place-items:center;
+  transition:background .25s,border-color .25s,transform .12s}
+.chk::before{content:"";position:absolute;inset:-9px}
+.chk::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--c);opacity:0;pointer-events:none}
+.chk:active{transform:scale(.86)}
+.chk svg{width:16px;height:16px;fill:none;stroke:#0a0a0d;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.chk path{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .1s}
+.done .chk{background:var(--c)}
+.done .chk path{stroke-dashoffset:0;transition:stroke-dashoffset .38s cubic-bezier(.65,0,.35,1) .06s}
+.chk.pop{animation:pop .5s cubic-bezier(.3,1.5,.5,1)}
+.chk.pop::after{animation:ripple .65s ease-out}
+@keyframes pop{0%{transform:scale(.78)}55%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes ripple{0%{opacity:.75;transform:scale(1)}100%{opacity:0;transform:scale(2.1)}}
+.tiny .chk,.short .chk{width:22px;height:22px}
+.tiny .chk svg,.short .chk svg{width:14px;height:14px}
+
+.ghost{position:absolute;inset-inline:0;height:34px;border-radius:12px;background:rgba(255,255,255,.1);border:1.5px dashed var(--mut);z-index:4;pointer-events:none;animation:gh .45s var(--ease)}
+@keyframes gh{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.now{position:absolute;inset-inline:calc(var(--gut) - 6px) 0;height:0;border-top:2px solid var(--danger);z-index:5;pointer-events:none}
+.now::before{content:"";position:absolute;inset-inline-start:-1px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
+.now span{position:absolute;right:8px;top:-21px;font-size:11px;font-weight:700;color:var(--danger);background:var(--bg);padding:0 5px;border-radius:6px}
+.week .now{inset-inline:0 0}
+
+/* ───────── תצוגה שבועית ───────── */
+.wk{position:relative}
+.wcols{position:absolute;inset-inline-start:var(--gut);inset-inline-end:0;top:0;bottom:0;display:grid;grid-template-columns:repeat(7,1fr)}
+.wcol{position:relative;border-inline-start:1px solid var(--line)}
+.wcol.today{background:rgba(255,255,255,.03)}
+.wb{position:absolute;border-radius:7px;background:linear-gradient(var(--cb),var(--cb)),var(--bg);overflow:hidden;cursor:pointer;padding:2px 4px 2px 3px;
+  display:flex;flex-direction:column;align-items:flex-start;
+  font-size:10.5px;line-height:1.18;font-weight:600;border-inline-start:2.5px solid var(--c);transition:opacity .3s,transform .12s}
+.wt{display:block;width:100%;flex:1;min-height:0;overflow:hidden;word-break:break-word;text-align:start;color:inherit;font:inherit;line-height:inherit;cursor:pointer}
+.wb.done{opacity:.45}
+.wb.done .wt{text-decoration:line-through}
+.chk.wchk{width:15px;height:15px;border-width:1.5px;margin-bottom:2px;flex:none}
+.wchk::before{inset:-6px}
+.wchk svg{width:10px;height:10px;stroke-width:3.6}
+@media(max-width:619px){.wb.nt .wt{display:none}}
+@media(min-width:620px){.wb{font-size:12.5px;padding:3px 6px}}
+
+/* ───────── כפתור הוספה מהיר ───────── */
+.fab{position:fixed;z-index:30;inset-inline-end:max(20px,calc(50% - 390px));bottom:calc(22px + var(--safe-b));width:62px;height:62px;border-radius:50%;
+  background:var(--tx);color:#0a0a0d;display:grid;place-items:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.2) inset;
+  transition:transform .35s var(--ease),opacity .25s,background .15s}
+.fab:active{transform:scale(.92)}
+.fab svg{width:28px;height:28px;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;fill:none;transition:transform .35s var(--ease)}
+.fab:hover svg{transform:rotate(90deg)}
+body.sheet-open .fab{transform:scale(.6);opacity:0;pointer-events:none}
+
+/* ───────── חלונית (Sheet) ───────── */
+.ov{touch-action:none;position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,0);transition:background .35s var(--ease)}
+.ov.in{background:rgba(0,0,0,.55)}
+.sheet{touch-action:pan-y;width:100%;max-width:520px;max-height:min(92dvh,760px);overflow:auto;overscroll-behavior:contain;
+  background:var(--s1);border-radius:26px 26px 0 0;border:1px solid var(--line2);border-bottom:0;
+  padding:0 18px calc(22px + var(--safe-b));transform:translateY(100%);transition:transform .42s var(--ease);
+  box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.ov.in .sheet{transform:none}
+@media(min-width:700px){
+  .ov{align-items:center}
+  .sheet{border-radius:26px;border-bottom:1px solid var(--line2);transform:translateY(24px) scale(.96);opacity:0;transition:transform .35s var(--ease),opacity .25s}
+  .ov.in .sheet{opacity:1}
+}
+.shh{position:sticky;top:0;z-index:2;background:var(--s1);margin:0 -18px;padding:8px 18px 6px;touch-action:none}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--s3);margin:0 auto 6px}
+.hd{display:flex;align-items:center;justify-content:space-between;min-height:40px}
+.hd h2{margin:0;font-size:17px;font-weight:700}
+.lnk{padding:8px 4px;color:var(--mut);font-size:16px;font-weight:500;min-width:56px}
+.lnk.st{color:var(--tx);font-weight:700;text-align:end}
+.lnk:active{opacity:.6}
+.f{display:grid;gap:16px;padding-top:6px}
+.tin{width:100%;background:none;border:0;outline:0;font-size:24px;font-weight:700;padding:6px 0;letter-spacing:-.01em;border-bottom:1px solid var(--line)}
+.tin::placeholder{color:var(--mut2)}
+.tin:focus{border-color:var(--mut)}
+.lbl{display:block;font-size:12.5px;color:var(--mut);margin-bottom:7px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip input,.dsel input,.rseg input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background:var(--s2);font-size:14px;font-weight:600;
+  border:1.5px solid transparent;cursor:pointer;transition:background .2s,border-color .2s,transform .1s}
+.chip span::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+.chip span:active{transform:scale(.95)}
+.chip input:checked+span{background:var(--cb);border-color:var(--c)}
+.chip input:focus-visible+span{outline:2px solid var(--tx);outline-offset:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{background:var(--s2);border-radius:14px;padding:9px 13px 7px}
+.fld .lbl{margin:0 0 2px;font-size:12px}
+.fld input,.fld textarea{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:2px 0;color-scheme:dark;font-variant-numeric:tabular-nums}
+.fld input[type=time],.fld input[type=date]{direction:ltr;text-align:start;min-height:28px}
+.fld textarea{font-size:15px;font-weight:400;resize:none;min-height:46px}
+.fld:focus-within{box-shadow:0 0 0 1.5px var(--mut2)}
+.dur{display:flex;gap:7px;flex-wrap:wrap}
+.dur button{padding:6px 11px;border-radius:999px;background:var(--s2);font-size:13px;font-weight:600;color:var(--mut);transition:background .15s,color .15s,transform .1s}
+.dur button:active{transform:scale(.94)}
+.dur button.on{background:var(--tx);color:#0a0a0d}
+.rseg{display:flex;background:var(--s2);border-radius:12px;padding:2px;gap:2px}
+.rseg label{flex:1}
+.rseg span{display:block;text-align:center;padding:8px 4px;border-radius:10px;font-size:14px;font-weight:600;color:var(--mut);cursor:pointer;transition:background .2s,color .2s}
+.rseg input:checked+span{background:var(--s3);color:var(--tx)}
+.dsel{display:flex;gap:6px;justify-content:space-between;overflow:hidden;max-height:0;opacity:0;transition:max-height .4s var(--ease),opacity .3s,margin .3s;margin-top:-10px}
+.dsel.open{max-height:60px;opacity:1;margin-top:0}
+.dsel span{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--s2);font-size:14px;font-weight:600;color:var(--mut);cursor:pointer;transition:background .2s,color .2s,transform .1s}
+.dsel span:active{transform:scale(.92)}
+.dsel input:checked+span{background:var(--tx);color:#0a0a0d}
+.err{color:var(--danger);font-size:14px;min-height:0}
+.err:empty{display:none}
+.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.donebtn{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:14px;background:var(--s2);font-size:15px;font-weight:600;text-align:start;transition:background .2s}
+.donebtn:active{background:var(--s3)}
+.donebtn .chk{width:24px;height:24px;pointer-events:none}
+.donebtn .chk::before{display:none}
+.nxt{font-size:13px;color:var(--mut);margin-top:-6px}
+.nxt:empty{display:none}
+.dels{display:grid;gap:8px;margin-top:2px}
+.dels .btn{width:100%;padding:12px}
+
+/* הגדרות */
+.sec{font-size:12.5px;color:var(--mut);margin:18px 0 8px;font-weight:600;letter-spacing:.02em}
+.crow{display:flex;align-items:center;gap:10px;padding:6px 0}
+.crow input[type=text]{flex:1;min-width:0;background:var(--s2);border:0;outline:0;border-radius:11px;padding:10px 12px;font-size:15px}
+.crow input[type=text]:focus{box-shadow:0 0 0 1.5px var(--mut2)}
+.crow input[type=color]{appearance:none;-webkit-appearance:none;width:34px;height:34px;border:0;padding:0;border-radius:50%;background:none;cursor:pointer;flex:none}
+.crow input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.crow input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
+.crow input[type=color]::-moz-color-swatch{border:0;border-radius:50%}
+.crow .ib{width:34px;height:34px}
+.list{display:grid;gap:8px}
+.list .btn{width:100%;text-align:start;display:flex;justify-content:space-between}
+
+/* הודעה קצרה */
+.toast{position:fixed;z-index:80;inset-inline:16px;bottom:calc(98px + var(--safe-b));margin:0 auto;max-width:420px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px;border-radius:16px;
+  background:rgba(38,38,47,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line2);
+  font-size:14.5px;font-weight:500;box-shadow:0 12px 34px rgba(0,0,0,.5);
+  transform:translateY(20px) scale(.96);opacity:0;transition:transform .4s var(--ease),opacity .25s;pointer-events:none}
+.toast.in{transform:none;opacity:1;pointer-events:auto}
+.toast button{color:#9db4ff;font-weight:700;padding:4px 2px}
+
+:focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .sheet{transition:opacity .2s!important}
+}
+@media(prefers-reduced-transparency:reduce){
+  .top{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+  .toast{background:var(--s3);backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+@media(prefers-contrast:more){:root{--line:rgba(255,255,255,.22);--mut:#b4b4c0}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top" id="top">
+    <div class="r1">
+      <div class="ttl"><h1 id="h1"></h1><p><span id="h2t"></span><span class="prog" id="prog" hidden></span></p></div>
+      <button class="ib" id="prev" aria-label="הקודם"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="ib" id="next" aria-label="הבא"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="ib" id="gear" aria-label="הגדרות וקטגוריות">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+    <div class="strip" id="strip"></div>
+  </header>
+  <main id="main"></main>
+  <nav class="dock" id="dock" aria-label="תצוגה">
+    <div class="seg" id="seg" role="tablist" data-v="day">
+      <button role="tab" data-v="day">יום</button>
+      <button role="tab" data-v="week">שבוע</button>
+    </div>
+    <button class="todaybtn" id="todayBtn">היום</button>
+  </nav>
+  <button class="fab" id="fab" aria-label="משימה חדשה"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+</div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ═════════ כלי עזר ═════════ */
+const $ = (s, r = document) => r.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const startOfWeek = d => addDays(d, -d.getDay());           // שבוע מתחיל ביום ראשון
+const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const fmt = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const DL = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+/* ═════════ נתונים ═════════ */
+const STORE = 'agenda.v1';
+const DEFAULT_CATS = [
+  { id: 'school',   name: 'בית ספר',  color: '#5aa9ff' },
+  { id: 'gym',      name: 'אימון',    color: '#ff8a4c' },
+  { id: 'recovery', name: 'התאוששות', color: '#3ddc97' },
+  { id: 'personal', name: 'אישי',     color: '#b794f6' },
+  { id: 'cindy',    name: 'סינדי',    color: '#ff6b9d' }
+];
+const PALETTE = ['#5aa9ff', '#ff8a4c', '#3ddc97', '#b794f6', '#ff6b9d', '#ffd166', '#2dd4bf', '#f87171', '#a3e635', '#94a3b8'];
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/, DKEY_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+const validDate = k => typeof k === 'string' && DKEY_RE.test(k) && keyOf(parseKey(k)) === k;
+/* ניקוי ואימות: כל נתון שנטען (מהמכשיר או מגיבוי) עובר כאן, כדי שקובץ פגום לא ישבור את האפליקציה */
+function clean(raw) {
+  let dropped = 0;
+  raw = raw && typeof raw === 'object' ? raw : {};
+  const hex = c => { if (typeof c !== 'string') return null; c = c.trim(); if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + [...c.slice(1)].map(x => x + x).join(''); return /^#[0-9a-f]{6}$/i.test(c) ? c.toLowerCase() : null; };
+  const seen = new Set();
+  const cats = (Array.isArray(raw.cats) ? raw.cats : [])
+    .filter(c => c && typeof c.id === 'string' && c.id && typeof c.name === 'string' && !seen.has(c.id) && seen.add(c.id))
+    .slice(0, 40).map((c, i) => ({ id: c.id, name: c.name.trim().slice(0, 24) || 'קטגוריה', color: hex(c.color) || PALETTE[i % PALETTE.length] }));
+  if (!cats.length) DEFAULT_CATS.forEach(c => cats.push({ ...c }));
+  const ids = new Set(), tasks = [];
+  (Array.isArray(raw.tasks) ? raw.tasks : []).forEach(t => {
+    if (!t || typeof t !== 'object' || !TIME_RE.test(t.start) || !TIME_RE.test(t.end) || t.start === t.end || !validDate(t.date)) { dropped++; return; }
+    const r = t.repeat && typeof t.repeat === 'object' ? t.repeat : {};
+    const type = ['none', 'daily', 'weekly'].includes(r.type) ? r.type : 'none';
+    let days = type === 'weekly' ? [...new Set((Array.isArray(r.days) ? r.days : []).map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))] : [];
+    if (type === 'weekly' && !days.length) days = [parseKey(t.date).getDay()];
+    const id = typeof t.id === 'string' && t.id && !ids.has(t.id) ? t.id : uid(); ids.add(id);
+    const done = {};
+    if (t.done && typeof t.done === 'object') Object.keys(t.done).forEach(k => { if (validDate(k) && t.done[k]) done[k] = Number(t.done[k]) || 1; });
+    const cat = cats.some(c => c.id === t.cat) ? t.cat : cats[0].id;
+    const out = {
+      id, title: String(t.title == null ? '' : t.title).trim().slice(0, 80) || cats.find(c => c.id === cat).name, cat,
+      start: t.start, end: t.end, date: t.date, notes: typeof t.notes === 'string' ? t.notes.slice(0, 300) : '',
+      done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }
+    };
+    if (validDate(t.until)) out.until = t.until;
+    tasks.push(out);
+  });
+  return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '' }, dropped };
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE));
+    if (s && Array.isArray(s.tasks)) return clean(s).state;
+  } catch (e) {}
+  return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '' };
+}
+let S = load();
+let saveWarned = false;
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(S)); }
+  catch (e) { if (!saveWarned) { saveWarned = true; toast('לא ניתן לשמור בדפדפן הזה — הנתונים לא יישמרו'); } }
+}
+const cat = id => S.cats.find(c => c.id === id) || { id, name: 'ללא קטגוריה', color: '#8b8b98' };
+const findTask = id => S.tasks.find(t => t.id === id);
+
+const ui = { date: keyOf(new Date()) };
+const todayKey = () => keyOf(new Date());
+
+function occursOn(t, k) {
+  if (t.skip && t.skip.includes(k)) return false;
+  if (t.until && k > t.until && (t.repeat || {}).type !== 'none') return false;
+  const r = t.repeat || { type: 'none' };
+  if (r.type === 'none') return t.date === k;
+  if (k < t.date) return false;
+  if (r.type === 'daily') return true;
+  return (r.days || []).includes(parseKey(k).getDay());
+}
+const occ = k => S.tasks.filter(t => occursOn(t, k)).sort((a, b) => mins(a.start) - mins(b.start) || mins(a.end) - mins(b.end));
+const isDone = (t, k) => !!(t.done && t.done[k]);
+const prevKey = k => keyOf(addDays(parseKey(k), -1));
+/* סיום 00:00 = חצות. סיום מוקדם מההתחלה = ממשיך למחרת (למשל שינה 23:00–07:00) */
+function span(t) { const s = mins(t.start); let e = mins(t.end); if (e === 0 && s > 0) e = 1440; return { s, e, over: e < s }; }
+function segs(k) {
+  const out = occ(k).map(t => { const p = span(t); return { t, s: p.s, e: p.over ? 1440 : p.e, k0: k, cont: false }; });
+  const pk = prevKey(k);
+  occ(pk).forEach(t => { const p = span(t); if (p.over) out.push({ t, s: 0, e: p.e, k0: pk, cont: true }); });
+  return out.sort((a, b) => a.s - b.s || a.e - b.e);
+}
+
+/* חלוקת משימות חופפות לעמודות */
+function layout(list, ppm, minH) {
+  const minMin = Math.ceil(minH / ppm);
+  const items = list.map(g => ({ t: g.t, k0: g.k0, cont: g.cont, s: g.s, e: Math.max(g.e, g.s + minMin) }));
+  items.sort((a, b) => a.s - b.s || b.e - a.e);
+  let cluster = [], end = 0;
+  const flush = () => {
+    const cols = [];
+    cluster.forEach(it => {
+      let c = cols.findIndex(ce => ce <= it.s);
+      if (c < 0) { c = cols.length; cols.push(0); }
+      cols[c] = it.e; it.col = c;
+    });
+    cluster.forEach(it => it.n = cols.length);
+    cluster = [];
+  };
+  items.forEach(it => {
+    if (cluster.length && it.s >= end) { flush(); end = 0; }
+    cluster.push(it); end = Math.max(end, it.e);
+  });
+  if (cluster.length) flush();
+  return items;
+}
+
+/* ═════════ תצוגה ═════════ */
+const TOP = 14;
+const main = $('#main');
+const PPM = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hh')) / 60;
+const WPPM = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--whh')) / 60;
+
+const CHECK = '<svg viewBox="0 0 24 24"><path pathLength="1" d="M5.5 12.5l4.2 4.2 8.8-9.4"/></svg>';
+
+function relTitle(k) {
+  const d = parseKey(k), t = todayKey();
+  if (k === t) return 'היום';
+  if (k === keyOf(addDays(new Date(), 1))) return 'מחר';
+  if (k === keyOf(addDays(new Date(), -1))) return 'אתמול';
+  return `יום ${DAYS[d.getDay()]}`;
+}
+function weekRange(ws) {
+  const we = addDays(ws, 6);
+  return ws.getMonth() === we.getMonth()
+    ? `${ws.getDate()}–${we.getDate()} ב${MONTHS[ws.getMonth()]} ${we.getFullYear()}`
+    : `${ws.getDate()} ב${MONTHS[ws.getMonth()]} – ${we.getDate()} ב${MONTHS[we.getMonth()]}`;
+}
+function rangeKeys() {
+  if (S.view === 'day') return [ui.date];
+  const ws = startOfWeek(parseKey(ui.date));
+  return Array.from({ length: 7 }, (_, i) => keyOf(addDays(ws, i)));
+}
+
+function renderHeader() {
+  const d = parseKey(ui.date);
+  document.body.classList.toggle('week', S.view === 'week');
+  $('#seg').dataset.v = S.view;
+  $('#seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === S.view));
+  if (S.view === 'day') {
+    $('#h1').textContent = relTitle(ui.date);
+    const isRel = ['היום', 'מחר', 'אתמול'].includes(relTitle(ui.date));
+    $('#h2t').textContent = `${isRel ? `יום ${DAYS[d.getDay()]} · ` : ''}${d.getDate()} ב${MONTHS[d.getMonth()]}${isRel ? '' : ' ' + d.getFullYear()}`;
+  } else {
+    const ws = startOfWeek(d);
+    $('#h1').textContent = startOfWeek(new Date()).getTime() === ws.getTime() ? 'השבוע' : 'שבוע';
+    $('#h2t').textContent = weekRange(ws);
+  }
+  const inView = S.view === 'day' ? ui.date === todayKey()
+    : startOfWeek(parseKey(ui.date)).getTime() === startOfWeek(new Date()).getTime();
+  $('#todayBtn').disabled = inView;
+
+  const ws = startOfWeek(d), tk = todayKey();
+  $('#strip').innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const dd = addDays(ws, i), k = keyOf(dd);
+    const cs = [...new Set(segs(k).map(g => g.t.cat))].slice(0, 3);
+    return `<button class="dchip${k === tk ? ' today' : ''}${S.view === 'day' && k === ui.date ? ' sel' : ''}" data-date="${k}" aria-label="יום ${DAYS[i]} ${dd.getDate()}">
+      <small>${DL[i]}׳</small><b>${dd.getDate()}</b><i>${cs.map(c => `<s style="--c:${cat(c).color}"></s>`).join('')}</i></button>`;
+  }).join('');
+  updateRing();
+}
+
+function updateRing() {
+  let total = 0, done = 0;
+  rangeKeys().forEach(k => occ(k).forEach(t => { total++; if (isDone(t, k)) done++; }));
+  const pr = $('#prog');
+  pr.hidden = total === 0;
+  pr.classList.toggle('full', total > 0 && done === total);
+  pr.textContent = total && done === total ? '✓ הכול בוצע' : `${done}/${total} בוצעו`;
+}
+
+function blockHTML(it, k, ppm) {
+  const t = it.t, c = cat(t.cat), done = isDone(t, it.k0);
+  const top = TOP + it.s * ppm + 1;
+  const h = Math.max(it.e - it.s, 1) * ppm - 2;
+  const cls = h < 30 ? 'tiny' : h < 50 ? 'short' : '';
+  const dense = it.n >= 4 ? ' xdense' : it.n === 3 ? ' dense' : '';
+  const w = 100 / it.n;
+  const sub = `<span class="tm">${t.start}–${t.end}</span>${h >= 50 && it.n === 1 ? ' · ' + esc(c.name) : ''}${(t.repeat && t.repeat.type !== 'none') ? ' ↻' : ''}${it.cont ? ' · המשך' : ''}`;
+  return `<div class="blk ${cls}${dense}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}"
+      style="--c:${c.color};--cb:${rgba(c.color, .17)};top:${top}px;height:${h}px;inset-inline-start:calc(${it.col * w}% + 2px);width:calc(${w}% - 4px)">
+    <div class="bi">${it.n >= 4 ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>`}
+    <button type="button" class="bt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}"><b>${esc(t.title)}</b><span class="sub">${sub}</span></button></div>
+    ${!it.cont && !span(t).over ? '<span class="rz rz-t" data-rz="t"></span><span class="rz rz-b" data-rz="b"></span>' : ''}
+  </div>`;
+}
+
+function nowLine(ppm, withLabel) {
+  const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
+  return `<div class="now" data-now style="top:${TOP + m * ppm}px">${withLabel ? `<span>${fmt(m)}</span>` : ''}</div>`;
+}
+
+function renderDay(opts) {
+  const ppm = PPM(), k = ui.date, list = segs(k);
+  let h = '';
+  const hint = list.length ? '' : `<div class="hintw"><div class="hint"><b>${k === todayKey() ? 'היום פנוי' : 'אין משימות ביום הזה'}</b>לחצו על + או החזיקו לחיצה על שעה בקו הזמן.
+      <div class="row"><button class="btn pri" data-act="add">הוסף משימה</button>${S.tasks.length ? '' : '<button class="btn" data-act="examples">טען דוגמאות</button>'}</div></div></div>`;
+  let lines = '';
+  for (let i = 0; i < 24; i++) lines += `<div class="hl" style="top:${TOP + i * 60 * ppm}px"><span>${pad(i)}:00</span></div>`;
+  lines += `<div class="hl" style="top:${TOP + 1440 * ppm}px"></div>`;
+  const items = layout(list, ppm, 26);
+  h += `<div class="tl" id="tl" data-date="${k}" style="height:${TOP * 2 + 1440 * ppm}px">${hint}${lines}
+    <div class="lane" id="lane">${items.map(it => blockHTML(it, k, ppm)).join('')}</div>
+    ${k === todayKey() ? nowLine(ppm, true) : ''}</div>`;
+  main.innerHTML = h;
+  if (opts.scroll) scrollToRelevant(ppm, k, list);
+}
+
+function renderWeek(opts) {
+  const ppm = WPPM(), ws = startOfWeek(parseKey(ui.date)), tk = todayKey();
+  let lines = '';
+  for (let i = 0; i < 24; i++) lines += `<div class="hl" style="top:${TOP + i * 60 * ppm}px"><span>${pad(i)}:00</span></div>`;
+  lines += `<div class="hl" style="top:${TOP + 1440 * ppm}px"></div>`;
+  let cols = '';
+  for (let i = 0; i < 7; i++) {
+    const k = keyOf(addDays(ws, i));
+    const items = layout(segs(k), ppm, 16);
+    cols += `<div class="wcol${k === tk ? ' today' : ''}" data-date="${k}">${items.map(it => {
+      const t = it.t, c = cat(t.cat), w = 100 / it.n, done = isDone(t, it.k0), hpx = Math.max((it.e - it.s) * ppm - 2, 14);
+      return `<div class="wb${done ? ' done' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
+    }).join('')}${k === tk ? nowLine(ppm, false) : ''}</div>`;
+  }
+  main.innerHTML = `<div class="wk" id="tl" style="height:${TOP * 2 + 1440 * ppm}px">${lines}<div class="wcols">${cols}</div></div>`;
+  if (opts.scroll) scrollToRelevant(ppm, ui.date, segs(ui.date));
+}
+
+function scrollToRelevant(ppm, k, list) {
+  const isToday = k === todayKey() || (S.view === 'week' && rangeKeys().includes(todayKey()));
+  let m;
+  if (isToday) { const n = new Date(); m = n.getHours() * 60 + n.getMinutes() - 60; }
+  else if (list.length) m = list[0].s - 45;
+  else m = 7 * 60;
+  const top = $('#top').offsetHeight;
+  const y = main.getBoundingClientRect().top + window.scrollY + TOP + Math.max(m, 0) * ppm - top - 6;
+  window.scrollTo({ top: Math.max(y, 0), behavior: 'instant' });
+}
+
+addEventListener('resize', () => document.documentElement.style.setProperty('--hdr', $('#top').offsetHeight + 'px'));
+function render(opts = {}) {
+  const y = window.scrollY;
+  renderHeader();
+  document.documentElement.style.setProperty('--hdr', $('#top').offsetHeight + 'px');
+  (S.view === 'day' ? renderDay : renderWeek)(opts);
+  if (!opts.scroll && y) window.scrollTo({ top: y, behavior: 'instant' });
+}
+function go(dateKey, dir, scroll = false) {
+  ui.date = dateKey; saveUi();
+  render({ scroll });
+  if (dir) { main.classList.remove('slide-l', 'slide-r'); void main.offsetWidth; main.classList.add(dir > 0 ? 'slide-r' : 'slide-l'); }
+}
+const step = n => go(keyOf(addDays(parseKey(ui.date), S.view === 'day' ? n : n * 7)), n);
+
+/* ═════════ אינטראקציות ═════════ */
+function setDone(t, k, now) { t.done = t.done || {}; if (now) t.done[k] = Date.now(); else delete t.done[k]; save(); }
+function toggleDone(id, k, btn) {
+  const t = findTask(id); if (!t) return;
+  const now = !isDone(t, k);
+  setDone(t, k, now);
+  const blk = btn.closest('.blk,.wb');
+  blk.classList.toggle('done', now);
+  btn.setAttribute('aria-checked', now);
+  if (now) { btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); vib(10); }
+  updateRing();
+}
+
+main.addEventListener('animationend', e => { if (e.target.classList.contains('chk')) e.target.classList.remove('pop'); });
+main.addEventListener('click', e => {
+  if (suppressClick) return;
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    const a = act.dataset.act;
+    if (a === 'chk') { const b = act.closest('.blk,.wb'); toggleDone(b.dataset.id, b.dataset.date, act); return; }
+    if (a === 'add') return openTask({ date: ui.date });
+    if (a === 'examples') { loadExamples(); return; }
+  }
+  const b = e.target.closest('.blk,.wb');
+  if (b) return openTask({ task: findTask(b.dataset.id), date: b.dataset.date });
+});
+
+/* הוספה בשעה מסוימת: לחיצה ארוכה (נייד) או לחיצה כפולה (עכבר) על מקום ריק — ולא נגיעה רגילה, כדי שלא ייפתח חלון בטעות באמצע גלילה */
+function emptySpot(e) {
+  if (e.target.closest('.blk,.wb,.hintw,button')) return null;
+  const tl = $('#tl'); if (!tl || !e.target.closest('#tl')) return null;
+  const r = tl.getBoundingClientRect(), colEl = e.target.closest('.wcol');
+  if (S.view === 'week') return colEl ? { date: colEl.dataset.date, start: slotAt((e.clientY - r.top - TOP) / WPPM()), y: e.clientY - r.top, col: colEl } : null;
+  return { date: ui.date, start: slotAt((e.clientY - r.top - TOP) / PPM()), y: e.clientY - r.top, col: $('#lane') };
+}
+function showGhost(spot) {
+  const g = document.createElement('div'); g.className = 'ghost';
+  const ppm = S.view === 'week' ? WPPM() : PPM();
+  g.style.top = (TOP + mins(spot.start) * ppm) + 'px';
+  spot.col.appendChild(g); setTimeout(() => g.remove(), 450);
+}
+let lp = null;
+main.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse') return;
+  const spot = emptySpot(e); if (!spot) return;
+  lp = { x: e.clientX, y: e.clientY, id: e.pointerId, t: setTimeout(() => { lp = null; vib(15); showGhost(spot); setTimeout(() => openTask({ date: spot.date, start: spot.start }), 160); }, 480) };
+});
+const lpCancel = () => { if (lp) { clearTimeout(lp.t); lp = null; } };
+main.addEventListener('pointermove', e => { if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 8) lpCancel(); });
+main.addEventListener('pointerup', lpCancel);
+main.addEventListener('pointercancel', lpCancel);
+main.addEventListener('scroll', lpCancel, true);
+main.addEventListener('dblclick', e => { const spot = emptySpot(e); if (spot) openTask({ date: spot.date, start: spot.start }); });
+
+/* ═════════ גרירת בלוקים: הזזה ושינוי משך ═════════
+   נייד: לחיצה ארוכה על בלוק מרימה אותו וגוררים. אחרי ההרמה מופיעות ידיות למעלה ולמטה לשינוי משך.
+   עכבר: גרירה ישירה. מקלדת: Alt + חצים (עם Shift משנים משך). */
+const SNAP = 5, MIN_DUR = 15;
+const snapMin = m => Math.round(m / SNAP) * SNAP;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+let drag = null, suppressClick = false, scrollRaf = 0;
+
+function clearSel() { document.querySelectorAll('.blk.sel,.wb.sel').forEach(b => b.classList.remove('sel')); }
+function select(blk) { clearSel(); if (blk) blk.classList.add('sel'); }
+function reselect(id, date) { const b = document.querySelector(`[data-id="${id}"][data-date="${date}"]`); if (b) select(b); }
+function dragInfo(blk) {
+  const t = findTask(blk.dataset.id); if (!t) return null;
+  const p = span(t);
+  return { t, k0: blk.dataset.date, s: p.s, e: p.e, over: p.over, dur: (p.e - p.s + 1440) % 1440 };
+}
+
+main.addEventListener('contextmenu', e => { if (e.target.closest('.blk,.wb')) e.preventDefault(); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.blk.sel,.wb.sel')) clearSel(); }, true);   // נגיעה מחוץ לבלוק הנבחר מבטלת בחירה
+main.addEventListener('pointerdown', e => {
+  const blk = e.target.closest('.blk,.wb');
+  if (!blk) return;
+  if (e.target.closest('.chk') || blk.dataset.cont === '1' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const info = dragInfo(blk); if (!info) return;
+  const rz = e.target.closest('.rz'), week = S.view === 'week';
+  drag = { blk, info, id: e.pointerId, touch: e.pointerType !== 'mouse', mode: rz ? (rz.dataset.rz === 't' ? 'rt' : 'rb') : 'move',
+    week, ppm: week ? WPPM() : PPM(), cx: e.clientX, cy: e.clientY, lx: e.clientX, ly: e.clientY, active: false, timer: 0, res: null };
+  if (drag.mode !== 'move') beginDrag();
+  else if (drag.touch) drag.timer = setTimeout(() => {      // לחיצה ארוכה: הרמה
+    if (!drag || drag.active) return;
+    beginDrag(); select(drag.blk); drag.blk.classList.add('lift'); vib(15);
+  }, 380);
+});
+
+function beginDrag() {
+  const d = drag; clearTimeout(d.timer); d.active = true; suppressClick = true;
+  d.sy = (d.touch && d.mode === 'move' ? d.ly : d.cy) + scrollY;
+  d.blk.classList.add('drag');
+  d.tip = document.createElement('div'); d.tip.className = 'tip'; document.body.appendChild(d.tip);
+  try { d.blk.setPointerCapture(d.id); } catch (e) {}
+  d.cols = d.week ? [...document.querySelectorAll('.wcol')] : null;
+  d.col0 = d.week ? d.blk.closest('.wcol') : null;
+  d.toDate = d.info.k0;
+  updateDrag(); scrollLoop();
+}
+
+function updateDrag() {
+  const d = drag, i = d.info, blk = d.blk, ppm = d.ppm;
+  const dy = (d.ly + scrollY - d.sy) / ppm;
+  let ns = i.s, ne = i.e;
+  if (d.mode === 'move') {
+    ns = clamp(snapMin(i.s + dy), 0, i.over ? 1440 - SNAP : 1440 - i.dur); ne = ns + i.dur;
+    blk.style.top = (TOP + ns * ppm + 1) + 'px';
+    if (d.week) {
+      const col = d.cols.find(c => { const r = c.getBoundingClientRect(); return d.lx >= r.left && d.lx < r.right; }) || d.col0;
+      d.cols.forEach(c => c.classList.toggle('dropcol', c === col && col !== d.col0));
+      blk.style.transform = `translateX(${col.getBoundingClientRect().left - d.col0.getBoundingClientRect().left}px) scale(1.04)`;
+      d.toDate = col.dataset.date;
+    }
+  } else {
+    if (d.mode === 'rb') ne = clamp(snapMin(i.e + dy), i.s + MIN_DUR, 1440);
+    else { ns = clamp(snapMin(i.s + dy), 0, i.e - MIN_DUR); blk.style.top = (TOP + ns * ppm + 1) + 'px'; }
+    const h = Math.max((ne - ns) * ppm - 2, 14);
+    blk.style.height = h + 'px';
+    blk.classList.toggle('tiny', h < 30); blk.classList.toggle('short', h >= 30 && h < 50);
+  }
+  d.res = { start: fmt(ns), end: fmt(ne % 1440), toDate: d.toDate };
+  const tm = blk.querySelector('.tm'); if (tm) tm.textContent = `${d.res.start}–${d.res.end}`;
+  const r = blk.getBoundingClientRect();
+  d.tip.textContent = `${d.week && d.toDate !== i.k0 ? DL[parseKey(d.toDate).getDay()] + '׳ ' : ''}${d.res.start}–${d.res.end}`;
+  d.tip.style.left = clamp(r.left + r.width / 2, 50, innerWidth - 50) + 'px';
+  d.tip.style.top = Math.max(r.top - 8, $('#top').offsetHeight + 34) + 'px';
+}
+
+/* גלילה אוטומטית כשגוררים לקצה המסך */
+function scrollLoop() {
+  cancelAnimationFrame(scrollRaf);
+  const step = () => {
+    if (!drag || !drag.active) return;
+    const top = $('#top').offsetHeight + 40, bot = innerHeight - 120;
+    const inEdge = (drag.ly > bot || drag.ly < top) && Math.hypot(drag.lx - drag.cx, drag.ly - drag.cy) > 8;
+    drag.edgeAt = inEdge ? (drag.edgeAt || performance.now()) : 0;          // גולל רק אחרי שהות קצרה בקצה, כדי שלא יברח
+    let v = 0;
+    if (drag.edgeAt && performance.now() - drag.edgeAt > 350) {
+      if (drag.ly > bot) v = Math.min((drag.ly - bot) / 60, 1) * 16;
+      else v = -Math.min((top - drag.ly) / 50, 1) * 16;
+    }
+    if (v) { const before = scrollY; window.scrollBy(0, v); if (scrollY !== before) updateDrag(); }
+    scrollRaf = requestAnimationFrame(step);
+  };
+  scrollRaf = requestAnimationFrame(step);
+}
+
+addEventListener('pointermove', e => {
+  const d = drag; if (!d || e.pointerId !== d.id) return;
+  d.lx = e.clientX; d.ly = e.clientY;
+  if (!d.active) {
+    const moved = Math.hypot(d.lx - d.cx, d.ly - d.cy);
+    if (d.touch) { if (moved > 9) { clearTimeout(d.timer); drag = null; } return; }   // זז לפני ההרמה = גלילה רגילה
+    if (moved < 5) return;
+    beginDrag();
+  }
+  updateDrag();
+});
+const endDrag = e => { const d = drag; if (d && e.pointerId === d.id) finishDrag(e.type === 'pointerup'); };
+addEventListener('pointerup', endDrag);
+addEventListener('pointercancel', endDrag);
+document.addEventListener('touchmove', e => { if (drag && drag.active && e.cancelable) e.preventDefault(); }, { passive: false });
+
+function finishDrag(commit) {
+  const d = drag; drag = null; clearTimeout(d.timer); cancelAnimationFrame(scrollRaf);
+  if (!d.active) return;
+  d.tip.remove();
+  if (d.cols) d.cols.forEach(c => c.classList.remove('dropcol'));
+  d.blk.classList.remove('drag', 'lift');
+  setTimeout(() => { suppressClick = false; }, 400);
+  const r = d.res, i = d.info, t = i.t;
+  if (commit && r && (r.start !== t.start || r.end !== t.end || r.toDate !== i.k0)) commitTimes(i, r.start, r.end, r.toDate);
+  else { render(); reselect(t.id, i.k0); }                 // לא השתנה: חוזר למקום, והבלוק נשאר מסומן עם הידיות
+}
+
+/* שמירת שעות חדשות. במשימה חוזרת שואלים מה לשנות */
+async function commitTimes(i, start, end, toDate) {
+  const t = i.t, snap = JSON.stringify(S.tasks), rec = t.repeat && t.repeat.type !== 'none';
+  const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', repeat: t.repeat };
+  let res = t;
+  if (!rec) { t.start = start; t.end = end; t.date = toDate; }
+  else if (toDate !== i.k0) res = applyEdit(t, data, 'one', i.k0, toDate);     // העברה ליום אחר = רק המופע הזה
+  else {
+    const scope = await choose(`לשנות ל־${start}–${end}. מה לשנות?`, [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
+    if (!scope) { render(); reselect(t.id, i.k0); return; }
+    res = applyEdit(t, data, scope, i.k0);
+  }
+  save(); render(); reselect(res.id, toDate);
+  vib(8);
+  toast(`עודכן · ${start}–${end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+}
+
+/* מקלדת: Alt+חצים מזיז ב־15 דקות, עם Shift משנה את הסיום */
+main.addEventListener('keydown', e => {
+  if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+  const blk = e.target.closest('.blk'); if (!blk || blk.dataset.cont === '1') return;
+  const i = dragInfo(blk); if (!i) return;
+  e.preventDefault();
+  const d = e.key === 'ArrowUp' ? -15 : 15;
+  let ns = i.s, ne = i.e;
+  if (e.shiftKey) { if (i.over) return; ne = clamp(i.e + d, i.s + MIN_DUR, 1440); }
+  else { ns = clamp(i.s + d, 0, i.over ? 1440 - SNAP : 1440 - i.dur); ne = ns + i.dur; }
+  const start = fmt(ns), end = fmt(ne % 1440);
+  if (start !== i.t.start || end !== i.t.end) commitTimes(i, start, end, i.k0);
+});
+
+const slotAt = m => fmt(Math.max(0, Math.min(Math.floor(m / 15) * 15, 23 * 60 + 30)));
+
+$('#strip').addEventListener('click', e => {
+  const c = e.target.closest('.dchip'); if (!c) return;
+  const from = ui.date;
+  if (S.view === 'week') { S.view = 'day'; save(); go(c.dataset.date, 0, true); }
+  else go(c.dataset.date, c.dataset.date > from ? 1 : c.dataset.date < from ? -1 : 0);
+});
+$('#seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.dataset.v === S.view) return;
+  S.view = b.dataset.v; save(); saveUi(); render({ scroll: true });
+});
+$('#prev').onclick = () => step(-1);
+$('#next').onclick = () => step(1);
+$('#todayBtn').onclick = () => { const d = todayKey() > ui.date ? 1 : -1; go(todayKey(), d, true); };
+$('#fab').onclick = () => openTask({ date: ui.date });
+$('#gear').onclick = openSettings;
+
+/* החלקה בין ימים: אצבע שמאלה = הקודם (הימים מסודרים מימין לשמאל) */
+let sx = 0, sy = 0, st = 0;
+document.addEventListener('touchstart', e => { if (e.touches.length !== 1 || document.body.classList.contains('sheet-open')) { st = 0; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!st || Date.now() - st > 450) return;
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 110 && Math.abs(dy) < 36 && Math.abs(dx) > Math.abs(dy) * 3.5 && Date.now() - st < 450) step(dx < 0 ? -1 : 1);
+  st = 0;
+}, { passive: true });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sheetStack.length) sheetStack[sheetStack.length - 1]();
+  else if (!document.body.classList.contains('sheet-open') && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+    if (e.key === 'ArrowRight') step(-1); else if (e.key === 'ArrowLeft') step(1); else if (e.key === 'n') openTask({ date: ui.date });
+  }
+});
+
+/* ═════════ חלוניות ═════════ */
+const sheetStack = [];
+function openSheet(html, onClose) {
+  const ov = document.createElement('div');
+  ov.className = 'ov';
+  ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  $('#layer').append(ov);
+  document.body.classList.add('sheet-open');
+  const sheet = ov.firstElementChild;
+  requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('in')));
+  let closed = false;
+  const close = () => {
+    if (closed) return; closed = true;
+    ov.classList.remove('in'); sheet.style.transform = '';
+    const i = sheetStack.indexOf(close); if (i >= 0) sheetStack.splice(i, 1);
+    if (!sheetStack.length) document.body.classList.remove('sheet-open');
+    setTimeout(() => ov.remove(), 450);
+    if (onClose) onClose();
+  };
+  sheetStack.push(close);
+  ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
+  sheet.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+  dragToDismiss(sheet, $('.shh', sheet), close);
+  return { sheet, close };
+}
+
+/* גרירה לסגירה: עוקב 1:1 אחרי האצבע, והמהירות קובעת אם לסגור */
+function dragToDismiss(sheet, handle, close) {
+  if (!handle) return;
+  let y0 = 0, dy = 0, id = null, hist = [];
+  handle.addEventListener('pointerdown', e => {
+    if (e.target.closest('button,input,a')) return;
+    id = e.pointerId; handle.setPointerCapture(id); y0 = e.clientY; dy = 0; hist = [[e.timeStamp, e.clientY]];
+    sheet.style.transition = 'none';
+  });
+  handle.addEventListener('pointermove', e => {
+    if (e.pointerId !== id) return;
+    dy = e.clientY - y0; hist.push([e.timeStamp, e.clientY]); hist = hist.slice(-5);
+    const off = dy > 0 ? dy : -(Math.abs(dy) * 40 / (Math.abs(dy) + 120));   // התנגדות בקצה העליון
+    sheet.style.transform = `translateY(${off}px)`;
+  });
+  const end = e => {
+    if (e.pointerId !== id) return; id = null;
+    sheet.style.transition = '';
+    const a = hist[0], b = hist[hist.length - 1];
+    const v = b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) * 1000 : 0;
+    if (dy + v * 0.1 > 130) close(); else sheet.style.transform = '';
+  };
+  handle.addEventListener('pointerup', end);
+  handle.addEventListener('pointercancel', end);
+}
+
+/* אישור בתוך האפליקציה (במקום confirm של הדפדפן) */
+function ask(msg, okLabel) {
+  return new Promise(res => {
+    let yes = false;
+    const { sheet, close } = openSheet(`<div class="shh"><div class="grab"></div></div>
+      <p style="font-size:17px;font-weight:600;margin:10px 0 20px;text-align:center;text-wrap:balance">${esc(msg)}</p>
+      <div class="dels"><button type="button" class="btn dng" id="askYes">${esc(okLabel || 'אישור')}</button><button type="button" class="btn" data-close>ביטול</button></div>`,
+      () => res(yes));
+    $('#askYes', sheet).onclick = () => { yes = true; close(); };
+  });
+}
+
+function choose(msg, opts) {
+  return new Promise(res => {
+    let pick = null;
+    const { sheet, close } = openSheet(`<div class="shh"><div class="grab"></div></div>
+      <p style="font-size:17px;font-weight:600;margin:10px 0 20px;text-align:center;text-wrap:balance">${esc(msg)}</p>
+      <div class="dels">${opts.map(([k, l]) => `<button type="button" class="btn" data-k="${k}">${esc(l)}</button>`).join('')}<button type="button" class="btn" data-close>ביטול</button></div>`,
+      () => res(pick));
+    sheet.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { pick = b.dataset.k; close(); });
+  });
+}
+
+let toastTimer = 0;
+function toast(msg, actionLabel, action) {
+  const el = $('#toast');
+  el.innerHTML = `<span>${esc(msg)}</span>${actionLabel ? `<button>${esc(actionLabel)}</button>` : ''}`;
+  if (actionLabel) $('button', el).onclick = () => { action(); el.classList.remove('in'); };
+  el.classList.add('in');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('in'), actionLabel ? 5000 : 2400);
+}
+
+/* ═════════ טופס משימה ═════════ */
+function nextSlot(k) {
+  if (k !== todayKey()) return '09:00';
+  const n = new Date(); let m = Math.ceil((n.getHours() * 60 + n.getMinutes() + 1) / 30) * 30;
+  return fmt(Math.min(m, 22 * 60 + 30));
+}
+/* שינוי משימה חוזרת: רק יום אחד, מהיום והלאה, או כל הסדרה */
+function applyEdit(task, data, scope, k, to = k) {
+  if (scope === 'all' || (scope === 'fwd' && k <= task.date)) { Object.assign(task, data); return task; }
+  const base = { title: data.title, cat: data.cat, start: data.start, end: data.end, notes: data.notes };
+  if (scope === 'one') {
+    const clone = { id: uid(), ...base, date: to, repeat: { type: 'none', days: [] }, done: {}, skip: [] };
+    if (task.done && task.done[k]) { clone.done[to] = task.done[k]; delete task.done[k]; }
+    task.skip = [...(task.skip || []), k];
+    S.tasks.push(clone); return clone;
+  }
+  const clone = { id: uid(), ...base, date: k, repeat: { type: task.repeat.type, days: [...(task.repeat.days || [])] }, done: {}, skip: (task.skip || []).filter(x => x >= k) };
+  if (task.until) clone.until = task.until;
+  Object.keys(task.done || {}).forEach(x => { if (x >= k) { clone.done[x] = task.done[x]; delete task.done[x]; } });
+  task.skip = (task.skip || []).filter(x => x < k);
+  task.until = prevKey(k);
+  S.tasks.push(clone);
+  return clone;
+}
+function openTask({ task, date, start }) {
+  const edit = !!task;
+  const defCat = S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id;
+  const t = task || { title: '', cat: defCat, date: date || ui.date, start: start || nextSlot(date || ui.date), end: '', repeat: { type: 'none', days: [] }, notes: '' };
+  if (!t.end) t.end = fmt(Math.min(mins(t.start) + 60, 1440) % 1440);
+  const rep = t.repeat || { type: 'none', days: [] };
+  const viewDate = date || t.date;
+  const days = rep.days && rep.days.length ? rep.days : [parseKey(t.date).getDay()];
+  const durs = [[30, '30 דק׳'], [45, '45 דק׳'], [60, 'שעה'], [90, 'שעה וחצי'], [120, 'שעתיים']];
+  const recurring = edit && rep.type !== 'none';
+
+  const { sheet, close } = openSheet(`
+  <form class="f" id="tf" novalidate>
+    <div class="shh"><div class="grab"></div><div class="hd">
+      <button type="button" class="lnk" data-close>ביטול</button>
+      <h2>${edit ? 'עריכת משימה' : 'משימה חדשה'}</h2>
+      <button type="submit" class="lnk st">${edit ? 'שמור' : 'הוסף'}</button></div></div>
+    <input class="tin" name="title" placeholder="מה מתוכנן?" value="${esc(t.title)}" autocomplete="off" enterkeyhint="done" maxlength="80">
+    ${edit ? `<button type="button" class="donebtn${isDone(task, viewDate) ? ' done' : ''}" id="doneBtn" style="--c:${cat(t.cat).color}" aria-pressed="${isDone(task, viewDate)}"><span class="chk" aria-hidden="true">${CHECK}</span><span id="doneTx">${isDone(task, viewDate) ? 'בוצע · לחצו לביטול' : 'סמן כבוצע'}</span></button>` : ''}
+    <div><span class="lbl">קטגוריה</span><div class="chips">${S.cats.map(c => `
+      <label class="chip" style="--c:${c.color};--cb:${rgba(c.color, .18)}"><input type="radio" name="cat" value="${c.id}"${c.id === t.cat ? ' checked' : ''}><span>${esc(c.name)}</span></label>`).join('')}</div></div>
+    <div class="two">
+      <div class="fld"><label class="lbl" for="fs">התחלה</label><input id="fs" type="time" name="start" value="${t.start}" required></div>
+      <div class="fld"><label class="lbl" for="fe">סיום</label><input id="fe" type="time" name="end" value="${t.end}" required></div>
+    </div>
+    <div class="nxt" id="nxt" aria-live="polite"></div>
+    <div class="dur" id="dur">${durs.map(([m, l]) => `<button type="button" data-m="${m}">${l}</button>`).join('')}</div>
+    <div class="fld"><label class="lbl" for="fd" id="dl">${rep.type === 'none' ? 'תאריך' : 'מתחיל בתאריך'}</label><input id="fd" type="date" name="date" value="${t.date}" required></div>
+    <div><span class="lbl">חזרה</span>
+      <div class="rseg">
+        <label><input type="radio" name="rep" value="none"${rep.type === 'none' ? ' checked' : ''}><span>חד־פעמית</span></label>
+        <label><input type="radio" name="rep" value="daily"${rep.type === 'daily' ? ' checked' : ''}><span>כל יום</span></label>
+        <label><input type="radio" name="rep" value="weekly"${rep.type === 'weekly' ? ' checked' : ''}><span>ימים בשבוע</span></label>
+      </div></div>
+    <div class="dsel${rep.type === 'weekly' ? ' open' : ''}" id="dsel">${DL.map((l, i) => `<label><input type="checkbox" name="day" value="${i}"${days.includes(i) ? ' checked' : ''}><span aria-label="יום ${DAYS[i]}">${l}</span></label>`).join('')}</div>
+    <div class="fld"><label class="lbl" for="fn">הערות</label><textarea id="fn" name="notes" rows="2" maxlength="300" placeholder="אופציונלי">${esc(t.notes || '')}</textarea></div>
+    <div class="err" id="err" role="alert"></div>
+    ${edit ? `<div class="dels">${recurring
+      ? `<button type="button" class="btn dng" data-del="one">מחק רק את ${esc(relTitle(viewDate) === 'היום' ? 'היום' : fullShort(viewDate))}</button>${viewDate > task.date ? '<button type="button" class="btn dng" data-del="fwd">מחק מהיום הזה והלאה</button>' : ''}<button type="button" class="btn dng" data-del="all">מחק את כל הסדרה</button>`
+      : `<button type="button" class="btn dng" data-del="all">מחק משימה</button>`}</div>` : ''}
+  </form>`);
+
+  const f = $('#tf', sheet), $f = n => f.elements[n];
+  const dur = () => (mins($f('end').value || '00:00') - mins($f('start').value || '00:00') + 1440) % 1440;
+  const syncDur = () => {
+    const d = dur(), s = mins($f('start').value || '00:00'), e = mins($f('end').value || '00:00');
+    $('#dur', sheet).querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.m === d));
+    $('#nxt', sheet).textContent = e < s && e !== 0 ? `נגמר למחרת ב־${$f('end').value}` : '';
+  };
+  let lastStart = mins(t.start);
+  $f('start').addEventListener('change', () => {           // שומר על אותו משך כשמזיזים את ההתחלה
+    const s = mins($f('start').value || '00:00'), e = mins($f('end').value || '00:00');
+    const wasOver = e < lastStart && e !== 0;
+    const d = Math.max((e - lastStart + 1440) % 1440 || 60, 15);
+    let ne = s + d; if (!wasOver && ne > 1440) ne = 1440;
+    $f('end').value = fmt(ne % 1440); lastStart = s; syncDur();
+  });
+  $f('end').addEventListener('change', syncDur);
+  $('#dur', sheet).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $f('end').value = fmt((mins($f('start').value || '00:00') + +b.dataset.m) % 1440); syncDur();
+  });
+  syncDur();
+  f.querySelectorAll('[name=rep]').forEach(r => r.addEventListener('change', () => {
+    $('#dsel', sheet).classList.toggle('open', r.value === 'weekly' && r.checked);
+    $('#dl', sheet).textContent = $f('rep').value === 'none' ? 'תאריך' : 'מתחיל בתאריך';
+  }));
+  const fail = msg => { const e = $('#err', sheet); e.textContent = msg; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); vib(30); };
+
+  const db = $('#doneBtn', sheet);                          // סימון בוצע ישירות מהטופס (שימושי בתצוגה השבועית)
+  if (db) db.onclick = () => {
+    const now = !isDone(task, viewDate); setDone(task, viewDate, now);
+    db.classList.toggle('done', now); db.setAttribute('aria-pressed', now);
+    $('#doneTx', sheet).textContent = now ? 'בוצע · לחצו לביטול' : 'סמן כבוצע';
+    if (now) { const c = $('.chk', db); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); c.addEventListener('animationend', () => c.classList.remove('pop'), { once: true }); vib(10); }
+    render();
+  };
+
+  f.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const catId = f.querySelector('[name=cat]:checked')?.value || S.cats[0].id;
+    const title = $f('title').value.trim() || cat(catId).name;
+    const s = $f('start').value, e = $f('end').value, d = $f('date').value;
+    if (!s || !e) return fail('בחרו שעת התחלה ושעת סיום');
+    if (s === e) return fail('שעת הסיום זהה לשעת ההתחלה');
+    if (!d) return fail('בחרו תאריך');
+    const type = $f('rep').value;
+    const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
+    if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
+    const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), repeat: { type, days: type === 'weekly' ? dsel : [] } };
+    const snap = JSON.stringify(S.tasks);
+    if (edit) {
+      const r0 = task.repeat || { type: 'none', days: [] };
+      const sameSchedule = r0.type !== 'none' && type === r0.type && JSON.stringify(r0.days || []) === JSON.stringify(data.repeat.days) && d === task.date;
+      const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '');
+      let scope = 'all';
+      if (sameSchedule && changed) {
+        scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
+        if (!scope) return;
+      }
+      applyEdit(task, data, scope, viewDate);
+    } else S.tasks.push({ id: uid(), done: {}, skip: [], ...data });
+    S.lastCat = catId;
+    save(); close();
+    if (type === 'none' && !rangeKeys().includes(d)) ui.date = d;
+    render();
+    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+  });
+
+  f.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    const snap = JSON.stringify(S.tasks), w = b.dataset.del;
+    if (w === 'one') task.skip = [...(task.skip || []), viewDate];
+    else if (w === 'fwd') task.until = prevKey(viewDate);
+    else S.tasks = S.tasks.filter(x => x.id !== task.id);
+    save(); close(); render();
+    toast('נמחק', 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+  }));
+  if (!edit && matchMedia('(pointer:fine)').matches) setTimeout(() => { try { $f('title').focus({ preventScroll: true }); } catch (e) {} }, 380);
+}
+const fullShort = k => { const d = parseKey(k); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; };
+
+/* ═════════ הגדרות וקטגוריות ═════════ */
+function openSettings() {
+  const { sheet, close } = openSheet(`
+    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>הגדרות</h2><button class="lnk st" data-close>סיום</button></div></div>
+    <div class="sec">קטגוריות</div>
+    <div id="cats"></div>
+    <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="nn" placeholder="קטגוריה חדשה…" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
+    <div class="sec">נתונים</div>
+    <div class="list">
+      <button class="btn" id="ex">ייצוא גיבוי <span>⬇</span></button>
+      <button class="btn" id="im">ייבוא מגיבוי <span>⬆</span></button>
+      <button class="btn" id="dm">הוסף משימות לדוגמה <span>＋</span></button>
+      <button class="btn dng" id="ca">מחק את כל המשימות <span>🗑</span></button>
+    </div>
+    <p style="color:var(--mut2);font-size:12.5px;margin:16px 0 0">הנתונים נשמרים במכשיר הזה בלבד. מומלץ לייצא גיבוי מדי פעם.</p>
+    <input type="file" id="file" accept="application/json" hidden>`);
+  const drawCats = () => {
+    $('#cats', sheet).innerHTML = S.cats.map(c => `<div class="crow" data-id="${c.id}">
+      <input type="color" value="${c.color}" aria-label="צבע ${esc(c.name)}"><input type="text" value="${esc(c.name)}" maxlength="24" aria-label="שם קטגוריה">
+      <button class="ib" data-rm aria-label="מחק קטגוריה"${S.cats.length < 2 ? ' disabled style="opacity:.3"' : ''}><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join('');
+  };
+  drawCats();
+  const cats = $('#cats', sheet);
+  cats.addEventListener('input', e => {
+    const row = e.target.closest('.crow'), c = S.cats.find(x => x.id === row.dataset.id);
+    if (e.target.type === 'color') c.color = e.target.value; else c.name = e.target.value;
+    save();
+  });
+  cats.addEventListener('click', async e => {
+    const rm = e.target.closest('[data-rm]'); if (!rm || S.cats.length < 2) return;
+    const id = rm.closest('.crow').dataset.id, c = cat(id);
+    const used = S.tasks.filter(t => t.cat === id).length;
+    if (used && !(await ask(`ל־"${c.name}" יש ${used} משימות. הן יועברו לקטגוריה "${S.cats.find(x => x.id !== id).name}".`, 'מחק והעבר'))) return;
+    const fb = S.cats.find(x => x.id !== id).id;
+    S.tasks.forEach(t => { if (t.cat === id) t.cat = fb; });
+    S.cats = S.cats.filter(x => x.id !== id); save(); drawCats(); render();
+  });
+  cats.addEventListener('change', () => render());
+  $('#na', sheet).onclick = () => {
+    const n = $('#nn', sheet).value.trim(); if (!n) return $('#nn', sheet).focus();
+    S.cats.push({ id: uid(), name: n, color: $('#nc', sheet).value }); save();
+    $('#nn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
+  };
+  $('#ex', sheet).onclick = () => {
+    const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `agenda-backup-${todayKey()}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $('#im', sheet).onclick = () => $('#file', sheet).click();
+  $('#file', sheet).onchange = async e => {
+    try {
+      const j = JSON.parse(await e.target.files[0].text());
+      if (!j || !Array.isArray(j.tasks)) throw 0;
+      const { state, dropped } = clean(j);
+      if (!(await ask(`הייבוא יחליף את כל הנתונים הקיימים בגיבוי של ${state.tasks.length} משימות${dropped ? ` (${dropped} פגומות ידולגו)` : ''}.`, 'ייבא'))) return;
+      S = state; save(); close(); render({ scroll: true }); toast(dropped ? `נטענו ${state.tasks.length} משימות, ${dropped} דולגו` : 'הגיבוי נטען');
+    } catch (err) { toast('הקובץ לא תקין'); }
+  };
+  $('#dm', sheet).onclick = () => { close(); loadExamples(); };
+  $('#ca', sheet).onclick = async () => {
+    if (!S.tasks.length || !(await ask('למחוק את כל המשימות? אי אפשר לבטל.', 'מחק הכול'))) return;
+    S.tasks = []; save(); close(); render(); toast('כל המשימות נמחקו');
+  };
+}
+
+function loadExamples() {
+  const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
+  const d = keyOf(startOfWeek(new Date()));
+  const mk = (title, c, start, end, repeat) => ({ id: uid(), title, cat: id(c), start, end, date: d, notes: '', done: {}, skip: [], repeat });
+  const before = S.tasks.length;
+  const add = (...ts) => ts.forEach(t => { if (!S.tasks.some(x => x.title === t.title && x.start === t.start && x.end === t.end)) S.tasks.push(t); });
+  add(
+    mk('בית ספר', 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
+    mk('שיעורי בית', 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
+    mk('אימון חדר כושר', 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
+    mk('זמן עם סינדי', 'cindy', '20:00', '21:30', { type: 'weekly', days: [1, 3, 5] }),
+    mk('מתיחות התאוששות', 'recovery', '21:45', '22:15', { type: 'daily', days: [] })
+  );
+  save(); render({ scroll: true }); toast(S.tasks.length > before ? 'נוספו משימות לדוגמה — אפשר לערוך או למחוק' : 'הדוגמאות כבר קיימות');
+}
+
+/* ═════════ הפעלה ═════════ */
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // מבקש מהדפדפן לא למחוק את הנתונים לבד
+const UIKEY = 'agenda.ui';
+let restored = false;
+try {
+  const u = JSON.parse(localStorage.getItem(UIKEY));
+  if (u && Date.now() - u.ts < 20 * 60 * 1000 && /^\d{4}-\d\d-\d\d$/.test(u.date) && u.view === S.view) { ui.date = u.date; restored = u; }
+} catch (e) {}
+let uiTimer = 0;
+const saveUi = () => { clearTimeout(uiTimer); uiTimer = setTimeout(() => { try { localStorage.setItem(UIKEY, JSON.stringify({ date: ui.date, view: S.view, y: window.scrollY, ts: Date.now() })); } catch (e) {} }, 250); };
+addEventListener('scroll', saveUi, { passive: true });
+addEventListener('pagehide', () => { try { localStorage.setItem(UIKEY, JSON.stringify({ date: ui.date, view: S.view, y: window.scrollY, ts: Date.now() })); } catch (e) {} });
+const DEMO = /*DEMO*/false;
+let hadStore = false; try { hadStore = !!localStorage.getItem(STORE); } catch (e) {}
+if (DEMO && !S.tasks.length && !hadStore) loadExamples();
+else if (restored) { render({ scroll: true }); window.scrollTo({ top: restored.y, behavior: 'instant' }); }
+else render({ scroll: true });
+setInterval(tickNow, 30000);
+try {                                                     // טיפ חד-פעמי בנייד: איך מזיזים בלוק
+  if (S.tasks.length && matchMedia('(pointer:coarse)').matches && !localStorage.getItem('agenda.tip1')) {
+    localStorage.setItem('agenda.tip1', '1');
+    setTimeout(() => toast('טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו'), 1200);
+  }
+} catch (e) {}
+let bootDay = todayKey();
+function tickNow() {
+  const n = $('[data-now]'); if (!n) return;
+  const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), ppm = S.view === 'day' ? PPM() : WPPM();
+  n.style.top = (TOP + m * ppm) + 'px';
+  const sp = $('span', n); if (sp) sp.textContent = fmt(m);
+}
+document.addEventListener('visibilitychange', () => {   // חזרה לאפליקציה: בלי לצייר מחדש ובלי לקפוץ. רק אחרי חצות עוברים ליום החדש
+  if (document.visibilityState !== 'visible') return;
+  if (todayKey() !== bootDay) {
+    const wasToday = ui.date === bootDay; bootDay = todayKey();
+    if (wasToday) { ui.date = bootDay; if (!document.querySelector('.ov')) render({ scroll: true }); }
+  } else tickNow();
+});
+/*SW*/ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
