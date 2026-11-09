@@ -1,7 +1,7 @@
 {
-  "name": "סדר יום",
-  "short_name": "סדר יום",
-  "description": "מתכנן יום מינימליסטי עם קו זמן, משימות חוזרות וקטגוריות",
+  "name": "Yomi · יומי",
+  "short_name": "Yomi",
+  "description": "Daily planner · מתכנן יום: קו זמן, משימות חוזרות, תזכורות וסנכרון",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./",
