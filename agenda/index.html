@@ -1887,6 +1887,176 @@ function parseVoice(raw, ctx) {
   return res;
 }
 
+/* ═════════ הבנת משפט באנגלית ═════════
+   "gym tomorrow at 5:30 for an hour and a half" → כותרת, קטגוריה, תאריך, שעות, חזרה. אותו מבנה תוצאה כמו parseVoice. */
+const EN_WD = { sunday: 0, sun: 0, monday: 1, mon: 1, tuesday: 2, tue: 2, tues: 2, wednesday: 3, wed: 3, thursday: 4, thu: 4, thur: 4, thurs: 4, friday: 5, fri: 5, saturday: 6, sat: 6 };
+const EN_WDRE = '(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri|sat)s?';
+const EN_NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, a: 1, an: 1 };
+const EN_NUMRE = 'one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve';
+const EN_MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+const EN_MONRE = '(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*\\.?';
+const EN_CATWORDS = {
+  gym: ['gym', 'workout', 'work out', 'training', 'train', 'run', 'running', 'jog', 'practice', 'basketball', 'soccer', 'football', 'swim', 'swimming', 'tennis', 'weights', 'lifting', 'crossfit', 'bike', 'cycling', 'karate', 'sport'],
+  recovery: ['stretch', 'stretching', 'recovery', 'rest', 'massage', 'yoga', 'pilates', 'sleep', 'nap', 'ice bath', 'sauna', 'mobility'],
+  school: ['school', 'class', 'lesson', 'homework', 'exam', 'test', 'quiz', 'study', 'studying', 'math', 'english', 'physics', 'history', 'chemistry', 'biology', 'literature', 'project', 'assignment', 'tutoring', 'tutor'],
+  personal: ['dinner', 'lunch', 'breakfast', 'meal', 'shopping', 'groceries', 'doctor', 'dentist', 'appointment', 'friends', 'meeting', 'movie', 'reading', 'read', 'laundry', 'cleaning', 'call'],
+  cindy: ['cindy']
+};
+function parseVoiceEn(raw, ctx) {
+  const now = ctx.now || new Date();
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const dkey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const plus = n => { const x = new Date(base); x.setDate(x.getDate() + n); return x; };
+  const hhmm = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const res = { text: String(raw || '').trim(), title: '', cat: null, date: null, start: null, end: null, repeat: { type: 'none', days: [] }, guessed: false };
+  let t = ' ' + String(raw || '').replace(/[’‘]/g, "'").replace(/[–—]/g, '-').replace(/(\d)\s*-\s*(\d)/g, '$1 to $2').replace(/\s+/g, ' ') + ' ';
+  const orig = t.toLowerCase();
+  const cut = re => { const m = t.match(re); if (!m) return null; t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length); return m; };
+  const wd = s => EN_WD[s.toLowerCase().replace(/s$/, '')] ?? EN_WD[s.toLowerCase()];
+  const range = (a, b) => { const out = [a]; let i = a; while (i !== b && out.length < 8) { i = (i + 1) % 7; out.push(i); } return out; };
+  let m, part = null;
+
+  /* חזרה */
+  if (cut(/\b(?:every ?day|each day|daily|every single day)\b/i)) res.repeat = { type: 'daily', days: [] };
+  else if ((m = cut(/\bevery (morning|evening|night|afternoon)\b/i))) { res.repeat = { type: 'daily', days: [] }; part = { morning: 'am', evening: 'eve', night: 'night', afternoon: 'pm' }[m[1].toLowerCase()]; }
+  else if (cut(/\b(?:on |every )?week ?days?\b/i)) res.repeat = { type: 'weekly', days: [1, 2, 3, 4, 5] };
+  else if (cut(/\b(?:on |every )?(?:the )?week ?ends?\b/i)) res.repeat = { type: 'weekly', days: [6, 0] };
+  else if ((m = cut(new RegExp(`\\b(?:from |every |on )?(${EN_WDRE}) (?:to|through|thru|till|until|-) (${EN_WDRE})\\b`, 'i')))) res.repeat = { type: 'weekly', days: range(wd(m[1]), wd(m[2])) };
+  else {
+    const re = new RegExp(`\\b(?:every|each|on) ((?:${EN_WDRE})(?:(?:,? and |, ?| & )(?:${EN_WDRE}))*)\\b`, 'i');
+    const mm = t.match(re);
+    if (mm && (/^(every|each)/i.test(mm[0].trim()) || /s$/i.test(mm[1]) || /,| and | & /i.test(mm[1]))) {     // "on monday" לבד = תאריך, לא חזרה
+      cut(re); res.repeat = { type: 'weekly', days: [...new Set(mm[1].split(/,? and |, ?| & /i).map(x => wd(x.trim())).filter(x => x !== undefined))] };
+    }
+  }
+  if (res.repeat.type === 'none' && (m = cut(new RegExp(`\\b(${EN_WDRE.replace('s?', '')})s\\b`, 'i'))) && wd(m[1]) !== undefined) res.repeat = { type: 'weekly', days: [wd(m[1])] };   // "mondays"
+  if (res.repeat.type === 'none' && cut(/\bevery week\b|\bweekly\b/i)) res.repeat = { type: 'weekly', days: [] };
+
+  /* משך */
+  let dur = null;
+  if ((m = cut(/\bfor (?:an? |one )?hour and (?:a )?half\b|\bfor (?:one and a half|1\.5) hours?\b|\bfor (?:an? )?(?:hour|1h) 30\b/i))) dur = 90;
+  else if ((m = cut(/\bfor (?:two|2) and (?:a )?half hours\b|\bfor 2\.5 hours\b/i))) dur = 150;
+  else if ((m = cut(/\bfor (?:a |an )?half (?:an )?hour\b|\bfor half an hour\b/i))) dur = 30;
+  else if ((m = cut(/\bfor (?:a |an )?quarter (?:of an )?hour\b/i))) dur = 15;
+  else if ((m = cut(/\bfor (?:three quarters of an hour)\b/i))) dur = 45;
+  else if ((m = cut(new RegExp(`\\bfor (\\d+(?:\\.\\d+)?|${EN_NUMRE}|an?) ?(hours?|hrs?|h|minutes?|mins?|m)\\b`, 'i')))) {
+    const n = /^\d/.test(m[1]) ? parseFloat(m[1]) : EN_NUM[m[1].toLowerCase()];
+    dur = Math.round(/^h/i.test(m[2]) ? n * 60 : n);
+  } else if ((m = cut(new RegExp(`\\b(\\d+(?:\\.\\d+)?|${EN_NUMRE}) ?(hours?|hrs?|minutes?|mins?)\\b(?! (?:before|after|later|from now))`, 'i')))) {
+    const n = /^\d/.test(m[1]) ? parseFloat(m[1]) : EN_NUM[m[1].toLowerCase()];
+    dur = Math.round(/^h/i.test(m[2]) ? n * 60 : n);
+  }
+
+  /* תאריך */
+  let dateOff = null, wdTarget = null, absDate = null, nextWeekWd = false;
+  if ((m = cut(/\btonight\b/i))) { dateOff = 0; part = part || 'eve'; }
+  if ((m = cut(/\bthis (morning|afternoon|evening)\b/i))) { dateOff = 0; part = { morning: 'am', afternoon: 'pm', evening: 'eve' }[m[1].toLowerCase()]; }
+  if ((m = cut(/\b(?:the )?day after tomorrow\b/i))) dateOff = 2;
+  else if ((m = cut(/\btoday\b/i))) dateOff = 0;
+  else if ((m = cut(/\btomorrow\b/i))) dateOff = 1;
+  else if ((m = cut(new RegExp(`\\bin (\\d+|${EN_NUMRE}|a|an) (days?|weeks?)\\b`, 'i')))) { const n = /^\d/.test(m[1]) ? +m[1] : EN_NUM[m[1].toLowerCase()]; dateOff = n * (/^w/i.test(m[2]) ? 7 : 1); }
+  else if ((m = cut(new RegExp(`\\b(?:on )?${EN_MONRE} (\\d{1,2})(?:st|nd|rd|th)?\\b`, 'i')))) absDate = [EN_MON[m[1].toLowerCase().slice(0, 3)], +m[2]];
+  else if ((m = cut(new RegExp(`\\b(?:on )?(?:the )?(\\d{1,2})(?:st|nd|rd|th)?(?: of)? ${EN_MONRE}`, 'i')))) absDate = [EN_MON[m[2].toLowerCase().slice(0, 3)], +m[1]];
+  else if ((m = cut(/\b(?:on )?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/))) absDate = [+m[1] - 1, +m[2], m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : null];
+  else if ((m = cut(new RegExp(`\\b(?:on |this |next )?(${EN_WDRE.replace('s?', '')})\\b`, 'i')))) { wdTarget = wd(m[1]); nextWeekWd = /next/i.test(m[0]); }
+  let date = null;
+  if (absDate) {
+    const [mo, d, y] = absDate;
+    if (mo >= 0 && mo <= 11 && d >= 1 && d <= 31) { let x = new Date(y || base.getFullYear(), mo, d); if (!y && x < base) x = new Date(base.getFullYear() + 1, mo, d); if (x.getDate() === d) date = x; }
+  }
+
+  /* חלקי יום */
+  const partDefs = [[/\bin the morning\b|\bmorning\b/i, 'am'], [/\bin the afternoon\b|\bafternoon\b/i, 'pm'], [/\bin the evening\b|\bevening\b/i, 'eve'], [/\bat night\b|\bnight\b/i, 'night'], [/\bat noon\b|\bnoon\b|\bmidday\b/i, 'noonw'], [/\bat midnight\b|\bmidnight\b/i, 'midw']];
+  let fixed = null;                                          // noon / midnight as a time
+  for (const [re, val] of partDefs) if ((m = cut(re))) { if (val === 'noonw') fixed = 720; else if (val === 'midw') fixed = 0; else part = part || val; }
+
+  /* שעות */
+  const clocks = [];
+  if (fixed !== null) clocks.push({ min: fixed, explicit: true, idx: 0, prefix: 'at' });
+  const clkRe = new RegExp(`(?:\\b(at|from|by|until|till|til|to|between|and|-|starting|ending|around)\\s*)?\\b(?:(half|quarter) (past|after|to|before) (\\d{1,2}|${EN_NUMRE})|(\\d{1,2})(?::(\\d{2}))?|(${EN_NUMRE}))(?:\\s*(o'?clock))?(?:\\s*(a\\.?m\\.?|p\\.?m\\.?))?(?![\\d:a-z])`, 'gi');
+  for (const k of t.matchAll(clkRe)) {
+    const prefix = (k[1] || '').toLowerCase(), ap = k[9] ? k[9].toLowerCase()[0] : null, colon = k[6] !== undefined;
+    const rangeStart = /^\s*(?:to|until|till)\s+\d/i.test(t.slice(k.index + k[0].length));         // "3 to 4pm"
+    if (!prefix && !colon && !ap && !k[2] && !k[8] && !rangeStart) continue;                    // מספר לבד (למשל "3 sets") אינו שעה
+    if (prefix === 'and' && !clocks.length) continue;
+    let h, mi = 0;
+    if (k[2]) { h = /^\d/.test(k[4]) ? +k[4] : EN_NUM[k[4].toLowerCase()]; const q = k[2].toLowerCase() === 'half' ? 30 : 15; if (/to|before/i.test(k[3])) { h = (h + 11) % 12 || 12; mi = 60 - q; } else mi = q; }
+    else if (k[5] !== undefined) { h = +k[5]; mi = colon ? +k[6] : 0; }
+    else h = EN_NUM[k[7].toLowerCase()];
+    if (h === undefined || isNaN(h) || h > 24 || mi > 59) continue;
+    if (ap) { if (h > 12) continue; h = ap === 'p' ? (h % 12) + 12 : h % 12; }
+    clocks.push({ h, mi, ap, colon, prefix, idx: k.index, len: k[0].length, explicit: !!ap || (colon && (h >= 13 || h === 0)) });
+  }
+  for (const c of [...clocks].filter(c => c.len).sort((a, b) => b.idx - a.idx)) t = t.slice(0, c.idx) + ' ' + t.slice(c.idx + c.len);
+  if (clocks.length >= 2 && !clocks[0].ap && clocks[1].ap && clocks[0].min === undefined) {   // "5-7pm": החצי של השנייה חל גם על הראשונה
+    const c0 = clocks[0]; let h = c0.h % 12 + (clocks[1].ap === 'p' ? 12 : 0); if (h * 60 + c0.mi > clocks[1].h * 60 + clocks[1].mi) h -= 12; if (h >= 0) { c0.h = h; c0.explicit = true; }
+  }
+
+  /* קטגוריה */
+  let catId = null;
+  for (const c of ctx.cats || []) if (c.name && new RegExp(`\\b${c.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(orig)) { catId = c.id; break; }
+  if (!catId) for (const [id, words] of Object.entries(EN_CATWORDS)) {
+    if (!(ctx.cats || []).some(x => x.id === id)) continue;
+    if (words.some(w => new RegExp(`\\b${w}\\b`).test(orig))) { catId = id; break; }
+  }
+  res.cat = catId || ctx.defCat || null;
+  if (!part && /\bbreakfast\b/.test(orig)) part = 'am';
+  const eveningCat = ['gym', 'recovery', 'personal', 'cindy'].includes(res.cat) || /evening|night/.test(orig);
+
+  const resolve = (c, isEnd) => {
+    if (c.min !== undefined) return c.min;
+    let h = c.h, mi = c.mi;
+    if (c.explicit) return (h % 24) * 60 + mi;
+    if (h === 24) return 0;
+    if (part === 'am') h = h === 12 ? 0 : h;
+    else if (part === 'pm' || part === 'eve') h = h < 12 ? h + 12 : h;
+    else if (part === 'night') h = h === 12 ? 0 : h >= 6 ? h + 12 : h;
+    else {
+      res.guessed = true;
+      if (h >= 1 && h <= 6) h += 12;
+      else if (h >= 7 && h <= 11) {
+        const today = res.repeat.type === 'none' && (dateOff === 0 || (dateOff == null && wdTarget == null && !date));
+        if (eveningCat && res.cat !== 'school') h += 12;
+        else if (today && !isEnd && h * 60 + mi <= nowMin) h += 12;
+      }
+    }
+    return h * 60 + mi;
+  };
+  const isEndPrefix = p => /^(until|till|til|by|ending)$/.test(p);
+  const resolved = clocks.map((c, i) => ({ ...c, min: resolve(c, i > 0 || isEndPrefix(c.prefix)) }));
+  let s = null, e = null;
+  if (resolved.length >= 2) { s = resolved[0].min; e = resolved[1].min; }
+  else if (resolved.length === 1) { if (isEndPrefix(resolved[0].prefix)) e = resolved[0].min; else s = resolved[0].min; }
+  if (s != null && s >= 1440) s %= 1440;
+  if (s != null && e != null && e <= s) { if (!resolved[1].explicit && e + 720 > s && e + 720 <= 1440) e += 720; }
+  if (s == null && e != null) s = Math.max(e - (dur || 60), 0);
+  if (s != null && e == null) e = Math.min(s + (dur || 60), 1440);
+  if (s != null && e != null && e % 1440 === s) e = Math.min(s + 60, 1440);
+  if (s != null) { res.start = hhmm(s); res.end = hhmm(e); }
+
+  /* תאריך סופי */
+  let d = date;
+  if (!d && dateOff != null) d = plus(dateOff);
+  else if (!d && wdTarget != null) { let delta = (wdTarget - base.getDay() + 7) % 7; if ((delta === 0 && (s == null || s <= nowMin)) || (nextWeekWd && delta === 0)) delta = 7; d = plus(delta); }
+  res.date = dkey(d || base);
+  res.dateGiven = !!d;
+  if (res.repeat.type === 'weekly' && !res.repeat.days.length) res.repeat.days = [new Date(res.date + 'T12:00').getDay()];
+  if (res.repeat.type === 'weekly' && !d) res.dateGiven = false;
+
+  /* כותרת */
+  let title = t.replace(/[,;!?.]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const lead = /^(?:please |hey |ok |okay )?(?:(?:add|schedule|set|put|create|make|plan|book)(?: me)?(?: an?| the)?(?: (?:task|event|reminder|appointment))?(?: for| to)?|remind me to|remind me|i (?:need|have|want|got) to|i have(?: an?)?|i've got(?: an?)?|need to|have to|new task|task)\s+/i;
+  const dangling = /\s+(?:at|on|for|to|from|the|and|in|every|by|until|till|starting|of|with|a)$/i;
+  const danglingStart = /^(?:at|on|for|to|from|the|and|in|by|until|a|an)\s+/i;
+  for (let i = 0; i < 4; i++) title = title.replace(lead, '').replace(danglingStart, '').replace(dangling, '').trim();
+  title = title.replace(/^[\s\-:]+|[\s\-:]+$/g, '');
+  res.title = title ? title[0].toUpperCase() + title.slice(1) : '';
+  if (dur != null) res.dur = dur;
+  res.routine = /\b(sleep|breakfast|lunch|dinner|shower|meal)\b/.test(orig);
+  return res;
+}
+
 /* ═════════ פס "עכשיו / הבא" ═════════ */
 const fmtDur = m => m < 60 ? tr('{0} דק׳', m) : tr('{0}:{1} שע׳', Math.floor(m / 60), String(m % 60).padStart(2, '0'));
 function updateNowNext() {
@@ -1962,7 +2132,7 @@ function openVoice() {
     const txt = $s('#vtxt').value.trim();
     $s('#vadd').disabled = $s('#vedit').disabled = !txt; $s('#vinbox').hidden = true;
     if (!txt) { $s('#vprev').innerHTML = ''; last = null; return; }
-    last = parseVoice(txt, ctx());
+    last = (LANG === 'en' ? parseVoiceEn : parseVoice)(txt, ctx());
     $s('#vinbox').hidden = !(!last.start && !last.dateGiven && last.repeat.type === 'none');
     const tk = voiceTask(last), c = cat(tk.cat), isRep = last.repeat.type !== 'none';
     $s('#vprev').innerHTML = `<div class="pv" style="--c:${c.color}">
