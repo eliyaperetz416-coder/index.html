@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src https://szhdasydkoqtbmbrmzpi.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="theme-color" content="#0a0a0d">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
@@ -249,10 +250,10 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .chip span:active{transform:scale(.95)}
 .chip input:checked+span{background:var(--cb);border-color:var(--c)}
 .chip input:focus-visible+span{outline:2px solid var(--tx);outline-offset:2px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .fld{background:var(--s2);border-radius:14px;padding:9px 13px 7px}
 .fld .lbl{margin:0 0 2px;font-size:12px}
-.fld input,.fld textarea{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:2px 0;color-scheme:dark;font-variant-numeric:tabular-nums}
+.fld input,.fld textarea{width:100%;min-width:0;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:2px 0;color-scheme:dark;font-variant-numeric:tabular-nums}
 .fld input[type=time],.fld input[type=date]{direction:ltr;text-align:start;min-height:28px}
 .fld textarea{font-size:15px;font-weight:400;resize:none;min-height:46px}
 .fld:focus-within{box-shadow:0 0 0 1.5px var(--mut2)}
@@ -408,6 +409,7 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .toast button{color:#9db4ff;font-weight:700;padding:4px 2px}
 
 :focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+.sheet:focus{outline:none}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .sheet{transition:opacity .2s!important}
@@ -484,9 +486,10 @@ function clean(raw) {
   let dropped = 0;
   raw = raw && typeof raw === 'object' ? raw : {};
   const hex = c => { if (typeof c !== 'string') return null; c = c.trim(); if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + [...c.slice(1)].map(x => x + x).join(''); return /^#[0-9a-f]{6}$/i.test(c) ? c.toLowerCase() : null; };
+  const idOk = s => typeof s === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(s);          // מזהים נכנסים ל־HTML: רק תווים בטוחים
   const seen = new Set();
   const cats = (Array.isArray(raw.cats) ? raw.cats : [])
-    .filter(c => c && typeof c.id === 'string' && c.id && typeof c.name === 'string' && !seen.has(c.id) && seen.add(c.id))
+    .filter(c => c && idOk(c.id) && typeof c.name === 'string' && !seen.has(c.id) && seen.add(c.id))
     .slice(0, 40).map((c, i) => ({ id: c.id, name: c.name.trim().slice(0, 24) || 'קטגוריה', color: hex(c.color) || PALETTE[i % PALETTE.length] }));
   if (!cats.length) DEFAULT_CATS.forEach(c => cats.push({ ...c }));
   const ids = new Set(), tasks = [];
@@ -496,31 +499,36 @@ function clean(raw) {
     const type = ['none', 'daily', 'weekly'].includes(r.type) ? r.type : 'none';
     let days = type === 'weekly' ? [...new Set((Array.isArray(r.days) ? r.days : []).map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))] : [];
     if (type === 'weekly' && !days.length) days = [parseKey(t.date).getDay()];
-    const id = typeof t.id === 'string' && t.id && !ids.has(t.id) ? t.id : uid(); ids.add(id);
-    const done = {};
+    const id = idOk(t.id) && !ids.has(t.id) ? t.id : uid(); ids.add(id);
+    const done = {}, undone = {};
     if (t.done && typeof t.done === 'object') Object.keys(t.done).forEach(k => { if (validDate(k) && t.done[k]) done[k] = Number(t.done[k]) || 1; });
+    if (t.undone && typeof t.undone === 'object') Object.keys(t.undone).forEach(k => { if (validDate(k) && Number.isFinite(t.undone[k])) undone[k] = t.undone[k]; });
     const cat = cats.some(c => c.id === t.cat) ? t.cat : cats[0].id;
     const out = {
       id, title: String(t.title == null ? '' : t.title).trim().slice(0, 80) || cats.find(c => c.id === cat).name, cat,
       start: t.start, end: t.end, date: t.date, notes: typeof t.notes === 'string' ? t.notes.slice(0, 300) : '',
       done, skip: Array.isArray(t.skip) ? t.skip.filter(validDate) : [], repeat: { type, days }, routine: !!t.routine
     };
+    if (Object.keys(undone).length) out.undone = undone;
     if (validDate(t.until)) out.until = t.until;
     if (t.dismissed) out.dismissed = true;
     if (Number.isFinite(t.u)) out.u = t.u;
     if (t.remind === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(t.remind)) out.remind = t.remind;
     tasks.push(out);
   });
-  const inbox = (Array.isArray(raw.inbox) ? raw.inbox : []).filter(x => x && typeof x.title === 'string' && x.title.trim()).slice(0, 200).map(x => ({ id: typeof x.id === 'string' && x.id ? x.id : uid(), title: x.title.trim().slice(0, 80), cat: cats.some(c => c.id === x.cat) ? x.cat : cats[0].id, ...(Number.isFinite(x.u) ? { u: x.u } : {}) }));
+  const inbox = (Array.isArray(raw.inbox) ? raw.inbox : []).filter(x => x && typeof x.title === 'string' && x.title.trim()).slice(0, 200).map(x => ({ id: idOk(x.id) ? x.id : uid(), title: x.title.trim().slice(0, 80), cat: cats.some(c => c.id === x.cat) ? x.cat : cats[0].id, ...(Number.isFinite(x.u) ? { u: x.u } : {}) }));
   const tomb = {};
-  if (raw.tomb && typeof raw.tomb === 'object') Object.entries(raw.tomb).slice(0, 2000).forEach(([id, ts]) => { if (id.length <= 40 && Number.isFinite(ts)) tomb[id] = ts; });
+  if (raw.tomb && typeof raw.tomb === 'object') Object.entries(raw.tomb).slice(0, 2000).forEach(([id, ts]) => { if (idOk(id) && Number.isFinite(ts)) tomb[id] = ts; });
   return { state: { tasks, cats, view: raw.view === 'week' ? 'week' : 'day', lastCat: typeof raw.lastCat === 'string' ? raw.lastCat : '', inbox, tomb, catsU: Number.isFinite(raw.catsU) ? raw.catsU : 0, setU: Number.isFinite(raw.setU) ? raw.setU : 0, remindDefault: raw.remindDefault === 'n' || [0, 5, 10, 15, 30, 60, 120, 1440].includes(raw.remindDefault) ? raw.remindDefault : 15 }, dropped };
 }
 function load() {
+  let raw = null;
   try {
-    const s = JSON.parse(localStorage.getItem(STORE));
+    raw = localStorage.getItem(STORE);
+    const s = JSON.parse(raw);
     if (s && Array.isArray(s.tasks)) return clean(s).state;
   } catch (e) {}
+  if (raw) { try { localStorage.setItem(STORE + '.bak', raw); } catch (e) {} }            // נתונים שלא נקראו לא נדרסים בשקט: נשמר עותק
   return { tasks: [], cats: DEFAULT_CATS.map(c => ({ ...c })), view: 'day', lastCat: '', remindDefault: 15, inbox: [], tomb: {}, catsU: 0, setU: 0 };
 }
 let S = load();
@@ -602,6 +610,7 @@ function weekRange(ws) {
     ? `${ws.getDate()}–${we.getDate()} ב${MONTHS[ws.getMonth()]} ${we.getFullYear()}`
     : `${ws.getDate()} ב${MONTHS[ws.getMonth()]} – ${we.getDate()} ב${MONTHS[we.getMonth()]}`;
 }
+const thisWeek = () => startOfWeek(parseKey(todayKey())).getTime();     // תחילת השבוע הנוכחי בחצות (להשוואה עם startOfWeek של תאריך)
 function rangeKeys() {
   if (S.view === 'day') return [ui.date];
   const ws = startOfWeek(parseKey(ui.date));
@@ -619,11 +628,11 @@ function renderHeader() {
     $('#h2t').textContent = `${isRel ? `יום ${DAYS[d.getDay()]} · ` : ''}${d.getDate()} ב${MONTHS[d.getMonth()]}${isRel ? '' : ' ' + d.getFullYear()}`;
   } else {
     const ws = startOfWeek(d);
-    $('#h1').textContent = startOfWeek(new Date()).getTime() === ws.getTime() ? 'השבוע' : 'שבוע';
+    $('#h1').textContent = thisWeek() === ws.getTime() ? 'השבוע' : 'שבוע';
     $('#h2t').textContent = weekRange(ws);
   }
   const inView = S.view === 'day' ? ui.date === todayKey()
-    : startOfWeek(parseKey(ui.date)).getTime() === startOfWeek(new Date()).getTime();
+    : startOfWeek(parseKey(ui.date)).getTime() === thisWeek();
   $('#todayBtn').disabled = inView;
 
   const ws = startOfWeek(d), tk = todayKey();
@@ -729,7 +738,17 @@ function go(dateKey, dir, scroll = false) {
 const step = n => go(keyOf(addDays(parseKey(ui.date), S.view === 'day' ? n : n * 7)), n);
 
 /* ═════════ אינטראקציות ═════════ */
-function setDone(t, k, now) { t.done = t.done || {}; if (now) t.done[k] = Date.now(); else delete t.done[k]; save(); }
+/* ביטול סימון נרשם ב־undone עם זמן, כדי שמיזוג בין מכשירים לא יחזיר את ה־V שהוסר */
+function setDone(t, k, now) {
+  t.done = t.done || {};
+  if (now) { t.done[k] = Date.now(); if (t.undone) { delete t.undone[k]; if (!Object.keys(t.undone).length) delete t.undone; } }
+  else {
+    delete t.done[k];
+    const old = Date.now() - 60 * 86400000;
+    t.undone = Object.fromEntries(Object.entries(t.undone || {}).filter(([, v]) => v > old)); t.undone[k] = Date.now();
+  }
+  save();
+}
 function toggleDone(id, k, btn) {
   const t = findTask(id); if (!t) return;
   const now = !isDone(t, k);
@@ -905,19 +924,19 @@ function finishDrag(commit) {
 
 /* שמירת שעות חדשות. במשימה חוזרת שואלים מה לשנות */
 async function commitTimes(i, start, end, toDate) {
-  const t = i.t, snap = JSON.stringify(S.tasks), rec = t.repeat && t.repeat.type !== 'none';
+  const t = i.t, rec = t.repeat && t.repeat.type !== 'none';
   const data = { title: t.title, cat: t.cat, start, end, date: t.date, notes: t.notes || '', routine: !!t.routine, remind: t.remind, repeat: t.repeat };
-  let res = t;
-  if (!rec) { t.start = start; t.end = end; t.date = toDate; }
-  else if (toDate !== i.k0) res = applyEdit(t, data, 'one', i.k0, toDate);     // העברה ליום אחר = רק המופע הזה
+  let res = t, ck;
+  if (!rec) { ck = checkpoint(); t.start = start; t.end = end; t.date = toDate; }
+  else if (toDate !== i.k0) { ck = checkpoint(); res = applyEdit(t, data, 'one', i.k0, toDate); }     // העברה ליום אחר = רק המופע הזה
   else {
     const scope = await choose(`לשנות ל־${start}–${end}. מה לשנות?`, [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
     if (!scope) { render(); reselect(t.id, i.k0); return; }
-    res = applyEdit(t, data, scope, i.k0);
+    ck = checkpoint(); res = applyEdit(t, data, scope, i.k0);
   }
-  save(); render(); reselect(res.id, toDate);
+  ck.arm(); save(); render(); reselect(res.id, toDate);
   vib(8);
-  toast(`עודכן · ${start}–${end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+  toast(`עודכן · ${start}–${end}`, 'ביטול', () => { ck(); save(); render(); });
 }
 
 /* מקלדת: Alt+חצים מזיז ב־15 דקות, עם Shift משנה את הסיום */
@@ -956,7 +975,7 @@ $('#gear').onclick = openSettings;
 let sx = 0, sy = 0, st = 0;
 document.addEventListener('touchstart', e => { if (e.touches.length !== 1 || document.body.classList.contains('sheet-open')) { st = 0; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); }, { passive: true });
 document.addEventListener('touchend', e => {
-  if (!st || Date.now() - st > 450) return;
+  if (!st || Date.now() - st > 450 || suppressClick) { st = 0; return; }
   const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
   if (Math.abs(dx) > 110 && Math.abs(dy) < 36 && Math.abs(dx) > Math.abs(dy) * 3.5 && Date.now() - st < 450) step(dx < 0 ? -1 : 1);
   st = 0;
@@ -976,14 +995,17 @@ function openSheet(html, onClose) {
   ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
   $('#layer').append(ov);
   document.body.classList.add('sheet-open');
-  const sheet = ov.firstElementChild;
+  const opener = document.activeElement, appEl = $('#app'); appEl.inert = true;
+  const sheet = ov.firstElementChild; sheet.tabIndex = -1;
+  try { sheet.focus({ preventScroll: true }); } catch (e) {}
   requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('in')));
   let closed = false;
   const close = () => {
     if (closed) return; closed = true;
     ov.classList.remove('in'); sheet.style.transform = '';
     const i = sheetStack.indexOf(close); if (i >= 0) sheetStack.splice(i, 1);
-    if (!sheetStack.length) document.body.classList.remove('sheet-open');
+    if (!sheetStack.length) { document.body.classList.remove('sheet-open'); appEl.inert = false; }
+    try { if (opener && opener.isConnected && opener !== document.body) opener.focus({ preventScroll: true }); } catch (e) {}
     setTimeout(() => ov.remove(), 450);
     if (onClose) onClose();
   };
@@ -1041,6 +1063,28 @@ function choose(msg, opts) {
       () => res(pick));
     sheet.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { pick = b.dataset.k; close(); });
   });
+}
+
+/* ביטול: מחזיר רק את הפריטים שהפעולה שינתה. פריט ששונה מאז (למשל הגיע ממכשיר אחר בסנכרון) נשאר כמו שהוא.
+   שימוש: const ck = checkpoint(); ...לשנות...; ck.arm(); ואז לקרוא ל־ck() כדי לבטל */
+function checkpoint(keys = ['tasks']) {
+  const before = Object.fromEntries(keys.map(k => [k, new Map(S[k].map(x => [x.id, JSON.parse(JSON.stringify(x))]))]));
+  let after = null;
+  const undo = () => {
+    if (!after) return;
+    keys.forEach(k => {
+      const cur = new Map(S[k].map(x => [x.id, x]));
+      new Set([...before[k].keys(), ...after[k].keys()]).forEach(id => {
+        const b = before[k].get(id), a = after[k].get(id) ?? null, c = cur.get(id);
+        if ((b ? noU(b) : null) === a) return;                 // הפעולה לא נגעה בפריט
+        if ((c ? noU(c) : null) !== a) return;                 // השתנה מאז: משאירים
+        const i = S[k].findIndex(x => x.id === id);
+        if (b && i >= 0) S[k][i] = b; else if (b) S[k].push(b); else if (i >= 0) S[k].splice(i, 1);
+      });
+    });
+  };
+  undo.arm = () => { after = Object.fromEntries(keys.map(k => [k, new Map(S[k].map(x => [x.id, noU(x)]))])); return undo; };
+  return undo;
 }
 
 let toastTimer = 0;
@@ -1105,7 +1149,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
     </div>
     <div class="nxt" id="nxt" aria-live="polite"></div>
     <div class="dur" id="dur">${durs.map(([m, l]) => `<button type="button" data-m="${m}">${l}</button>`).join('')}</div>
-    <div class="fld"><label class="lbl" for="fd" id="dl">${rep.type === 'none' ? 'תאריך' : 'מתחיל בתאריך'}</label><input id="fd" type="date" name="date" value="${t.date}" required></div>
+    <div class="fld"><label class="lbl" for="fd" id="dl">${rep.type === 'none' ? 'תאריך' : 'מתחיל בתאריך'}</label><input id="fd" type="date" name="date" value="${t.date}" min="2000-01-01" max="2099-12-31" required></div>
     <div><span class="lbl">חזרה</span>
       <div class="rseg">
         <label><input type="radio" name="rep" value="none"${rep.type === 'none' ? ' checked' : ''}><span>חד־פעמית</span></label>
@@ -1166,13 +1210,17 @@ function openTask({ task, date, start, prefill, inboxId }) {
     if (!s || !e) return fail('בחרו שעת התחלה ושעת סיום');
     if (s === e) return fail('שעת הסיום זהה לשעת ההתחלה');
     if (!d) return fail('בחרו תאריך');
+    if (!validDate(d) || d < '2000-01-01' || d > '2099-12-31') return fail('התאריך לא תקין. בדקו את השנה');
     const type = $f('rep').value;
     const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
     if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
     if (busy) return; busy = true;                          // לחיצה כפולה על "הוסף" לא יוצרת שתי משימות
     const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
     const rv = $f('remind').value; if (rv !== '') data.remind = rv === 'n' ? 'n' : +rv;
-    const snap = JSON.stringify(S.tasks), snapI = JSON.stringify(S.inbox);
+    const gone = () => edit && !S.tasks.includes(task);        // נמחקה במכשיר אחר בזמן שהחלון פתוח
+    const lost = () => { busy = false; close(); toast('המשימה נמחקה במכשיר אחר'); };
+    if (gone()) return lost();
+    let ck;
     if (edit) {
       const r0 = task.repeat || { type: 'none', days: [] };
       const sameSchedule = r0.type !== 'none' && type === r0.type && JSON.stringify(r0.days || []) === JSON.stringify(data.repeat.days) && d === task.date;
@@ -1181,24 +1229,26 @@ function openTask({ task, date, start, prefill, inboxId }) {
       if (sameSchedule && changed) {
         scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
         if (!scope) { busy = false; return; }
+        if (gone()) return lost();
       }
+      ck = checkpoint(['tasks', 'inbox']);
       applyEdit(task, data, scope, viewDate);
-    } else S.tasks.push({ id: uid(), done: {}, skip: [], ...data });
+    } else { ck = checkpoint(['tasks', 'inbox']); S.tasks.push({ id: uid(), done: {}, skip: [], ...data }); }
     S.lastCat = catId;
     if (inboxId) S.inbox = S.inbox.filter(q => q.id !== inboxId);
-    save(); close();
+    ck.arm(); save(); close();
     if (type === 'none' && !rangeKeys().includes(d)) ui.date = d;
     render();
-    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { S.tasks = JSON.parse(snap); if (inboxId) S.inbox = JSON.parse(snapI); save(); render(); });
+    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { ck(); save(); render(); });
   });
 
   f.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
-    const snap = JSON.stringify(S.tasks), w = b.dataset.del;
+    const ck = checkpoint(), w = b.dataset.del;
     if (w === 'one') task.skip = [...(task.skip || []), viewDate];
     else if (w === 'fwd') task.until = prevKey(viewDate);
     else S.tasks = S.tasks.filter(x => x.id !== task.id);
-    save(); close(); render();
-    toast('נמחק', 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+    ck.arm(); save(); close(); render();
+    toast('נמחק', 'ביטול', () => { ck(); save(); render(); });
   }));
   const io = $('#icsOne', sheet); if (io) io.onclick = () => exportICS([task], 'האירוע מוכן');
   if (!edit && matchMedia('(pointer:fine)').matches) setTimeout(() => { try { $f('title').focus({ preventScroll: true }); } catch (e) {} }, 380);
@@ -1211,7 +1261,7 @@ function openSettings() {
     <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>הגדרות</h2><button class="lnk st" data-close>סיום</button></div></div>
     <div class="sec">קטגוריות</div>
     <div id="cats"></div>
-    <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="nn" placeholder="קטגוריה חדשה…" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
+    <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="ncn" placeholder="קטגוריה חדשה…" aria-label="שם קטגוריה חדשה" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
     ${DEMO ? '' : '<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div><div class="sec">התראות בטלפון</div><div id="pushBox"></div>'}
     <div class="sec">תזכורות</div>
     <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
@@ -1255,13 +1305,20 @@ function openSettings() {
     if (used && !(await ask(`ל־"${c.name}" יש ${used} משימות. הן יועברו לקטגוריה "${S.cats.find(x => x.id !== id).name}".`, 'מחק והעבר'))) return;
     const fb = S.cats.find(x => x.id !== id).id;
     S.tasks.forEach(t => { if (t.cat === id) t.cat = fb; });
+    S.inbox.forEach(x => { if (x.cat === id) x.cat = fb; });
     S.cats = S.cats.filter(x => x.id !== id); save(); drawCats(); render();
   });
-  cats.addEventListener('change', () => render());
+  cats.addEventListener('change', e => {
+    if (e.target.type === 'text' && !e.target.value.trim()) {                  // שם ריק לא נשמר
+      const c = S.cats.find(x => x.id === e.target.closest('.crow').dataset.id);
+      if (c) { c.name = 'קטגוריה'; e.target.value = c.name; save(); }
+    }
+    render();
+  });
   $('#na', sheet).onclick = () => {
-    const n = $('#nn', sheet).value.trim(); if (!n) return $('#nn', sheet).focus();
+    const n = $('#ncn', sheet).value.trim(); if (!n) return $('#ncn', sheet).focus();
     S.cats.push({ id: uid(), name: n, color: $('#nc', sheet).value }); save();
-    $('#nn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
+    $('#ncn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
   };
   $('#ex', sheet).onclick = exportBackup;
   $('#sm', sheet).onclick = () => { close(); setTimeout(openSummary, 220); };
@@ -1269,8 +1326,10 @@ function openSettings() {
   $('#rd', sheet).onchange = e => { S.remindDefault = e.target.value === 'n' ? 'n' : +e.target.value; save(); };
   $('#im', sheet).onclick = () => $('#file', sheet).click();
   $('#file', sheet).onchange = async e => {
+    const file = e.target.files[0]; e.target.value = '';                      // כדי שאפשר יהיה לבחור שוב את אותו קובץ
     try {
-      const j = JSON.parse(await e.target.files[0].text());
+      if (!file || file.size > 5e6) throw 0;
+      const j = JSON.parse(await file.text());
       if (!j || !Array.isArray(j.tasks)) throw 0;
       const { state, dropped } = clean(j);
       if (!(await ask(`הייבוא יחליף את כל הנתונים הקיימים בגיבוי של ${state.tasks.length} משימות${dropped ? ` (${dropped} פגומות ידולגו)` : ''}.`, 'ייבא'))) return;
@@ -1421,10 +1480,11 @@ function parseVoice(raw, ctx) {
   let s = null, e = null;
   if (resolved.length >= 2) { s = resolved[0].min; e = resolved[1].min; }
   else if (resolved.length === 1) { if (resolved[0].prefix.startsWith('עד')) e = resolved[0].min; else s = resolved[0].min; }
+  if (s != null && s >= 1440) s %= 1440;                    // "24:00" כהתחלה = חצות
   if (s != null && e != null && e <= s) { if (!resolved[1].part && e + 720 > s && e + 720 < 1440) e += 720; }      // "משמונה עד שתיים" → 14:00
   if (s == null && e != null) s = Math.max(e - (dur || 60), 0);
   if (s != null && e == null) e = Math.min(s + (dur || 60), 1440);
-  if (s != null && e === s) e = Math.min(s + 60, 1440);
+  if (s != null && e != null && e % 1440 === s) e = Math.min(s + 60, 1440);     // שעת סיום זהה להתחלה (כולל 24:00 מול 00:00) לא חוקית
   if (s != null) { res.start = hhmm(s); res.end = hhmm(e); }
 
   /* תאריך סופי */
@@ -1547,7 +1607,7 @@ function openVoice() {
     try {
       errored = false; rec = new SR(); rec.lang = 'he-IL'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
       rec.onstart = () => { setRec(true); stat('מקשיבה… אמרו מה לתכנן'); };
-      rec.onresult = e => { let txt = ''; for (const r of e.results) txt += r[0].transcript + ' '; $s('#vtxt').value = txt.trim(); preview(); };
+      rec.onresult = e => { let txt = ''; for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript + ' '; $s('#vtxt').value = txt.trim(); preview(); };
       rec.onerror = e => { if (e.error === 'aborted') return; errored = true; stat(msgs[e.error] || 'לא הצלחתי להקליט. אפשר להקליד.', 'err'); };
       rec.onend = () => { setRec(false); if (errored) return; stat($s('#vtxt').value.trim() ? 'הבנתי. בדקו ולחצו "הוסף"' : 'לא שמעתי. לחצו על המיקרופון ונסו שוב'); };
       rec.start();
@@ -1558,16 +1618,16 @@ function openVoice() {
   let added = false;
   $s('#vadd').onclick = () => {
     if (!last || added) return; added = true;
-    const tk = voiceTask(last), snap = JSON.stringify(S.tasks);
+    const tk = voiceTask(last), ck = checkpoint();
     S.tasks.push({ id: uid(), done: {}, skip: [], ...tk });
-    S.lastCat = tk.cat; save(); close();
+    S.lastCat = tk.cat; ck.arm(); save(); close();
     const moved = tk.repeat.type === 'none' && !rangeKeys().includes(tk.date);
     if (moved) ui.date = tk.date;
     render({ scroll: moved });
     vib(8);
-    toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
+    toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { ck(); save(); render(); });
   };
-  $s('#vinbox').onclick = () => { if (!last || added) return; added = true; const tk = voiceTask(last), snap = JSON.stringify(S.inbox); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { S.inbox = JSON.parse(snap); save(); updateBadge(); }); };
+  $s('#vinbox').onclick = () => { if (!last || added) return; added = true; const tk = voiceTask(last), ck = checkpoint(['inbox']); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; ck.arm(); save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { ck(); save(); updateBadge(); }); };
   $s('#vedit').onclick = () => { if (!last) return; const tk = voiceTask(last); close(); setTimeout(() => openTask({ date: tk.date, start: tk.start, prefill: tk }), 220); };
   start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
 }
@@ -1654,7 +1714,7 @@ function openTray() {
     <div class="qa"><input id="qa" placeholder="משימה בלי שעה, למשל: להתקשר לרופא" maxlength="80" enterkeyhint="done" aria-label="משימה חדשה בלי שעה"><button type="button" class="btn pri" id="qab">הוסף</button></div>
     <div id="trayBody"></div>`);
   const body = $('#trayBody', sheet);
-  const undoable = (msg, fn) => { const snap = JSON.stringify({ t: S.tasks, i: S.inbox }); fn(); save(); draw(); render(); toast(msg, 'ביטול', () => { const o = JSON.parse(snap); S.tasks = o.t; S.inbox = o.i; save(); draw(); render(); }); };
+  const undoable = (msg, fn) => { const ck = checkpoint(['tasks', 'inbox']); fn(); ck.arm(); save(); draw(); render(); toast(msg, 'ביטול', () => { ck(); save(); draw(); render(); }); };
   const draw = () => {
     const miss = missedList();
     const row = (kind, id, title, catId, label, btns) => `<div class="trow" data-kind="${kind}" data-id="${id}" style="--c:${cat(catId).color}"><i></i><div class="tr-t"><b>${esc(title)}</b><small>${label}</small></div><div class="tr-a">${btns}</div></div>`;
@@ -1806,8 +1866,15 @@ function mergeRemote(raw) {
       const c = m.get(x.id);
       if (!c) { m.set(x.id, x); continue; }
       const [nw, od] = (x.u || 0) >= (c.u || 0) ? [x, c] : [c, x], r = { ...nw };
-      if (isTask) { r.done = { ...(od.done || {}), ...(nw.done || {}) }; r.skip = [...new Set([...(od.skip || []), ...(nw.skip || [])])]; }
-      m.set(x.id, r);
+      if (isTask) {
+        const mx = (p = {}, q = {}) => { const o = { ...p }; for (const [k, v] of Object.entries(q)) o[k] = Math.max(o[k] || 0, v); return o; };
+        r.done = mx(od.done, nw.done); const un = mx(od.undone, nw.undone);
+        for (const k of Object.keys(un)) { if (r.done[k] && un[k] > r.done[k]) delete r.done[k]; if (r.done[k]) delete un[k]; }   // ביטול סימון מאוחר יותר מנצח; סימון מאוחר יותר מבטל את הביטול
+        if (Object.keys(un).length) r.undone = un; else delete r.undone;
+        r.skip = [...new Set([...(od.skip || []), ...(nw.skip || [])])];
+      }
+      for (const k of Object.keys(c)) if (!(k in r)) delete c[k];      // מעדכנים את האובייקט המקומי במקום (חלון עריכה או גרירה פתוחים מחזיקים אותו)
+      Object.assign(c, r);
     }
     return [...m.values()].filter(x => !(tomb[x.id] > (x.u || 0)));
   };
@@ -1830,8 +1897,10 @@ async function doSync() {
   try {
     for (let attempt = 0; attempt < 4; attempt++) {
       const r = await cloud('agenda_pull', { p_key: sync.key });
+      if (!r.data && sync.base > 0) throw new Error('gone');     // נמחק מהענן (במכשיר אחר): לא יוצרים מחדש בלי שביקשו
       if (r.data && r.version !== sync.base) {                   // יש חדש בשרת: ממזגים
-        mergeRemote(r.data); persistLocal(); snapshotShadow(); render();
+        mergeRemote(r.data); persistLocal(); snapshotShadow();
+        if (!(drag && drag.active)) render();                    // באמצע גרירה לא מציירים מחדש; הגרירה מציירת בסיומה
       }
       const mine = payload();
       if (r.version > 0 && r.data && canon(mine) === canon(r.data)) { sync.base = r.version; break; }   // זהים, אין מה לשלוח
@@ -1843,6 +1912,7 @@ async function doSync() {
     queueReminders(); refreshPush();
   } catch (e) {
     const m = String(e.message || e);
+    if (m === 'gone') { stopSync(); toast('הנתונים נמחקו מהענן, אז הסנכרון במכשיר הזה הופסק. המשימות נשארו כאן.'); return; }
     setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? 'ננסה שוב בעוד רגע' : 'שגיאת סנכרון'));
     if (m !== 'offline' && m !== 'bad_key' && m !== 'full') queueSync(m === 'busy' ? 600000 : 30000);
   } finally {
@@ -1866,7 +1936,7 @@ async function joinSync(raw) {
   sync.key = key; sync.base = 0; saveSync();
   await doSync();
 }
-function stopSync() { sync.key = null; sync.base = 0; sync.last = 0; saveSync(); clearTimeout(syncTimer); setStatus('off'); }
+function stopSync() { sync.key = null; sync.base = 0; sync.last = 0; saveSync(); clearTimeout(syncTimer); pushRefreshed = false; lastRem = ''; setStatus('off'); }
 async function deleteCloud() { const k = sync.key; await cloud('agenda_delete_account', { p_key: k }); stopSync(); }
 
 addEventListener('online', () => queueSync(300));
@@ -1957,6 +2027,7 @@ async function refreshPush() {                                    // פעם בכ
     if (sub) await cloud('agenda_save_push', { p_key: sync.key, p_sub: sub.toJSON() });
   } catch (e) {}
 }
+const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(() => no(new Error('no_sw')), 8000))]);
 const sameKey = (sub, bytes) => { try { const k = new Uint8Array(sub.options.applicationServerKey); return k.length === bytes.length && k.every((v, i) => v === bytes[i]); } catch (e) { return true; } };
 
 async function enablePush() {
@@ -1967,7 +2038,7 @@ async function enablePush() {
   if (perm !== 'granted') throw new Error('denied');
   const pub = await cloud('agenda_vapid', {});
   if (!pub) throw new Error('no_vapid');
-  const bytes = b64uToBytes(pub), reg = await navigator.serviceWorker.ready;
+  const bytes = b64uToBytes(pub), reg = await swReady();
   let sub = await reg.pushManager.getSubscription();
   if (sub && !sameKey(sub, bytes)) { await sub.unsubscribe(); sub = null; }
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
@@ -1978,7 +2049,7 @@ async function enablePush() {
 async function disablePush() {
   setPushOn(false);
   try {
-    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    const reg = await swReady(), sub = await reg.pushManager.getSubscription();
     if (sub) { const ep = sub.endpoint; await sub.unsubscribe(); if (sync.key) await cloud('agenda_drop_push', { p_key: sync.key, p_endpoint: ep }).catch(() => {}); }
   } catch (e) {}
 }
@@ -1998,7 +2069,7 @@ function drawPush(sheet) {
   box.innerHTML = `<p class="sm-note">${on ? 'פעיל במכשיר הזה. כל משימה תתריע לפי התזכורת שלה (ברירת מחדל: ' + esc(remindLabel(S.remindDefault)) + '), גם כשהאפליקציה סגורה.' : 'תקבלו התראה לפני כל משימה, גם כשהאפליקציה סגורה.'}</p>
     <div class="list">${on ? '<button class="btn" id="pTest">שלח התראת בדיקה</button><button class="btn" id="pOff">כבה התראות במכשיר הזה</button>' : '<button class="btn pri" id="pOn">הפעל התראות</button>'}</div><div class="vstat err" id="pErr"></div>`;
   const err = m => { $('#pErr', box).textContent = m; };
-  const MSG = { need_sync: 'צריך להפעיל סנכרון קודם', unsupported: 'הדפדפן לא תומך', ios_install: 'צריך להוסיף למסך הבית קודם', denied: 'לא אישרתם התראות', no_vapid: 'השירות עוד לא מוכן, נסו שוב בעוד דקה', offline: 'אין חיבור לשרת' };
+  const MSG = { need_sync: 'צריך להפעיל סנכרון קודם', unsupported: 'הדפדפן לא תומך', ios_install: 'צריך להוסיף למסך הבית קודם', denied: 'לא אישרתם התראות', no_vapid: 'השירות עוד לא מוכן, נסו שוב בעוד דקה', no_sw: 'האפליקציה עוד לא מוכנה להתראות. רעננו ונסו שוב', offline: 'אין חיבור לשרת' };
   const on_ = $('#pOn', box); if (on_) on_.onclick = async () => { on_.disabled = true; try { await enablePush(); toast('ההתראות פעילות'); } catch (e) { err(MSG[e.message] || 'לא הצלחנו להפעיל התראות'); } drawPush(sheet); };
   const t_ = $('#pTest', box); if (t_) t_.onclick = async () => { await sendTestPush(); toast('תגיע התראה בעוד כדקה. אפשר לסגור את האפליקציה'); };
   const o_ = $('#pOff', box); if (o_) o_.onclick = async () => { await disablePush(); toast('ההתראות כובו במכשיר הזה'); drawPush(sheet); };
@@ -2101,8 +2172,28 @@ try {                                                     // טיפ חד-פעמ�
     setTimeout(() => toast('טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו'), 1200);
   }
 } catch (e) {}
+/* אותה אפליקציה פתוחה בלשונית נוספת (או חלון מותקן ולשונית): ממזגים, כדי שאחת לא תדרוס את השנייה */
+const normS = o => canon({ ...o, view: 0, tasks: [...(o.tasks || [])].sort((a, b) => a.id < b.id ? -1 : 1), inbox: [...(o.inbox || [])].sort((a, b) => a.id < b.id ? -1 : 1) });
+addEventListener('storage', e => {
+  if (e.storageArea !== localStorage || e.key !== STORE || !e.newValue) return;
+  try {
+    const other = JSON.parse(e.newValue);
+    mergeRemote(other); snapshotShadow();
+    if (normS(S) !== normS(other)) persistLocal();                      // רק אם יש מה להוסיף, כדי שלא יהיה פינג־פונג
+    if (!(drag && drag.active)) render();
+  } catch (err) {}
+});
 let bootDay = todayKey();
+function rollDay() {                                      // אחרי חצות: "היום" עובר ליום החדש גם אם האפליקציה נשארה פתוחה
+  const tk = todayKey(); if (tk === bootDay) return false;
+  if (document.querySelector('.ov') || (drag && drag.active)) return false;      // באמצע חלון או גרירה: ננסה שוב בעוד רגע
+  const wasToday = ui.date === bootDay; bootDay = tk;
+  if (wasToday) ui.date = tk;
+  render({ scroll: wasToday });
+  return true;
+}
 function tickNow() {
+  if (rollDay()) return;
   updateNowNext(); updateBadge();
   const n = $('[data-now]'); if (!n) return;
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), ppm = S.view === 'day' ? PPM() : WPPM();
@@ -2110,11 +2201,7 @@ function tickNow() {
   const sp = $('span', n); if (sp) sp.textContent = fmt(m);
 }
 document.addEventListener('visibilitychange', () => {   // חזרה לאפליקציה: בלי לצייר מחדש ובלי לקפוץ. רק אחרי חצות עוברים ליום החדש
-  if (document.visibilityState !== 'visible') return;
-  if (todayKey() !== bootDay) {
-    const wasToday = ui.date === bootDay; bootDay = todayKey();
-    if (wasToday) { ui.date = bootDay; if (!document.querySelector('.ov')) render({ scroll: true }); }
-  } else tickNow();
+  if (document.visibilityState === 'visible') tickNow();
 });
 /*SW*/ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
