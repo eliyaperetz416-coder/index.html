@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src https://szhdasydkoqtbmbrmzpi.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<script>
+(function () {
+  var L = 'he';
+  try {
+    var v = localStorage.getItem('agenda.lang');
+    if (v === 'he' || v === 'en') L = v;
+    else {
+      if (!localStorage.getItem('agenda.v1') && !localStorage.getItem('agenda.onboarded')) {       // משתמש חדש: לפי שפת הדפדפן. קיים: נשאר בעברית
+        var n = String((navigator.languages && navigator.languages[0]) || navigator.language || 'he').toLowerCase();
+        L = (n.indexOf('he') === 0 || n.indexOf('iw') === 0) ? 'he' : 'en';
+      }
+      localStorage.setItem('agenda.lang', L);
+    }
+  } catch (e) {}
+  window.__LANG = L; document.documentElement.lang = L; document.documentElement.dir = L === 'he' ? 'rtl' : 'ltr';
+})();
+</script>
 <meta name="theme-color" content="#0a0a0d">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
@@ -182,7 +199,7 @@ main.slide-r{animation:slR .22s var(--ease)}
 @keyframes gh{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 .now{position:absolute;inset-inline:calc(var(--gut) - 6px) 0;height:0;border-top:2px solid var(--danger);z-index:5;pointer-events:none}
 .now::before{content:"";position:absolute;inset-inline-start:-1px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
-.now span{position:absolute;right:8px;top:-21px;font-size:11px;font-weight:700;color:var(--danger);background:var(--bg);padding:0 5px;border-radius:6px}
+.now span{position:absolute;inset-inline-start:8px;top:-21px;font-size:11px;font-weight:700;color:var(--danger);background:var(--bg);padding:0 5px;border-radius:6px}
 .week .now{inset-inline:0 0}
 
 /* ───────── תצוגה שבועית ───────── */
@@ -409,6 +426,9 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .toast button{color:#9db4ff;font-weight:700;padding:4px 2px}
 
 :focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+html[dir=ltr] .seg[data-v=week]::before,html[dir=ltr] .dock .seg[data-v=week]::before{transform:translateX(100%)}
+html[dir=ltr] .swrow input:checked+.sw::after{transform:translateX(16px)}
+html[dir=ltr] #prev svg,html[dir=ltr] #next svg,html[dir=ltr] .sm-nav .ib svg{transform:scaleX(-1)}
 .sheet:focus{outline:none}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -452,6 +472,347 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 
 <script>
 'use strict';
+/* ═════════ שפה (עברית / אנגלית) ═════════
+   המפתח הוא הטקסט בעברית, ולכן בעברית הכול נשאר כמו שהיה. באנגלית מחפשים תרגום במילון, ואם אין, מוצג הטקסט בעברית (בדיקה מוצאת כאלה).
+   החלפת שפה טוענת את הדף מחדש, כך שכל הטקסטים נבנים מחדש בשפה הנכונה. {0} {1} הם פרמטרים. */
+const LANGKEY = 'agenda.lang';
+const LANG = window.__LANG === 'en' ? 'en' : 'he', RTL = LANG === 'he';
+const I18N_EN = {
+  "סדר יום": "Day Planner",
+  "מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.": "A daily planner: timeline, week view, recurring tasks, reminders and sync between devices.",
+  "ראשון": "Sunday",
+  "שני": "Monday",
+  "שלישי": "Tuesday",
+  "רביעי": "Wednesday",
+  "חמישי": "Thursday",
+  "שישי": "Friday",
+  "שבת": "Saturday",
+  "ינואר": "Jan",
+  "פברואר": "Feb",
+  "מרץ": "Mar",
+  "אפריל": "Apr",
+  "מאי": "May",
+  "יוני": "Jun",
+  "יולי": "Jul",
+  "אוגוסט": "Aug",
+  "ספטמבר": "Sep",
+  "אוקטובר": "Oct",
+  "נובמבר": "Nov",
+  "דצמבר": "Dec",
+  "׳": "",
+  "היום": "Today",
+  "מחר": "Tomorrow",
+  "אתמול": "Yesterday",
+  "השבוע": "This week",
+  "שבוע": "Week",
+  "יום": "Day",
+  "יום {0}": "{0}",
+  "יום {0} · ": "{0} · ",
+  "ימים {0}": "Days {0}",
+  "{0}–{1} ב{2} {3}": "{2} {0}–{1}, {3}",
+  "{0} ב{1} – {2} ב{3}": "{1} {0} – {3} {2}",
+  "{0}{1} ב{2}{3}": "{0}{2} {1}{3}",
+  " {0}": ", {0}",
+  "הקודם": "Previous",
+  "הבא": "Next",
+  "משימות פתוחות": "Open tasks",
+  "משימות פתוחות: {0}": "Open tasks: {0}",
+  "הגדרות וקטגוריות": "Settings and categories",
+  "עכשיו והבא": "Now and next",
+  "תצוגה": "View",
+  "הוספה בדיבור": "Add by voice",
+  "משימה חדשה": "New task",
+  "עכשיו": "Now",
+  "בעוד {0}": "in {0}",
+  "עוד {0}": "{0} left",
+  "{0} לא סומנו": "{0} not marked",
+  "היום פנוי": "Nothing planned today",
+  "<b>היום פנוי</b>": "<b>Nothing planned today</b>",
+  "<b>סיימתם להיום</b>": "<b>Done for today</b>",
+  "{0}/{1} בוצעו": "{0}/{1} done",
+  "✓ הכול בוצע": "✓ All done",
+  "{0} משימות · {1}{2} שע׳ מתוכננות": "{0} tasks · {1}{2} h planned",
+  "אין משימות מתוכננות": "Nothing planned",
+  "יום עמוס": "Busy day",
+  "יום עמוס אחד": "1 busy day",
+  "{0} ימים עמוסים": "{0} busy days",
+  " · <b>סיכום ›</b>": " · <b>Summary ›</b>",
+  "{0} דק׳": "{0} min",
+  "{0}:{1} שע׳": "{0}:{1} h",
+  "{0}{1} שע׳": "{0}{1} h",
+  "אין משימות ביום הזה": "No tasks on this day",
+  "לחצו על + או החזיקו לחיצה על שעה בקו הזמן.": "Tap + or press and hold a time on the timeline.",
+  "הוסף משימה": "Add task",
+  "<button class=\"btn\" data-act=\"examples\">טען דוגמאות</button>": "<button class=\"btn\" data-act=\"examples\">Load examples</button>",
+  " · המשך": " · continued",
+  "{0} עד {1}": "{0} to {1}",
+  "עריכה": "Edit",
+  "סמן כבוצע": "Mark as done",
+  "עריכת משימה": "Edit task",
+  "ביטול": "Cancel",
+  "שמור": "Save",
+  "הוסף": "Add",
+  "מה מתוכנן?": "What's planned?",
+  "בוצע · לחצו לביטול": "Done · tap to undo",
+  "קטגוריה": "Category",
+  "שגרה ברקע": "Background routine",
+  "שינה, ארוחות. לא נספרת בהתקדמות": "Sleep, meals. Not counted in progress",
+  "התחלה": "Start",
+  "סיום": "Done",
+  "סיום||end": "End",
+  "נגמר למחרת ב־{0}": "Ends the next day at {0}",
+  "30 דק׳": "30 min",
+  "45 דק׳": "45 min",
+  "שעה": "1 hour",
+  "שעה וחצי": "1.5 hours",
+  "שעתיים": "2 hours",
+  "תאריך": "Date",
+  "מתחיל בתאריך": "Starts on",
+  "חזרה": "Repeat",
+  "חד־פעמית": "Once",
+  "כל יום": "Every day",
+  "ימים בשבוע": "Days of the week",
+  "תזכורת ביומן של הטלפון": "Phone calendar reminder",
+  "ברירת מחדל ({0})": "Default ({0})",
+  "בלי תזכורת": "No reminder",
+  "הערות": "Notes",
+  "אופציונלי": "Optional",
+  "הוסף ליומן (קובץ)": "Add to calendar (file)",
+  "מחק רק את {0}": "Delete only {0}",
+  "<button type=\"button\" class=\"btn dng\" data-del=\"fwd\">מחק מהיום הזה והלאה</button>": "<button type=\"button\" class=\"btn dng\" data-del=\"fwd\">Delete from this day on</button>",
+  "מחק את כל הסדרה": "Delete the whole series",
+  "מחק משימה": "Delete task",
+  "בחרו שעת התחלה ושעת סיום": "Choose a start and end time",
+  "שעת הסיום זהה לשעת ההתחלה": "The end time equals the start time",
+  "בחרו תאריך": "Choose a date",
+  "התאריך לא תקין. בדקו את השנה": "Invalid date. Check the year",
+  "בחרו לפחות יום אחד בשבוע": "Choose at least one day of the week",
+  "המשימה הזו חוזרת. מה לשנות?": "This task repeats. What to change?",
+  "רק את היום הזה": "Only this day",
+  "מהיום הזה והלאה": "From this day on",
+  "כל הסדרה": "The whole series",
+  "לשנות ל־{0}–{1}. מה לשנות?": "Change to {0}–{1}. What to change?",
+  "המשימה נמחקה במכשיר אחר": "The task was deleted on another device",
+  "נשמר": "Saved",
+  "נוסף ליומן": "Added",
+  "נמחק": "Deleted",
+  "עודכן · {0}–{1}": "Updated · {0}–{1}",
+  "בזמן ההתחלה": "At start time",
+  "5 דקות לפני": "5 minutes before",
+  "10 דקות לפני": "10 minutes before",
+  "15 דקות לפני": "15 minutes before",
+  "30 דקות לפני": "30 minutes before",
+  "שעה לפני": "1 hour before",
+  "שעתיים לפני": "2 hours before",
+  "יום לפני": "1 day before",
+  "{0} דקות לפני": "{0} minutes before",
+  "מתחיל עכשיו": "Starting now",
+  "בעוד {0} דקות": "in {0} minutes",
+  "בעוד שעה": "in 1 hour",
+  "בעוד שעתיים": "in 2 hours",
+  "בעוד יום": "in 1 day",
+  "בדיקת התראה": "Test notification",
+  "ההתראות עובדות": "Notifications work",
+  "הגדרות": "Settings",
+  "קטגוריות": "Categories",
+  "צבע": "Color",
+  "שם קטגוריה": "Category name",
+  "שם קטגוריה חדשה": "New category name",
+  "קטגוריה חדשה…": "New category…",
+  "מחק קטגוריה": "Delete category",
+  "התאם את שמות קטגוריות ברירת המחדל לשפה": "Use English names for the default categories",
+  "ל־\"{0}\" יש {1} משימות. הן יועברו לקטגוריה \"{2}\".": "\"{0}\" has {1} tasks. They will move to \"{2}\".",
+  "מחק והעבר": "Delete and move",
+  "תזכורות": "Reminders",
+  "תזכורת ברירת מחדל": "Default reminder",
+  "התזכורות נוצרות ביומן של הטלפון: לוחצים \"ייצוא ליומן\", ובוחרים להוסיף ליומן.": "Reminders are created in your phone calendar: tap \"Export to calendar\" and choose to add it.",
+  "<div class=\"sec\">סנכרון בין מכשירים</div><div id=\"syncBox\"></div><div class=\"sec\">התראות בטלפון</div><div id=\"pushBox\"></div>": "<div class=\"sec\">Sync between devices</div><div id=\"syncBox\"></div><div class=\"sec\">Phone notifications</div><div id=\"pushBox\"></div>",
+  "פרטיות ונתונים": "Privacy and data",
+  "במכשיר:": "On the device:",
+  "כל המשימות נשמרות בדפדפן של המכשיר הזה. בלי סנכרון, שום דבר לא יוצא ממנו.": "All tasks are stored in this device’s browser. Without sync, nothing leaves it.",
+  "סנכרון:": "Sync:",
+  "אם מפעילים אותו, המשימות, הקטגוריות, התיבה וההגדרות נשמרות בענן של Supabase (פרנקפורט), מזוהות לפי גיבוב של מפתח הסנכרון. מי שמחזיק במפתח רואה אותן. אפשר למחוק הכול מהענן בלחיצה.": "If you turn it on, tasks, categories, the inbox and settings are stored in the Supabase cloud (Frankfurt), identified by a hash of the sync key. Whoever holds the key can see them. You can delete everything from the cloud in one tap.",
+  "התראות:": "Notifications:",
+  "כותרות המשימות וזמני התזכורת נשמרים בענן כדי שיישלחו בזמן, והשליחה עוברת דרך שירות ההתראות של אפל, גוגל או מוזילה.": "Task titles and reminder times are stored in the cloud so they can be sent on time, and delivery goes through Apple’s, Google’s or Mozilla’s notification service.",
+  "הקלטה:": "Recording:",
+  "נעשית בדפדפן או במערכת ההפעלה, ויכולה לעבור לגוגל או לאפל. האפליקציה לא שומרת הקלטות.": "Is done by the browser or the operating system and may pass through Google or Apple. The app does not keep recordings.",
+  "מה אין:": "What there isn’t:",
+  "אין פרסומות, אין אנליטיקה, אין עוגיות ואין סקריפטים של צד שלישי.": "No ads, no analytics, no cookies and no third-party scripts.",
+  "נתונים": "Data",
+  "סיכום שבועי": "Weekly summary",
+  "ייצוא משימות עתידיות ליומן": "Export upcoming tasks to calendar",
+  "ייצוא גיבוי": "Export backup",
+  "ייבוא מגיבוי": "Import from backup",
+  "הוסף משימות לדוגמה": "Add example tasks",
+  "מחק את כל המשימות": "Delete all tasks",
+  "הנתונים נשמרים במכשיר הזה בלבד. מומלץ לייצא גיבוי מדי פעם.": "Data is stored on this device only. Export a backup now and then.",
+  "הקובץ לא תקין": "Invalid file",
+  "הייבוא יחליף את כל הנתונים הקיימים בגיבוי של {0} משימות{1}.": "Importing will replace all existing data with a backup of {0} tasks{1}.",
+  " ({0} פגומות ידולגו)": " ({0} damaged ones will be skipped)",
+  "ייבא": "Import",
+  "נטענו {0} משימות, {1} דולגו": "Loaded {0} tasks, {1} skipped",
+  "הגיבוי נטען": "Backup loaded",
+  "למחוק את כל המשימות? אי אפשר לבטל.": "Delete all tasks? This cannot be undone.",
+  "מחק הכול": "Delete all",
+  "כל המשימות נמחקו": "All tasks deleted",
+  "לא ניתן לשמור בדפדפן הזה — הנתונים לא יישמרו": "Cannot save in this browser — data will not be kept",
+  "האירוע מוכן": "The event is ready",
+  "הקובץ מוכן": "The file is ready",
+  "{0} · פתחו את הקובץ כדי להוסיף ליומן": "{0} · open the file to add it to your calendar",
+  "אין משימות עתידיות לייצוא": "No upcoming tasks to export",
+  "הגיבוי ירד למכשיר": "The backup was downloaded",
+  "הדוגמאות כבר קיימות": "The examples are already there",
+  "נוספו משימות לדוגמה — אפשר לערוך או למחוק": "Example tasks added — you can edit or delete them",
+  "X-WR-CALNAME:סדר יום": "X-WR-CALNAME:Day Planner",
+  "שומר את המשימות בענן, כדי שיופיעו בכל מכשיר ולא יאבדו. אין חשבון וסיסמה: מפתח אחד מזהה אתכם, ומי שיש לו אותו יכול לראות את המשימות.": "Keeps your tasks in the cloud so they show up on every device and are not lost. No account or password: one key identifies you, and whoever has it can see the tasks.",
+  "הפעל סנכרון (מפתח חדש)": "Turn on sync (new key)",
+  "יש לי מפתח ממכשיר אחר": "I have a key from another device",
+  "התחבר": "Connect",
+  "מפתח סנכרון": "Sync key",
+  "מפתח הסנכרון שלך": "Your sync key",
+  "מסונכרן · {0}": "Synced · {0}",
+  "מסנכרן…": "Syncing…",
+  "ממתין לסנכרון": "Waiting to sync",
+  "אין חיבור. הכול נשמר במכשיר ויסונכרן כשהחיבור יחזור": "Offline. Everything is saved on the device and will sync when the connection returns",
+  "שגיאת סנכרון": "Sync error",
+  "הרגע": "just now",
+  "לפני {0} דק׳": "{0} min ago",
+  "לפני {0} שע׳": "{0} h ago",
+  "הצג": "Show",
+  "הסתר": "Hide",
+  "העתק": "Copy",
+  "המפתח הועתק": "Key copied",
+  "סמנו והעתיקו ידנית": "Select and copy manually",
+  "את המפתח הזה מזינים במכשיר חדש כדי לחבר אותו. שמרו אותו במקום בטוח. אם הוא אובד, אי אפשר לחבר מכשיר נוסף.": "Enter this key on a new device to connect it. Keep it somewhere safe. If it is lost, no other device can be connected.",
+  "סנכרן עכשיו": "Sync now",
+  "הפסק סנכרון במכשיר הזה": "Stop syncing on this device",
+  "מחק את הנתונים שלי מהענן": "Delete my data from the cloud",
+  "המכשיר הזה יפסיק להסתנכרן. הנתונים שבו והנתונים בענן נשארים.": "This device will stop syncing. Its data and the cloud data stay.",
+  "הפסק": "Stop",
+  "כל הנתונים שלכם יימחקו מהענן, ובכל המכשירים המחוברים הסנכרון יפסיק לעבוד. הנתונים שבמכשיר הזה נשארים.": "All your data will be deleted from the cloud, and sync will stop working on every connected device. The data on this device stays.",
+  "מחק מהענן": "Delete from the cloud",
+  "נמחק מהענן": "Deleted from the cloud",
+  "המחיקה נכשלה, בדקו חיבור": "Deletion failed, check your connection",
+  "הסנכרון פעיל. שמרו את המפתח במקום בטוח": "Sync is on. Keep the key somewhere safe",
+  "מחובר. המשימות מהמכשיר השני נטענו": "Connected. Tasks from the other device were loaded",
+  "המפתח לא נמצא. בדקו שהעתקתם אותו נכון": "Key not found. Check that you copied it correctly",
+  "המפתח לא נראה תקין (26 תווים)": "The key does not look valid (26 characters)",
+  "אין חיבור לשרת": "No connection to the server",
+  "לא הצלחנו להתחבר": "We could not connect",
+  "אין חיבור": "Offline",
+  "המפתח לא תקין": "Invalid key",
+  "השירות מלא כרגע": "The service is full right now",
+  "השירות עמוס כרגע, נסו שוב בעוד שעה": "The service is busy right now, try again in an hour",
+  "הנתונים גדולים מדי": "The data is too large",
+  "שגיאה בנתונים": "Data error",
+  "ננסה שוב בעוד רגע": "We will try again in a moment",
+  "הנתונים נמחקו מהענן, אז הסנכרון במכשיר הזה הופסק. המשימות נשארו כאן.": "The data was deleted from the cloud, so sync on this device was stopped. Your tasks stay here.",
+  "התראות דורשות סנכרון, כדי שהשרת ידע מה לתזכר. הפעילו קודם את הסנכרון.": "Notifications need sync so the server knows what to remind you about. Turn on sync first.",
+  "הדפדפן הזה לא תומך בהתראות. אפשר להשתמש בייצוא ליומן של הטלפון.": "This browser does not support notifications. You can use the export to your phone calendar.",
+  "באייפון ההתראות עובדות רק אחרי שמוסיפים את האפליקציה למסך הבית (שיתוף ← הוסף למסך הבית) ופותחים אותה משם.": "On iPhone, notifications only work after you add the app to the Home Screen (Share → Add to Home Screen) and open it from there.",
+  "ההתראות חסומות בהגדרות המכשיר. אפשר לאפשר אותן שם ולחזור לכאן.": "Notifications are blocked in the device settings. You can allow them there and come back.",
+  "פעיל במכשיר הזה. כל משימה תתריע לפי התזכורת שלה (ברירת מחדל: ": "Active on this device. Each task alerts according to its reminder (default: ",
+  "), גם כשהאפליקציה סגורה.": "), even when the app is closed.",
+  "תקבלו התראה לפני כל משימה, גם כשהאפליקציה סגורה.": "You will get a notification before each task, even when the app is closed.",
+  "<button class=\"btn pri\" id=\"pOn\">הפעל התראות</button>": "<button class=\"btn pri\" id=\"pOn\">Turn on notifications</button>",
+  "<button class=\"btn\" id=\"pTest\">שלח התראת בדיקה</button><button class=\"btn\" id=\"pOff\">כבה התראות במכשיר הזה</button>": "<button class=\"btn\" id=\"pTest\">Send a test notification</button><button class=\"btn\" id=\"pOff\">Turn off notifications on this device</button>",
+  "צריך להפעיל סנכרון קודם": "Turn on sync first",
+  "הדפדפן לא תומך": "The browser does not support it",
+  "צריך להוסיף למסך הבית קודם": "Add the app to the Home Screen first",
+  "לא אישרתם התראות": "You did not allow notifications",
+  "השירות עוד לא מוכן, נסו שוב בעוד דקה": "The service is not ready yet, try again in a minute",
+  "האפליקציה עוד לא מוכנה להתראות. רעננו ונסו שוב": "The app is not ready for notifications yet. Refresh and try again",
+  "לא הצלחנו להפעיל התראות": "We could not turn on notifications",
+  "ההתראות פעילות": "Notifications are on",
+  "ההתראות כובו במכשיר הזה": "Notifications were turned off on this device",
+  "תגיע התראה בעוד כדקה. אפשר לסגור את האפליקציה": "A notification will arrive in about a minute. You can close the app",
+  "או כתבו כאן. למשל: אימון מחר בחמש וחצי לשעה וחצי": "Or type here. For example: gym tomorrow at 5:30 for an hour and a half",
+  "התחל להקליט": "Start recording",
+  "עצור הקלטה": "Stop recording",
+  "מה לתכנן": "What to plan",
+  "הזיהוי נעשה על ידי הדפדפן או מערכת ההפעלה של הטלפון. בטלפון אפשר גם ללחוץ על המיקרופון במקלדת.": "Recognition is done by the browser or your phone’s operating system. On a phone you can also tap the microphone on the keyboard.",
+  "שמור בתיבה (בלי שעה)": "Save to inbox (no time)",
+  "מקשיבה… אמרו מה לתכנן": "Listening… say what to plan",
+  "הבנתי. בדקו ולחצו \"הוסף\"": "Got it. Check and tap \"Add\"",
+  "לא שמעתי. לחצו על המיקרופון ונסו שוב": "I did not hear anything. Tap the microphone and try again",
+  "ההקלטה לא נתמכת בדפדפן הזה. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.": "Recording is not supported in this browser. You can type, or tap the microphone on the keyboard.",
+  "לא ניתן להפעיל הקלטה כאן. אפשר להקליד.": "Recording cannot start here. You can type.",
+  "אין הרשאה למיקרופון. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.": "No microphone permission. You can type, or tap the microphone on the keyboard.",
+  "ההקלטה לא זמינה כאן. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.": "Recording is not available here. You can type, or tap the microphone on the keyboard.",
+  "לא שמעתי כלום. לחצו על המיקרופון ונסו שוב.": "I did not hear anything. Tap the microphone and try again.",
+  "לא נמצא מיקרופון.": "No microphone found.",
+  "אין חיבור לשירות הזיהוי. אפשר להקליד.": "No connection to the recognition service. You can type.",
+  "עברית לא נתמכת בזיהוי כאן. אפשר להקליד.": "This language is not supported for recognition here. You can type.",
+  "לא הצלחתי להקליט. אפשר להקליד.": "I could not record. You can type.",
+  "מתי": "When",
+  "מתחילה ב": "Starts on",
+  "שעה||time": "Time",
+  " (לא נאמרה שעה)": " (no time given)",
+  "<div class=\"pv-r\"><span>סוג</span><b>שגרה ברקע, לא נספרת</b></div>": "<div class=\"pv-r\"><span>Type</span><b>Background routine, not counted</b></div>",
+  "לא נאמר בוקר או ערב, אז הבנתי {0}. אפשר לתקן בעריכה.": "You did not say morning or evening, so I understood {0}. You can fix it in Edit.",
+  "נוסף · {0} · {1}–{2}": "Added · {0} · {1}–{2}",
+  "נשמר בתיבה": "Saved to inbox",
+  "לא בוצעו": "Not done",
+  "בלי שעה": "No time",
+  "משימה בלי שעה, למשל: להתקשר לרופא": "A task with no time, e.g.: call the doctor",
+  "משימה חדשה בלי שעה": "New task with no time",
+  "<button class=\"mini\" data-a=\"today\">להיום</button><button class=\"mini\" data-a=\"done\">בוצע</button><button class=\"mini dng\" data-a=\"drop\">ויתור</button>": "<button class=\"mini\" data-a=\"today\">To today</button><button class=\"mini\" data-a=\"done\">Done</button><button class=\"mini dng\" data-a=\"drop\">Skip</button>",
+  "<button class=\"mini\" data-a=\"plan\">תזמן</button><button class=\"mini dng\" data-a=\"del\">מחק</button>": "<button class=\"mini\" data-a=\"plan\">Schedule</button><button class=\"mini dng\" data-a=\"del\">Delete</button>",
+  "<p class=\"empty\">אין משימות פתוחות. מה שלא תספיקו יופיע כאן.</p>": "<p class=\"empty\">No open tasks. What you do not get to will show up here.</p>",
+  "הועבר להיום": "Moved to today",
+  "סומן כבוצע": "Marked as done",
+  "בוטל": "Skipped",
+  "נמחק מהתיבה": "Deleted from the inbox",
+  "סגור": "Close",
+  "שבוע קודם": "Previous week",
+  "שבוע הבא": "Next week",
+  "מתוך {0} שהגיע זמנן בוצעו": "of {0} due were done",
+  "{0} אחוז בוצעו": "{0} percent done",
+  "{0} משימות בשבוע · {1} מתוכננות": "{0} tasks this week · {1} planned",
+  " · {0} עוד לפניכם": " · {0} still ahead",
+  "<p class=\"empty\">אין משימות בשבוע הזה.</p>": "<p class=\"empty\">No tasks this week.</p>",
+  "לפי קטגוריה": "By category",
+  "לפי יום": "By day",
+  "יום עם יותר מ־{0} שעות מתוכננות מסומן בכתום. כדאי להקל עליו.": "A day with more than {0} planned hours is marked orange. Consider lightening it.",
+  "רצפים": "Streaks",
+  "ברצף ללא החמצה": "in a row with no miss",
+  "<p class=\"vnote\" style=\"margin-top:14px\">שגרה (שינה, ארוחות) לא נכללת. משימה שעוד לא הגיע זמנה לא נחשבת החמצה.</p>": "<p class=\"vnote\" style=\"margin-top:14px\">Routines (sleep, meals) are not included. A task that is not due yet does not count as a miss.</p>",
+  "ללא קטגוריה": "No category",
+  "ברוכים הבאים ל״סדר יום״": "Welcome to Day Planner",
+  "הוספה:": "Adding:",
+  "נוגעים ב־+ או במיקרופון ואומרים, למשל: \"אימון מחר בחמש וחצי\".": "Tap + or the microphone and say, for example: \"gym tomorrow at 5:30\".",
+  "תזוזה:": "Moving:",
+  "לחיצה ארוכה על בלוק מרימה אותו, וגוררים לשעה אחרת או למשך אחר.": "Press and hold a block to lift it, then drag it to another time or length.",
+  "מה שלא הספקתם:": "What you did not get to:",
+  "מחכה לכם בתיבה למעלה, ואפשר להעביר אותו להיום.": "Waits for you in the inbox at the top, and you can move it to today.",
+  "בכל מכשיר:": "On every device:",
+  "בהגדרות מפעילים סנכרון ומקבלים גם התראות.": "Turn on sync in Settings and you get notifications too.",
+  "התחל עם שבוע לימודים לדוגמה": "Start with an example school week",
+  "התחל ריק": "Start empty",
+  "יש לי מפתח סנכרון ממכשיר אחר": "I have a sync key from another device",
+  "התבנית נטענה. אפשר לערוך או למחוק כל פריט": "The template was loaded. You can edit or delete any item",
+  "טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו": "Tip: press and hold a block to move it or change its length",
+  "הנתונים שמורים רק במכשיר הזה. כדאי לגבות או להפעיל סנכרון.": "Your data is stored only on this device. Consider backing up or turning on sync.",
+  "לא גיבית כבר {0} ימים. הנתונים שמורים רק במכשיר הזה.": "You have not backed up for {0} days. Your data is stored only on this device.",
+  "גבה": "Back up",
+  "בית ספר": "School",
+  "אימון": "Workout",
+  "התאוששות": "Recovery",
+  "אישי": "Personal",
+  "סינדי": "Cindy",
+  "שיעורי בית": "Homework",
+  "אימון חדר כושר": "Gym workout",
+  "זמן עם סינדי": "Time with Cindy",
+  "מתיחות התאוששות": "Recovery stretching",
+  "ארוחת ערב": "Dinner",
+  "שינה": "Sleep",
+  "אישור": "OK",
+  "׳ ": " ",
+};
+function tr(src, ...a) {
+  let s = LANG === 'en' && I18N_EN[src] !== undefined ? I18N_EN[src] : src.split('||')[0];     // 'מפתח||הקשר' נבדל במילון בלבד
+  return a.length ? s.replace(/\{(\d+)\}/g, (_, i) => a[+i]) : s;
+}
 /* ═════════ כלי עזר ═════════ */
 const $ = (s, r = document) => r.querySelector(s);
 const pad = n => String(n).padStart(2, '0');
@@ -463,20 +824,20 @@ const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; 
 const fmt = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const DL = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+const DAYS = [tr('ראשון'), tr('שני'), tr('שלישי'), tr('רביעי'), tr('חמישי'), tr('שישי'), tr('שבת')];
+const DL = LANG === 'en' ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const MONTHS = [tr('ינואר'), tr('פברואר'), tr('מרץ'), tr('אפריל'), tr('מאי'), tr('יוני'), tr('יולי'), tr('אוגוסט'), tr('ספטמבר'), tr('אוקטובר'), tr('נובמבר'), tr('דצמבר')];
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 
 /* ═════════ נתונים ═════════ */
 const STORE = 'agenda.v1';
 const DEFAULT_CATS = [
-  { id: 'school',   name: 'בית ספר',  color: '#5aa9ff' },
-  { id: 'gym',      name: 'אימון',    color: '#ff8a4c' },
-  { id: 'recovery', name: 'התאוששות', color: '#3ddc97' },
-  { id: 'personal', name: 'אישי',     color: '#b794f6' },
-  { id: 'cindy',    name: 'סינדי',    color: '#ff6b9d' }
+  { id: 'school',   name: tr('בית ספר'),  color: '#5aa9ff' },
+  { id: 'gym',      name: tr('אימון'),    color: '#ff8a4c' },
+  { id: 'recovery', name: tr('התאוששות'), color: '#3ddc97' },
+  { id: 'personal', name: tr('אישי'),     color: '#b794f6' },
+  { id: 'cindy',    name: tr('סינדי'),    color: '#ff6b9d' }
 ];
 const PALETTE = ['#5aa9ff', '#ff8a4c', '#3ddc97', '#b794f6', '#ff6b9d', '#ffd166', '#2dd4bf', '#f87171', '#a3e635', '#94a3b8'];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/, DKEY_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -490,7 +851,7 @@ function clean(raw) {
   const seen = new Set();
   const cats = (Array.isArray(raw.cats) ? raw.cats : [])
     .filter(c => c && idOk(c.id) && typeof c.name === 'string' && !seen.has(c.id) && seen.add(c.id))
-    .slice(0, 40).map((c, i) => ({ id: c.id, name: c.name.trim().slice(0, 24) || 'קטגוריה', color: hex(c.color) || PALETTE[i % PALETTE.length] }));
+    .slice(0, 40).map((c, i) => ({ id: c.id, name: c.name.trim().slice(0, 24) || tr('קטגוריה'), color: hex(c.color) || PALETTE[i % PALETTE.length] }));
   if (!cats.length) DEFAULT_CATS.forEach(c => cats.push({ ...c }));
   const ids = new Set(), tasks = [];
   (Array.isArray(raw.tasks) ? raw.tasks : []).forEach(t => {
@@ -535,10 +896,10 @@ let S = load();
 let saveWarned = false;
 function persistLocal() {
   try { localStorage.setItem(STORE, JSON.stringify(S)); }
-  catch (e) { if (!saveWarned) { saveWarned = true; toast('לא ניתן לשמור בדפדפן הזה — הנתונים לא יישמרו'); } }
+  catch (e) { if (!saveWarned) { saveWarned = true; toast(tr('לא ניתן לשמור בדפדפן הזה — הנתונים לא יישמרו')); } }
 }
 function save() { stamp(); persistLocal(); queueSync(); }
-const cat = id => S.cats.find(c => c.id === id) || { id, name: 'ללא קטגוריה', color: '#8b8b98' };
+const cat = id => S.cats.find(c => c.id === id) || { id, name: tr('ללא קטגוריה'), color: '#8b8b98' };
 const findTask = id => S.tasks.find(t => t.id === id);
 
 const ui = { date: keyOf(new Date()) };
@@ -599,16 +960,16 @@ const CHECK = '<svg viewBox="0 0 24 24"><path pathLength="1" d="M5.5 12.5l4.2 4.
 
 function relTitle(k) {
   const d = parseKey(k), t = todayKey();
-  if (k === t) return 'היום';
-  if (k === keyOf(addDays(new Date(), 1))) return 'מחר';
-  if (k === keyOf(addDays(new Date(), -1))) return 'אתמול';
-  return `יום ${DAYS[d.getDay()]}`;
+  if (k === t) return tr('היום');
+  if (k === keyOf(addDays(new Date(), 1))) return tr('מחר');
+  if (k === keyOf(addDays(new Date(), -1))) return tr('אתמול');
+  return tr('יום {0}', DAYS[d.getDay()]);
 }
 function weekRange(ws) {
   const we = addDays(ws, 6);
   return ws.getMonth() === we.getMonth()
-    ? `${ws.getDate()}–${we.getDate()} ב${MONTHS[ws.getMonth()]} ${we.getFullYear()}`
-    : `${ws.getDate()} ב${MONTHS[ws.getMonth()]} – ${we.getDate()} ב${MONTHS[we.getMonth()]}`;
+    ? tr('{0}–{1} ב{2} {3}', ws.getDate(), we.getDate(), MONTHS[ws.getMonth()], we.getFullYear())
+    : tr('{0} ב{1} – {2} ב{3}', ws.getDate(), MONTHS[ws.getMonth()], we.getDate(), MONTHS[we.getMonth()]);
 }
 const thisWeek = () => startOfWeek(parseKey(todayKey())).getTime();     // תחילת השבוע הנוכחי בחצות (להשוואה עם startOfWeek של תאריך)
 function rangeKeys() {
@@ -624,11 +985,11 @@ function renderHeader() {
   $('#seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === S.view));
   if (S.view === 'day') {
     $('#h1').textContent = relTitle(ui.date);
-    const isRel = ['היום', 'מחר', 'אתמול'].includes(relTitle(ui.date));
-    $('#h2t').textContent = `${isRel ? `יום ${DAYS[d.getDay()]} · ` : ''}${d.getDate()} ב${MONTHS[d.getMonth()]}${isRel ? '' : ' ' + d.getFullYear()}`;
+    const isRel = [tr('היום'), tr('מחר'), tr('אתמול')].includes(relTitle(ui.date));
+    $('#h2t').textContent = tr('{0}{1} ב{2}{3}', isRel ? tr('יום {0} · ', DAYS[d.getDay()]) : '', d.getDate(), MONTHS[d.getMonth()], isRel ? '' : tr(' {0}', d.getFullYear()));
   } else {
     const ws = startOfWeek(d);
-    $('#h1').textContent = thisWeek() === ws.getTime() ? 'השבוע' : 'שבוע';
+    $('#h1').textContent = thisWeek() === ws.getTime() ? tr('השבוע') : tr('שבוע');
     $('#h2t').textContent = weekRange(ws);
   }
   const inView = S.view === 'day' ? ui.date === todayKey()
@@ -639,8 +1000,8 @@ function renderHeader() {
   $('#strip').innerHTML = Array.from({ length: 7 }, (_, i) => {
     const dd = addDays(ws, i), k = keyOf(dd);
     const cs = [...new Set(segs(k).filter(g => !g.t.routine).map(g => g.t.cat))].slice(0, 3);
-    return `<button class="dchip${k === tk ? ' today' : ''}${S.view === 'day' && k === ui.date ? ' sel' : ''}" data-date="${k}" aria-label="יום ${DAYS[i]} ${dd.getDate()}">
-      <small>${DL[i]}׳</small><b>${dd.getDate()}</b><i>${cs.map(c => `<s style="--c:${cat(c).color}"></s>`).join('')}</i></button>`;
+    return `<button class="dchip${k === tk ? ' today' : ''}${S.view === 'day' && k === ui.date ? ' sel' : ''}" data-date="${k}" aria-label="${tr('יום {0}', DAYS[i])} ${dd.getDate()}">
+      <small>${DL[i]}${tr('׳')}</small><b>${dd.getDate()}</b><i>${cs.map(c => `<s style="--c:${cat(c).color}"></s>`).join('')}</i></button>`;
   }).join('');
   updateRing();
   updateNowNext();
@@ -653,7 +1014,7 @@ function updateRing() {
   const pr = $('#prog');
   pr.hidden = total === 0;
   pr.classList.toggle('full', total > 0 && done === total);
-  pr.textContent = total && done === total ? '✓ הכול בוצע' : `${done}/${total} בוצעו`;
+  pr.textContent = total && done === total ? tr('✓ הכול בוצע') : tr('{0}/{1} בוצעו', done, total);
 }
 
 function blockHTML(it, k, ppm) {
@@ -663,11 +1024,11 @@ function blockHTML(it, k, ppm) {
   const cls = h < 30 ? 'tiny' : h < 50 ? 'short' : '';
   const dense = it.n >= 4 ? ' xdense' : it.n === 3 ? ' dense' : '';
   const w = 100 / it.n;
-  const sub = `<span class="tm">${t.start}–${t.end}</span>${h >= 50 && it.n === 1 ? ' · ' + esc(c.name) : ''}${(t.repeat && t.repeat.type !== 'none') ? ' ↻' : ''}${it.cont ? ' · המשך' : ''}`;
+  const sub = `<span class="tm">${t.start}–${t.end}</span>${h >= 50 && it.n === 1 ? ' · ' + esc(c.name) : ''}${(t.repeat && t.repeat.type !== 'none') ? ' ↻' : ''}${it.cont ? tr(' · המשך') : ''}`;
   return `<div class="blk ${cls}${dense}${t.routine ? ' routine' : ''}${done ? ' done' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}"
       style="--c:${c.color};--cb:${rgba(c.color, .17)};top:${top}px;height:${h}px;inset-inline-start:calc(${it.col * w}% + 2px);width:calc(${w}% - 4px)">
-    <div class="bi">${it.n >= 4 || t.routine ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>`}
-    <button type="button" class="bt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}"><b>${esc(t.title)}</b><span class="sub">${sub}</span></button></div>
+    <div class="bi">${it.n >= 4 || t.routine ? '' : `<button class="chk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="${tr('סמן כבוצע')}: ${esc(t.title)}">${CHECK}</button>`}
+    <button type="button" class="bt" aria-label="${tr('עריכה')}: ${esc(t.title)}, ${tr('{0} עד {1}', t.start, t.end)}"><b>${esc(t.title)}</b><span class="sub">${sub}</span></button></div>
     ${!it.cont && !span(t).over ? '<span class="rz rz-t" data-rz="t"></span><span class="rz rz-b" data-rz="b"></span>' : ''}
   </div>`;
 }
@@ -680,8 +1041,8 @@ function nowLine(ppm, withLabel) {
 function renderDay(opts) {
   const ppm = PPM(), k = ui.date, list = segs(k), real = list.filter(g => !g.t.routine);
   let h = '';
-  const hint = real.length ? '' : `<div class="hintw"><div class="hint"><b>${k === todayKey() ? 'היום פנוי' : 'אין משימות ביום הזה'}</b>לחצו על + או החזיקו לחיצה על שעה בקו הזמן.
-      <div class="row"><button class="btn pri" data-act="add">הוסף משימה</button>${S.tasks.length ? '' : '<button class="btn" data-act="examples">טען דוגמאות</button>'}</div></div></div>`;
+  const hint = real.length ? '' : `<div class="hintw"><div class="hint"><b>${k === todayKey() ? tr('היום פנוי') : tr('אין משימות ביום הזה')}</b>${tr('לחצו על + או החזיקו לחיצה על שעה בקו הזמן.')}
+      <div class="row"><button class="btn pri" data-act="add">${tr('הוסף משימה')}</button>${S.tasks.length ? '' : tr('<button class="btn" data-act="examples">טען דוגמאות</button>')}</div></div></div>`;
   let lines = '';
   for (let i = 0; i < 24; i++) lines += `<div class="hl" style="top:${TOP + i * 60 * ppm}px"><span>${pad(i)}:00</span></div>`;
   lines += `<div class="hl" style="top:${TOP + 1440 * ppm}px"></div>`;
@@ -704,7 +1065,7 @@ function renderWeek(opts) {
     const sg = segs(k), items = [...layout(sg.filter(g => g.t.routine), ppm, 16), ...layout(sg.filter(g => !g.t.routine), ppm, 16)];
     cols += `<div class="wcol${k === tk ? ' today' : ''}" data-date="${k}">${items.map(it => {
       const t = it.t, c = cat(t.cat), w = 100 / it.n, done = !t.routine && isDone(t, it.k0), hpx = Math.max((it.e - it.s) * ppm - 2, 14);
-      return `<div class="wb${done ? ' done' : ''}${t.routine ? ' routine' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 && !t.routine ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="סמן כבוצע: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="עריכה: ${esc(t.title)}, ${t.start} עד ${t.end}">${esc(t.title)}</button></div>`;
+      return `<div class="wb${done ? ' done' : ''}${t.routine ? ' routine' : ''}${it.n > 1 ? ' nt' : ''}" data-id="${t.id}" data-date="${it.k0}" data-cont="${it.cont ? 1 : 0}" style="--c:${c.color};--cb:${rgba(c.color, .24)};top:${TOP + it.s * ppm + 1}px;height:${hpx}px;inset-inline-start:calc(${it.col * w}% + 1px);width:calc(${w}% - 2px)">${it.n === 1 && hpx >= 32 && !t.routine ? `<button class="chk wchk" data-act="chk" role="checkbox" aria-checked="${done}" aria-label="${tr('סמן כבוצע')}: ${esc(t.title)}">${CHECK}</button>` : ''}<button type="button" class="wt" aria-label="${tr('עריכה')}: ${esc(t.title)}, ${tr('{0} עד {1}', t.start, t.end)}">${esc(t.title)}</button></div>`;
     }).join('')}${k === tk ? nowLine(ppm, false) : ''}</div>`;
   }
   main.innerHTML = `<div class="wk" id="tl" style="height:${TOP * 2 + 1440 * ppm}px">${lines}<div class="wcols">${cols}</div></div>`;
@@ -733,7 +1094,7 @@ function render(opts = {}) {
 function go(dateKey, dir, scroll = false) {
   ui.date = dateKey; saveUi();
   render({ scroll });
-  if (dir) { main.classList.remove('slide-l', 'slide-r'); void main.offsetWidth; main.classList.add(dir > 0 ? 'slide-r' : 'slide-l'); }
+  if (dir) { main.classList.remove('slide-l', 'slide-r'); void main.offsetWidth; main.classList.add((dir > 0) === RTL ? 'slide-r' : 'slide-l'); }
 }
 const step = n => go(keyOf(addDays(parseKey(ui.date), S.view === 'day' ? n : n * 7)), n);
 
@@ -870,7 +1231,7 @@ function updateDrag() {
   d.res = { start: fmt(ns), end: fmt(ne % 1440), toDate: d.toDate };
   const tm = blk.querySelector('.tm'); if (tm) tm.textContent = `${d.res.start}–${d.res.end}`;
   const r = blk.getBoundingClientRect();
-  d.tip.textContent = `${d.week && d.toDate !== i.k0 ? DL[parseKey(d.toDate).getDay()] + '׳ ' : ''}${d.res.start}–${d.res.end}`;
+  d.tip.textContent = `${d.week && d.toDate !== i.k0 ? DL[parseKey(d.toDate).getDay()] + tr('׳ ') : ''}${d.res.start}–${d.res.end}`;
   d.tip.style.left = clamp(r.left + r.width / 2, 50, innerWidth - 50) + 'px';
   d.tip.style.top = Math.max(r.top - 8, $('#top').offsetHeight + 34) + 'px';
 }
@@ -930,13 +1291,13 @@ async function commitTimes(i, start, end, toDate) {
   if (!rec) { ck = checkpoint(); t.start = start; t.end = end; t.date = toDate; }
   else if (toDate !== i.k0) { ck = checkpoint(); res = applyEdit(t, data, 'one', i.k0, toDate); }     // העברה ליום אחר = רק המופע הזה
   else {
-    const scope = await choose(`לשנות ל־${start}–${end}. מה לשנות?`, [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
+    const scope = await choose(tr('לשנות ל־{0}–{1}. מה לשנות?', start, end), [['one', tr('רק את היום הזה')], ['fwd', tr('מהיום הזה והלאה')], ['all', tr('כל הסדרה')]]);
     if (!scope) { render(); reselect(t.id, i.k0); return; }
     ck = checkpoint(); res = applyEdit(t, data, scope, i.k0);
   }
   ck.arm(); save(); render(); reselect(res.id, toDate);
   vib(8);
-  toast(`עודכן · ${start}–${end}`, 'ביטול', () => { ck(); save(); render(); });
+  toast(tr('עודכן · {0}–{1}', start, end), tr('ביטול'), () => { ck(); save(); render(); });
 }
 
 /* מקלדת: Alt+חצים מזיז ב־15 דקות, עם Shift משנה את הסיום */
@@ -977,13 +1338,13 @@ document.addEventListener('touchstart', e => { if (e.touches.length !== 1 || doc
 document.addEventListener('touchend', e => {
   if (!st || Date.now() - st > 450 || suppressClick) { st = 0; return; }
   const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > 110 && Math.abs(dy) < 36 && Math.abs(dx) > Math.abs(dy) * 3.5 && Date.now() - st < 450) step(dx < 0 ? -1 : 1);
+  if (Math.abs(dx) > 110 && Math.abs(dy) < 36 && Math.abs(dx) > Math.abs(dy) * 3.5 && Date.now() - st < 450) step((dx < 0 ? -1 : 1) * (RTL ? 1 : -1));
   st = 0;
 }, { passive: true });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && sheetStack.length) sheetStack[sheetStack.length - 1]();
   else if (!document.body.classList.contains('sheet-open') && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
-    if (e.key === 'ArrowRight') step(-1); else if (e.key === 'ArrowLeft') step(1); else if (e.key === 'n') openTask({ date: ui.date });
+    if (e.key === 'ArrowRight') step(RTL ? -1 : 1); else if (e.key === 'ArrowLeft') step(RTL ? 1 : -1); else if (e.key === 'n') openTask({ date: ui.date });
   }
 });
 
@@ -1048,7 +1409,7 @@ function ask(msg, okLabel) {
     let yes = false;
     const { sheet, close } = openSheet(`<div class="shh"><div class="grab"></div></div>
       <p style="font-size:17px;font-weight:600;margin:10px 0 20px;text-align:center;text-wrap:balance">${esc(msg)}</p>
-      <div class="dels"><button type="button" class="btn dng" id="askYes">${esc(okLabel || 'אישור')}</button><button type="button" class="btn" data-close>ביטול</button></div>`,
+      <div class="dels"><button type="button" class="btn dng" id="askYes">${esc(okLabel || tr('אישור'))}</button><button type="button" class="btn" data-close>${tr('ביטול')}</button></div>`,
       () => res(yes));
     $('#askYes', sheet).onclick = () => { yes = true; close(); };
   });
@@ -1059,7 +1420,7 @@ function choose(msg, opts) {
     let pick = null;
     const { sheet, close } = openSheet(`<div class="shh"><div class="grab"></div></div>
       <p style="font-size:17px;font-weight:600;margin:10px 0 20px;text-align:center;text-wrap:balance">${esc(msg)}</p>
-      <div class="dels">${opts.map(([k, l]) => `<button type="button" class="btn" data-k="${k}">${esc(l)}</button>`).join('')}<button type="button" class="btn" data-close>ביטול</button></div>`,
+      <div class="dels">${opts.map(([k, l]) => `<button type="button" class="btn" data-k="${k}">${esc(l)}</button>`).join('')}<button type="button" class="btn" data-close>${tr('ביטול')}</button></div>`,
       () => res(pick));
     sheet.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { pick = b.dataset.k; close(); });
   });
@@ -1129,40 +1490,40 @@ function openTask({ task, date, start, prefill, inboxId }) {
   const rep = t.repeat || { type: 'none', days: [] };
   const viewDate = date || t.date;
   const days = rep.days && rep.days.length ? rep.days : [parseKey(t.date).getDay()];
-  const durs = [[30, '30 דק׳'], [45, '45 דק׳'], [60, 'שעה'], [90, 'שעה וחצי'], [120, 'שעתיים']];
+  const durs = [[30, tr('30 דק׳')], [45, tr('45 דק׳')], [60, tr('שעה')], [90, tr('שעה וחצי')], [120, tr('שעתיים')]];
   const recurring = edit && rep.type !== 'none';
 
   const { sheet, close } = openSheet(`
   <form class="f" id="tf" novalidate>
     <div class="shh"><div class="grab"></div><div class="hd">
-      <button type="button" class="lnk" data-close>ביטול</button>
-      <h2>${edit ? 'עריכת משימה' : 'משימה חדשה'}</h2>
-      <button type="submit" class="lnk st">${edit ? 'שמור' : 'הוסף'}</button></div></div>
-    <input class="tin" name="title" placeholder="מה מתוכנן?" value="${esc(t.title)}" autocomplete="off" enterkeyhint="done" maxlength="80">
-    ${edit && !t.routine ? `<button type="button" class="donebtn${isDone(task, viewDate) ? ' done' : ''}" id="doneBtn" style="--c:${cat(t.cat).color}" aria-pressed="${isDone(task, viewDate)}"><span class="chk" aria-hidden="true">${CHECK}</span><span id="doneTx">${isDone(task, viewDate) ? 'בוצע · לחצו לביטול' : 'סמן כבוצע'}</span></button>` : ''}
-    <div><span class="lbl">קטגוריה</span><div class="chips">${S.cats.map(c => `
+      <button type="button" class="lnk" data-close>${tr('ביטול')}</button>
+      <h2>${edit ? tr('עריכת משימה') : tr('משימה חדשה')}</h2>
+      <button type="submit" class="lnk st">${edit ? tr('שמור') : tr('הוסף')}</button></div></div>
+    <input class="tin" name="title" placeholder="${tr('מה מתוכנן?')}" value="${esc(t.title)}" autocomplete="off" enterkeyhint="done" maxlength="80">
+    ${edit && !t.routine ? `<button type="button" class="donebtn${isDone(task, viewDate) ? ' done' : ''}" id="doneBtn" style="--c:${cat(t.cat).color}" aria-pressed="${isDone(task, viewDate)}"><span class="chk" aria-hidden="true">${CHECK}</span><span id="doneTx">${isDone(task, viewDate) ? tr('בוצע · לחצו לביטול') : tr('סמן כבוצע')}</span></button>` : ''}
+    <div><span class="lbl">${tr('קטגוריה')}</span><div class="chips">${S.cats.map(c => `
       <label class="chip" style="--c:${c.color};--cb:${rgba(c.color, .18)}"><input type="radio" name="cat" value="${c.id}"${c.id === t.cat ? ' checked' : ''}><span>${esc(c.name)}</span></label>`).join('')}</div></div>
-    <label class="swrow"><input type="checkbox" name="routine"${t.routine ? ' checked' : ''}><span class="sw"></span><span>שגרה ברקע<small>שינה, ארוחות. לא נספרת בהתקדמות</small></span></label>
+    <label class="swrow"><input type="checkbox" name="routine"${t.routine ? ' checked' : ''}><span class="sw"></span><span>${tr('שגרה ברקע')}<small>${tr('שינה, ארוחות. לא נספרת בהתקדמות')}</small></span></label>
     <div class="two">
-      <div class="fld"><label class="lbl" for="fs">התחלה</label><input id="fs" type="time" name="start" value="${t.start}" required></div>
-      <div class="fld"><label class="lbl" for="fe">סיום</label><input id="fe" type="time" name="end" value="${t.end}" required></div>
+      <div class="fld"><label class="lbl" for="fs">${tr('התחלה')}</label><input id="fs" type="time" name="start" value="${t.start}" required></div>
+      <div class="fld"><label class="lbl" for="fe">${tr('סיום||end')}</label><input id="fe" type="time" name="end" value="${t.end}" required></div>
     </div>
     <div class="nxt" id="nxt" aria-live="polite"></div>
     <div class="dur" id="dur">${durs.map(([m, l]) => `<button type="button" data-m="${m}">${l}</button>`).join('')}</div>
-    <div class="fld"><label class="lbl" for="fd" id="dl">${rep.type === 'none' ? 'תאריך' : 'מתחיל בתאריך'}</label><input id="fd" type="date" name="date" value="${t.date}" min="2000-01-01" max="2099-12-31" required></div>
-    <div><span class="lbl">חזרה</span>
+    <div class="fld"><label class="lbl" for="fd" id="dl">${rep.type === 'none' ? tr('תאריך') : tr('מתחיל בתאריך')}</label><input id="fd" type="date" name="date" value="${t.date}" min="2000-01-01" max="2099-12-31" required></div>
+    <div><span class="lbl">${tr('חזרה')}</span>
       <div class="rseg">
-        <label><input type="radio" name="rep" value="none"${rep.type === 'none' ? ' checked' : ''}><span>חד־פעמית</span></label>
-        <label><input type="radio" name="rep" value="daily"${rep.type === 'daily' ? ' checked' : ''}><span>כל יום</span></label>
-        <label><input type="radio" name="rep" value="weekly"${rep.type === 'weekly' ? ' checked' : ''}><span>ימים בשבוע</span></label>
+        <label><input type="radio" name="rep" value="none"${rep.type === 'none' ? ' checked' : ''}><span>${tr('חד־פעמית')}</span></label>
+        <label><input type="radio" name="rep" value="daily"${rep.type === 'daily' ? ' checked' : ''}><span>${tr('כל יום')}</span></label>
+        <label><input type="radio" name="rep" value="weekly"${rep.type === 'weekly' ? ' checked' : ''}><span>${tr('ימים בשבוע')}</span></label>
       </div></div>
-    <div class="dsel${rep.type === 'weekly' ? ' open' : ''}" id="dsel">${DL.map((l, i) => `<label><input type="checkbox" name="day" value="${i}"${days.includes(i) ? ' checked' : ''}><span aria-label="יום ${DAYS[i]}">${l}</span></label>`).join('')}</div>
-    <div class="fld"><label class="lbl" for="fr">תזכורת ביומן של הטלפון</label><select id="fr" name="remind"><option value="">ברירת מחדל (${esc(remindLabel(S.remindDefault))})</option><option value="n"${t.remind === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${t.remind === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="fld"><label class="lbl" for="fn">הערות</label><textarea id="fn" name="notes" rows="2" maxlength="300" placeholder="אופציונלי">${esc(t.notes || '')}</textarea></div>
+    <div class="dsel${rep.type === 'weekly' ? ' open' : ''}" id="dsel">${DL.map((l, i) => `<label><input type="checkbox" name="day" value="${i}"${days.includes(i) ? ' checked' : ''}><span aria-label="${tr('יום {0}', DAYS[i])}">${l}</span></label>`).join('')}</div>
+    <div class="fld"><label class="lbl" for="fr">${tr('תזכורת ביומן של הטלפון')}</label><select id="fr" name="remind"><option value="">${esc(tr('ברירת מחדל ({0})', remindLabel(S.remindDefault)))}</option><option value="n"${t.remind === 'n' ? ' selected' : ''}>${tr('בלי תזכורת')}</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${t.remind === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="fld"><label class="lbl" for="fn">${tr('הערות')}</label><textarea id="fn" name="notes" rows="2" maxlength="300" placeholder="${tr('אופציונלי')}">${esc(t.notes || '')}</textarea></div>
     <div class="err" id="err" role="alert"></div>
-    ${edit ? `<div class="dels"><button type="button" class="btn" id="icsOne">הוסף ליומן (קובץ)</button>${recurring
-      ? `<button type="button" class="btn dng" data-del="one">מחק רק את ${esc(relTitle(viewDate) === 'היום' ? 'היום' : fullShort(viewDate))}</button>${viewDate > task.date ? '<button type="button" class="btn dng" data-del="fwd">מחק מהיום הזה והלאה</button>' : ''}<button type="button" class="btn dng" data-del="all">מחק את כל הסדרה</button>`
-      : `<button type="button" class="btn dng" data-del="all">מחק משימה</button>`}</div>` : ''}
+    ${edit ? `<div class="dels"><button type="button" class="btn" id="icsOne">${tr('הוסף ליומן (קובץ)')}</button>${recurring
+      ? `<button type="button" class="btn dng" data-del="one">${esc(tr('מחק רק את {0}', relTitle(viewDate) === tr('היום') ? tr('היום') : fullShort(viewDate)))}</button>${viewDate > task.date ? tr('<button type="button" class="btn dng" data-del="fwd">מחק מהיום הזה והלאה</button>') : ''}<button type="button" class="btn dng" data-del="all">${tr('מחק את כל הסדרה')}</button>`
+      : `<button type="button" class="btn dng" data-del="all">${tr('מחק משימה')}</button>`}</div>` : ''}
   </form>`);
 
   const f = $('#tf', sheet), $f = n => f.elements[n];
@@ -1170,7 +1531,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
   const syncDur = () => {
     const d = dur(), s = mins($f('start').value || '00:00'), e = mins($f('end').value || '00:00');
     $('#dur', sheet).querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.m === d));
-    $('#nxt', sheet).textContent = e < s && e !== 0 ? `נגמר למחרת ב־${$f('end').value}` : '';
+    $('#nxt', sheet).textContent = e < s && e !== 0 ? tr('נגמר למחרת ב־{0}', $f('end').value) : '';
   };
   let lastStart = mins(t.start);
   $f('start').addEventListener('change', () => {           // שומר על אותו משך כשמזיזים את ההתחלה
@@ -1188,7 +1549,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
   syncDur();
   f.querySelectorAll('[name=rep]').forEach(r => r.addEventListener('change', () => {
     $('#dsel', sheet).classList.toggle('open', r.value === 'weekly' && r.checked);
-    $('#dl', sheet).textContent = $f('rep').value === 'none' ? 'תאריך' : 'מתחיל בתאריך';
+    $('#dl', sheet).textContent = $f('rep').value === 'none' ? tr('תאריך') : tr('מתחיל בתאריך');
   }));
   const fail = msg => { const e = $('#err', sheet); e.textContent = msg; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); vib(30); };
 
@@ -1196,7 +1557,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
   if (db) db.onclick = () => {
     const now = !isDone(task, viewDate); setDone(task, viewDate, now);
     db.classList.toggle('done', now); db.setAttribute('aria-pressed', now);
-    $('#doneTx', sheet).textContent = now ? 'בוצע · לחצו לביטול' : 'סמן כבוצע';
+    $('#doneTx', sheet).textContent = now ? tr('בוצע · לחצו לביטול') : tr('סמן כבוצע');
     if (now) { const c = $('.chk', db); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); c.addEventListener('animationend', () => c.classList.remove('pop'), { once: true }); vib(10); }
     render();
   };
@@ -1207,18 +1568,18 @@ function openTask({ task, date, start, prefill, inboxId }) {
     const catId = f.querySelector('[name=cat]:checked')?.value || S.cats[0].id;
     const title = $f('title').value.trim() || cat(catId).name;
     const s = $f('start').value, e = $f('end').value, d = $f('date').value;
-    if (!s || !e) return fail('בחרו שעת התחלה ושעת סיום');
-    if (s === e) return fail('שעת הסיום זהה לשעת ההתחלה');
-    if (!d) return fail('בחרו תאריך');
-    if (!validDate(d) || d < '2000-01-01' || d > '2099-12-31') return fail('התאריך לא תקין. בדקו את השנה');
+    if (!s || !e) return fail(tr('בחרו שעת התחלה ושעת סיום'));
+    if (s === e) return fail(tr('שעת הסיום זהה לשעת ההתחלה'));
+    if (!d) return fail(tr('בחרו תאריך'));
+    if (!validDate(d) || d < '2000-01-01' || d > '2099-12-31') return fail(tr('התאריך לא תקין. בדקו את השנה'));
     const type = $f('rep').value;
     const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
-    if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
+    if (type === 'weekly' && !dsel.length) return fail(tr('בחרו לפחות יום אחד בשבוע'));
     if (busy) return; busy = true;                          // לחיצה כפולה על "הוסף" לא יוצרת שתי משימות
     const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
     const rv = $f('remind').value; if (rv !== '') data.remind = rv === 'n' ? 'n' : +rv;
     const gone = () => edit && !S.tasks.includes(task);        // נמחקה במכשיר אחר בזמן שהחלון פתוח
-    const lost = () => { busy = false; close(); toast('המשימה נמחקה במכשיר אחר'); };
+    const lost = () => { busy = false; close(); toast(tr('המשימה נמחקה במכשיר אחר')); };
     if (gone()) return lost();
     let ck;
     if (edit) {
@@ -1227,7 +1588,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
       const changed = ['title', 'cat', 'start', 'end'].some(k => data[k] !== task[k]) || data.notes !== (task.notes || '') || data.routine !== !!task.routine || (data.remind ?? null) !== (task.remind ?? null);
       let scope = 'all';
       if (sameSchedule && changed) {
-        scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
+        scope = await choose(tr('המשימה הזו חוזרת. מה לשנות?'), [['one', tr('רק את היום הזה')], ['fwd', tr('מהיום הזה והלאה')], ['all', tr('כל הסדרה')]]);
         if (!scope) { busy = false; return; }
         if (gone()) return lost();
       }
@@ -1239,7 +1600,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
     ck.arm(); save(); close();
     if (type === 'none' && !rangeKeys().includes(d)) ui.date = d;
     render();
-    toast(edit ? 'נשמר' : 'נוסף ליומן', 'ביטול', () => { ck(); save(); render(); });
+    toast(edit ? tr('נשמר') : tr('נוסף ליומן'), tr('ביטול'), () => { ck(); save(); render(); });
   });
 
   f.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
@@ -1248,48 +1609,64 @@ function openTask({ task, date, start, prefill, inboxId }) {
     else if (w === 'fwd') task.until = prevKey(viewDate);
     else S.tasks = S.tasks.filter(x => x.id !== task.id);
     ck.arm(); save(); close(); render();
-    toast('נמחק', 'ביטול', () => { ck(); save(); render(); });
+    toast(tr('נמחק'), tr('ביטול'), () => { ck(); save(); render(); });
   }));
-  const io = $('#icsOne', sheet); if (io) io.onclick = () => exportICS([task], 'האירוע מוכן');
+  const io = $('#icsOne', sheet); if (io) io.onclick = () => exportICS([task], tr('האירוע מוכן'));
   if (!edit && matchMedia('(pointer:fine)').matches) setTimeout(() => { try { $f('title').focus({ preventScroll: true }); } catch (e) {} }, 380);
 }
-const fullShort = k => { const d = parseKey(k); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; };
+const dm = d => LANG === 'en' ? `${d.getMonth() + 1}/${d.getDate()}` : `${d.getDate()}/${d.getMonth() + 1}`;
+const fullShort = k => { const d = parseKey(k); return `${DAYS[d.getDay()]} ${dm(d)}`; };
 
 /* ═════════ הגדרות וקטגוריות ═════════ */
+const DEF_CAT_SRC = { school: 'בית ספר', gym: 'אימון', recovery: 'התאוששות', personal: 'אישי', cindy: 'סינדי' };
+function setLang(l) {
+  if (l === LANG || (l !== 'he' && l !== 'en')) return;
+  try { localStorage.setItem(LANGKEY, l); } catch (e) {}
+  persistLocal(); location.reload();
+}
 function openSettings() {
   const { sheet, close } = openSheet(`
-    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>הגדרות</h2><button class="lnk st" data-close>סיום</button></div></div>
-    <div class="sec">קטגוריות</div>
+    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>${tr('הגדרות')}</h2><button class="lnk st" data-close>${tr('סיום')}</button></div></div>
+    <div class="sec">עברית · English</div>
+    <div class="rseg" id="langSeg" role="radiogroup" aria-label="עברית · English"><label><input type="radio" name="lang" value="he"${LANG === 'he' ? ' checked' : ''}><span>עברית</span></label><label><input type="radio" name="lang" value="en"${LANG === 'en' ? ' checked' : ''}><span>English</span></label></div>
+    <div class="sec">${tr('קטגוריות')}</div>
     <div id="cats"></div>
-    <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="ncn" placeholder="קטגוריה חדשה…" aria-label="שם קטגוריה חדשה" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
-    ${DEMO ? '' : '<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div><div class="sec">התראות בטלפון</div><div id="pushBox"></div>'}
-    <div class="sec">תזכורות</div>
-    <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
-    <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
-    ${DEMO ? '' : `<details class="priv"><summary>פרטיות ונתונים</summary>
+    <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="${tr('צבע')}"><input type="text" id="ncn" placeholder="${tr('קטגוריה חדשה…')}" aria-label="${tr('שם קטגוריה חדשה')}" maxlength="24"><button class="btn pri" id="na">${tr('הוסף')}</button></div>
+    ${DEMO ? '' : tr('<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div><div class="sec">התראות בטלפון</div><div id="pushBox"></div>')}
+    <div class="sec">${tr('תזכורות')}</div>
+    <div class="fld"><label class="lbl" for="rd">${tr('תזכורת ברירת מחדל')}</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>${tr('בלי תזכורת')}</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+    <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">${tr('התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.')}</p>
+    ${DEMO ? '' : `<details class="priv"><summary>${tr('פרטיות ונתונים')}</summary>
       <ul>
-        <li><b>במכשיר:</b> כל המשימות נשמרות בדפדפן של המכשיר הזה. בלי סנכרון, שום דבר לא יוצא ממנו.</li>
-        <li><b>סנכרון:</b> אם מפעילים אותו, המשימות, הקטגוריות, התיבה וההגדרות נשמרות בענן של Supabase (פרנקפורט), מזוהות לפי גיבוב של מפתח הסנכרון. מי שמחזיק במפתח רואה אותן. אפשר למחוק הכול מהענן בלחיצה.</li>
-        <li><b>התראות:</b> כותרות המשימות וזמני התזכורת נשמרים בענן כדי שיישלחו בזמן, והשליחה עוברת דרך שירות ההתראות של אפל, גוגל או מוזילה.</li>
-        <li><b>הקלטה:</b> נעשית בדפדפן או במערכת ההפעלה, ויכולה לעבור לגוגל או לאפל. האפליקציה לא שומרת הקלטות.</li>
-        <li><b>מה אין:</b> אין פרסומות, אין אנליטיקה, אין עוגיות ואין סקריפטים של צד שלישי.</li>
+        <li><b>${tr('במכשיר:')}</b> ${tr('כל המשימות נשמרות בדפדפן של המכשיר הזה. בלי סנכרון, שום דבר לא יוצא ממנו.')}</li>
+        <li><b>${tr('סנכרון:')}</b> ${tr('אם מפעילים אותו, המשימות, הקטגוריות, התיבה וההגדרות נשמרות בענן של Supabase (פרנקפורט), מזוהות לפי גיבוב של מפתח הסנכרון. מי שמחזיק במפתח רואה אותן. אפשר למחוק הכול מהענן בלחיצה.')}</li>
+        <li><b>${tr('התראות:')}</b> ${tr('כותרות המשימות וזמני התזכורת נשמרים בענן כדי שיישלחו בזמן, והשליחה עוברת דרך שירות ההתראות של אפל, גוגל או מוזילה.')}</li>
+        <li><b>${tr('הקלטה:')}</b> ${tr('נעשית בדפדפן או במערכת ההפעלה, ויכולה לעבור לגוגל או לאפל. האפליקציה לא שומרת הקלטות.')}</li>
+        <li><b>${tr('מה אין:')}</b> ${tr('אין פרסומות, אין אנליטיקה, אין עוגיות ואין סקריפטים של צד שלישי.')}</li>
       </ul></details>`}
-    <div class="sec">נתונים</div>
+    <div class="sec">${tr('נתונים')}</div>
     <div class="list">
-      <button class="btn" id="sm">סיכום שבועי <span>▤</span></button>
-      <button class="btn" id="ics">ייצוא משימות עתידיות ליומן <span>↗</span></button>
-      <button class="btn" id="ex">ייצוא גיבוי <span>⬇</span></button>
-      <button class="btn" id="im">ייבוא מגיבוי <span>⬆</span></button>
-      <button class="btn" id="dm">הוסף משימות לדוגמה <span>＋</span></button>
-      <button class="btn dng" id="ca">מחק את כל המשימות <span>🗑</span></button>
+      <button class="btn" id="sm">${tr('סיכום שבועי')} <span>▤</span></button>
+      <button class="btn" id="ics">${tr('ייצוא משימות עתידיות ליומן')} <span>↗</span></button>
+      <button class="btn" id="ex">${tr('ייצוא גיבוי')} <span>⬇</span></button>
+      <button class="btn" id="im">${tr('ייבוא מגיבוי')} <span>⬆</span></button>
+      <button class="btn" id="dm">${tr('הוסף משימות לדוגמה')} <span>＋</span></button>
+      <button class="btn dng" id="ca">${tr('מחק את כל המשימות')} <span>🗑</span></button>
     </div>
-    <p style="color:var(--mut2);font-size:12.5px;margin:16px 0 0">הנתונים נשמרים במכשיר הזה בלבד. מומלץ לייצא גיבוי מדי פעם.</p>
+    <p style="color:var(--mut2);font-size:12.5px;margin:16px 0 0">${tr('הנתונים נשמרים במכשיר הזה בלבד. מומלץ לייצא גיבוי מדי פעם.')}</p>
     <input type="file" id="file" accept="application/json" hidden>`, () => { syncUI = null; });
   if (!DEMO) syncSection(sheet);
+  sheet.querySelectorAll('[name=lang]').forEach(r => r.addEventListener('change', () => { if (r.checked) setLang(r.value); }));
+  const otherNames = () => S.cats.filter(c => DEF_CAT_SRC[c.id] && c.name === (LANG === 'en' ? DEF_CAT_SRC[c.id] : I18N_EN[DEF_CAT_SRC[c.id]]));
+  if (otherNames().length) {                                // קטגוריות ברירת מחדל שעדיין בשפה השנייה: כפתור מפורש, כי השמות מסתנכרנים בין מכשירים
+    const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.style.marginTop = '8px'; b.textContent = tr('התאם את שמות קטגוריות ברירת המחדל לשפה');
+    b.onclick = () => { otherNames().forEach(c => { c.name = LANG === 'en' ? I18N_EN[DEF_CAT_SRC[c.id]] : DEF_CAT_SRC[c.id]; }); save(); drawCats(); render(); b.remove(); };
+    $('#cats', sheet).after(b);
+  }
   const drawCats = () => {
     $('#cats', sheet).innerHTML = S.cats.map(c => `<div class="crow" data-id="${c.id}">
-      <input type="color" value="${c.color}" aria-label="צבע ${esc(c.name)}"><input type="text" value="${esc(c.name)}" maxlength="24" aria-label="שם קטגוריה">
-      <button class="ib" data-rm aria-label="מחק קטגוריה"${S.cats.length < 2 ? ' disabled style="opacity:.3"' : ''}><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join('');
+      <input type="color" value="${c.color}" aria-label="${tr('צבע')} ${esc(c.name)}"><input type="text" value="${esc(c.name)}" maxlength="24" aria-label="${tr('שם קטגוריה')}">
+      <button class="ib" data-rm aria-label="${tr('מחק קטגוריה')}"${S.cats.length < 2 ? ' disabled style="opacity:.3"' : ''}><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join('');
   };
   drawCats();
   const cats = $('#cats', sheet);
@@ -1302,7 +1679,7 @@ function openSettings() {
     const rm = e.target.closest('[data-rm]'); if (!rm || S.cats.length < 2) return;
     const id = rm.closest('.crow').dataset.id, c = cat(id);
     const used = S.tasks.filter(t => t.cat === id).length;
-    if (used && !(await ask(`ל־"${c.name}" יש ${used} משימות. הן יועברו לקטגוריה "${S.cats.find(x => x.id !== id).name}".`, 'מחק והעבר'))) return;
+    if (used && !(await ask(tr('ל־"{0}" יש {1} משימות. הן יועברו לקטגוריה "{2}".', c.name, used, S.cats.find(x => x.id !== id).name), tr('מחק והעבר')))) return;
     const fb = S.cats.find(x => x.id !== id).id;
     S.tasks.forEach(t => { if (t.cat === id) t.cat = fb; });
     S.inbox.forEach(x => { if (x.cat === id) x.cat = fb; });
@@ -1311,7 +1688,7 @@ function openSettings() {
   cats.addEventListener('change', e => {
     if (e.target.type === 'text' && !e.target.value.trim()) {                  // שם ריק לא נשמר
       const c = S.cats.find(x => x.id === e.target.closest('.crow').dataset.id);
-      if (c) { c.name = 'קטגוריה'; e.target.value = c.name; save(); }
+      if (c) { c.name = tr('קטגוריה'); e.target.value = c.name; save(); }
     }
     render();
   });
@@ -1322,7 +1699,7 @@ function openSettings() {
   };
   $('#ex', sheet).onclick = exportBackup;
   $('#sm', sheet).onclick = () => { close(); setTimeout(openSummary, 220); };
-  $('#ics', sheet).onclick = () => exportICS(upcomingTasks(), 'הקובץ מוכן');
+  $('#ics', sheet).onclick = () => exportICS(upcomingTasks(), tr('הקובץ מוכן'));
   $('#rd', sheet).onchange = e => { S.remindDefault = e.target.value === 'n' ? 'n' : +e.target.value; save(); };
   $('#im', sheet).onclick = () => $('#file', sheet).click();
   $('#file', sheet).onchange = async e => {
@@ -1332,14 +1709,14 @@ function openSettings() {
       const j = JSON.parse(await file.text());
       if (!j || !Array.isArray(j.tasks)) throw 0;
       const { state, dropped } = clean(j);
-      if (!(await ask(`הייבוא יחליף את כל הנתונים הקיימים בגיבוי של ${state.tasks.length} משימות${dropped ? ` (${dropped} פגומות ידולגו)` : ''}.`, 'ייבא'))) return;
-      S = state; save(); close(); render({ scroll: true }); toast(dropped ? `נטענו ${state.tasks.length} משימות, ${dropped} דולגו` : 'הגיבוי נטען');
-    } catch (err) { toast('הקובץ לא תקין'); }
+      if (!(await ask(tr('הייבוא יחליף את כל הנתונים הקיימים בגיבוי של {0} משימות{1}.', state.tasks.length, dropped ? tr(' ({0} פגומות ידולגו)', dropped) : ''), tr('ייבא')))) return;
+      S = state; save(); close(); render({ scroll: true }); toast(dropped ? tr('נטענו {0} משימות, {1} דולגו', state.tasks.length, dropped) : tr('הגיבוי נטען'));
+    } catch (err) { toast(tr('הקובץ לא תקין')); }
   };
   $('#dm', sheet).onclick = () => { close(); loadExamples(); };
   $('#ca', sheet).onclick = async () => {
-    if (!S.tasks.length || !(await ask('למחוק את כל המשימות? אי אפשר לבטל.', 'מחק הכול'))) return;
-    S.tasks = []; S.inbox = []; save(); close(); render(); toast('כל המשימות נמחקו');
+    if (!S.tasks.length || !(await ask(tr('למחוק את כל המשימות? אי אפשר לבטל.'), tr('מחק הכול')))) return;
+    S.tasks = []; S.inbox = []; save(); close(); render(); toast(tr('כל המשימות נמחקו'));
   };
 }
 
@@ -1511,7 +1888,7 @@ function parseVoice(raw, ctx) {
 }
 
 /* ═════════ פס "עכשיו / הבא" ═════════ */
-const fmtDur = m => m < 60 ? `${m} דק׳` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} שע׳`;
+const fmtDur = m => m < 60 ? tr('{0} דק׳', m) : tr('{0}:{1} שע׳', Math.floor(m / 60), String(m % 60).padStart(2, '0'));
 function updateNowNext() {
   const txt = $('#nnt'), dot = $('#nnd'); if (!txt) return;
   const tk = todayKey();
@@ -1523,20 +1900,20 @@ function updateNowNext() {
     const missed = list.filter(g => !g.cont && g.e <= m && !isDone(g.t, g.k0)).length;
     if (cur) {
       color = cat(cur.t.cat).color;
-      html = `<b>עכשיו</b> ${esc(cur.t.title)} · עוד ${fmtDur(cur.e - m)}${nxt ? ` · הבא ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi>` : ''}`;
+      html = `<b>${tr('עכשיו')}</b> ${esc(cur.t.title)} · ${tr('עוד {0}', fmtDur(cur.e - m))}${nxt ? ` · ${tr('הבא')} ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi>` : ''}`;
     } else if (nxt) {
       color = cat(nxt.t.cat).color;
-      html = `<b>הבא</b> ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi> · בעוד ${fmtDur(nxt.s - m)}`;
-    } else html = list.length ? '<b>סיימתם להיום</b>' : '<b>היום פנוי</b>';
-    if (missed) html += ` · <span class="miss">${missed} לא סומנו</span>`;
+      html = `<b>${tr('הבא')}</b> ${esc(nxt.t.title)} <bdi>${nxt.t.start}</bdi> · ${tr('בעוד {0}', fmtDur(nxt.s - m))}`;
+    } else html = list.length ? tr('<b>סיימתם להיום</b>') : tr('<b>היום פנוי</b>');
+    if (missed) html += ` · <span class="miss">${tr('{0} לא סומנו', missed)}</span>`;
   } else {
     let cnt = 0, total = 0;
     rangeKeys().forEach(k => occ(k).forEach(t => { if (t.routine) return; cnt++; const p = span(t); total += (p.e - p.s + 1440) % 1440 || 1440; }));
     const h = Math.floor(total / 60), r = total % 60;
-    html = cnt ? `${cnt} משימות · ${h}${r ? ':' + String(r).padStart(2, '0') : ''} שע׳ מתוכננות` : 'אין משימות מתוכננות';
+    html = cnt ? tr('{0} משימות · {1}{2} שע׳ מתוכננות', cnt, h, r ? ':' + String(r).padStart(2, '0') : '') : tr('אין משימות מתוכננות');
     const heavy = rangeKeys().filter(k => occ(k).reduce((a, t) => a + (t.routine ? 0 : durMin(t)), 0) > OVERLOAD_MIN).length;
-    if (heavy) html += ` · <span class="warn">${S.view === 'day' ? 'יום עמוס' : heavy === 1 ? 'יום עמוס אחד' : heavy + ' ימים עמוסים'}</span>`;
-    if (S.view === 'week') html += ' · <b>סיכום ›</b>';
+    if (heavy) html += ` · <span class="warn">${S.view === 'day' ? tr('יום עמוס') : heavy === 1 ? tr('יום עמוס אחד') : tr('{0} ימים עמוסים', heavy)}</span>`;
+    if (S.view === 'week') html += tr(' · <b>סיכום ›</b>');
   }
   txt.innerHTML = html;
   dot.style.setProperty('--c', color || 'var(--mut2)');
@@ -1557,8 +1934,8 @@ $('#nn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === '
 
 /* ═════════ הוספה בדיבור ═════════ */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const dateLabel = k => { const d = parseKey(k), nm = `יום ${DAYS[d.getDay()]}`, r = relTitle(k); return `${r !== nm ? r + ' · ' : ''}${nm} ${d.getDate()}/${d.getMonth() + 1}`; };
-const repeatLabel = r => r.type === 'daily' ? 'כל יום' : `ימים ${r.days.map(i => DL[i] + '׳').join(' ')}`;
+const dateLabel = k => { const d = parseKey(k), nm = tr('יום {0}', DAYS[d.getDay()]), r = relTitle(k); return `${r !== nm ? r + ' · ' : ''}${nm} ${dm(d)}`; };
+const repeatLabel = r => r.type === 'daily' ? tr('כל יום') : tr('ימים {0}', r.days.map(i => DL[i] + tr('׳')).join(' '));
 function voiceTask(r) {                                    // ממשפט שהובן למשימה מוכנה
   const defCat = S.cats.some(c => c.id === S.lastCat) ? S.lastCat : S.cats[0].id;
   const catId = S.cats.some(c => c.id === r.cat) ? r.cat : defCat;
@@ -1568,14 +1945,14 @@ function voiceTask(r) {                                    // ממשפט שהו�
 function openVoice() {
   let rec = null, errored = false, last = null;
   const { sheet, close } = openSheet(`
-    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>ביטול</button><h2>הוספה בדיבור</h2><span style="min-width:56px"></span></div></div>
+    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>${tr('ביטול')}</button><h2>${tr('הוספה בדיבור')}</h2><span style="min-width:56px"></span></div></div>
     <div class="vwrap">
-      <button type="button" class="mic" id="mic" aria-label="התחל להקליט"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button type="button" class="mic" id="mic" aria-label="${tr('התחל להקליט')}"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <div class="vstat" id="vstat" aria-live="polite"></div>
-      <textarea class="vtxt" id="vtxt" rows="2" placeholder="או כתבו כאן. למשל: אימון מחר בחמש וחצי לשעה וחצי" aria-label="מה לתכנן"></textarea>
+      <textarea class="vtxt" id="vtxt" rows="2" placeholder="${tr('או כתבו כאן. למשל: אימון מחר בחמש וחצי לשעה וחצי')}" aria-label="${tr('מה לתכנן')}"></textarea>
       <div class="vprev" id="vprev"></div>
-      <div class="vact"><button type="button" class="btn" id="vedit" disabled>עריכה</button><button type="button" class="btn pri" id="vadd" disabled>הוסף</button><button type="button" class="btn full" id="vinbox" hidden>שמור בתיבה (בלי שעה)</button></div>
-      <p class="vnote">הזיהוי נעשה על ידי הדפדפן או מערכת ההפעלה של הטלפון. בטלפון אפשר גם ללחוץ על המיקרופון במקלדת.</p>
+      <div class="vact"><button type="button" class="btn" id="vedit" disabled>${tr('עריכה')}</button><button type="button" class="btn pri" id="vadd" disabled>${tr('הוסף')}</button><button type="button" class="btn full" id="vinbox" hidden>${tr('שמור בתיבה (בלי שעה)')}</button></div>
+      <p class="vnote">${tr('הזיהוי נעשה על ידי הדפדפן או מערכת ההפעלה של הטלפון. בטלפון אפשר גם ללחוץ על המיקרופון במקלדת.')}</p>
     </div>`, () => { try { rec && rec.abort(); } catch (e) {} });
   const $s = s => $(s, sheet);
   const stat = (m, cls) => { const e = $s('#vstat'); e.textContent = m; e.className = 'vstat ' + (cls || ''); };
@@ -1590,28 +1967,28 @@ function openVoice() {
     const tk = voiceTask(last), c = cat(tk.cat), isRep = last.repeat.type !== 'none';
     $s('#vprev').innerHTML = `<div class="pv" style="--c:${c.color}">
       <div class="pv-h"><i></i><b>${esc(tk.title)}</b><span>${esc(c.name)}</span></div>
-      <div class="pv-r"><span>מתי</span><b>${isRep ? esc(repeatLabel(last.repeat)) : esc(dateLabel(tk.date))}</b></div>
-      ${isRep ? `<div class="pv-r"><span>מתחילה ב</span><b>${esc(dateLabel(tk.date))}</b></div>` : ''}
-      <div class="pv-r"><span>שעה</span><b><bdi>${tk.start}–${tk.end}</bdi>${last.start ? '' : ' (לא נאמרה שעה)'}</b></div>
-      ${tk.routine ? '<div class="pv-r"><span>סוג</span><b>שגרה ברקע, לא נספרת</b></div>' : ''}
-      ${last.guessed && last.start ? `<div class="pv-n">לא נאמר בוקר או ערב, אז הבנתי ${tk.start}. אפשר לתקן בעריכה.</div>` : ''}
+      <div class="pv-r"><span>${tr('מתי')}</span><b>${isRep ? esc(repeatLabel(last.repeat)) : esc(dateLabel(tk.date))}</b></div>
+      ${isRep ? `<div class="pv-r"><span>${tr('מתחילה ב')}</span><b>${esc(dateLabel(tk.date))}</b></div>` : ''}
+      <div class="pv-r"><span>${tr('שעה||time')}</span><b><bdi>${tk.start}–${tk.end}</bdi>${last.start ? '' : tr(' (לא נאמרה שעה)')}</b></div>
+      ${tk.routine ? tr('<div class="pv-r"><span>סוג</span><b>שגרה ברקע, לא נספרת</b></div>') : ''}
+      ${last.guessed && last.start ? `<div class="pv-n">${tr('לא נאמר בוקר או ערב, אז הבנתי {0}. אפשר לתקן בעריכה.', tk.start)}</div>` : ''}
     </div>`;
   };
   $s('#vtxt').addEventListener('input', preview);
   $s('#vtxt').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $s('#vadd').click(); } });
 
-  const msgs = { 'not-allowed': 'אין הרשאה למיקרופון. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'service-not-allowed': 'ההקלטה לא זמינה כאן. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'no-speech': 'לא שמעתי כלום. לחצו על המיקרופון ונסו שוב.', 'audio-capture': 'לא נמצא מיקרופון.', 'network': 'אין חיבור לשירות הזיהוי. אפשר להקליד.', 'language-not-supported': 'עברית לא נתמכת בזיהוי כאן. אפשר להקליד.' };
-  const setRec = on => { const b = $s('#mic'); b.classList.toggle('rec', on); b.setAttribute('aria-label', on ? 'עצור הקלטה' : 'התחל להקליט'); };
+  const msgs = { 'not-allowed': tr('אין הרשאה למיקרופון. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.'), 'service-not-allowed': tr('ההקלטה לא זמינה כאן. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.'), 'no-speech': tr('לא שמעתי כלום. לחצו על המיקרופון ונסו שוב.'), 'audio-capture': tr('לא נמצא מיקרופון.'), 'network': tr('אין חיבור לשירות הזיהוי. אפשר להקליד.'), 'language-not-supported': tr('עברית לא נתמכת בזיהוי כאן. אפשר להקליד.') };
+  const setRec = on => { const b = $s('#mic'); b.classList.toggle('rec', on); b.setAttribute('aria-label', on ? tr('עצור הקלטה') : tr('התחל להקליט')); };
   const start = () => {
-    if (!SR) { stat('ההקלטה לא נתמכת בדפדפן הזה. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.', 'err'); $s('#mic').disabled = true; return; }
+    if (!SR) { stat(tr('ההקלטה לא נתמכת בדפדפן הזה. אפשר להקליד, או ללחוץ על המיקרופון במקלדת.'), 'err'); $s('#mic').disabled = true; return; }
     try {
-      errored = false; rec = new SR(); rec.lang = 'he-IL'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-      rec.onstart = () => { setRec(true); stat('מקשיבה… אמרו מה לתכנן'); };
+      errored = false; rec = new SR(); rec.lang = LANG === 'en' ? 'en-US' : 'he-IL'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      rec.onstart = () => { setRec(true); stat(tr('מקשיבה… אמרו מה לתכנן')); };
       rec.onresult = e => { let txt = ''; for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript + ' '; $s('#vtxt').value = txt.trim(); preview(); };
-      rec.onerror = e => { if (e.error === 'aborted') return; errored = true; stat(msgs[e.error] || 'לא הצלחתי להקליט. אפשר להקליד.', 'err'); };
-      rec.onend = () => { setRec(false); if (errored) return; stat($s('#vtxt').value.trim() ? 'הבנתי. בדקו ולחצו "הוסף"' : 'לא שמעתי. לחצו על המיקרופון ונסו שוב'); };
+      rec.onerror = e => { if (e.error === 'aborted') return; errored = true; stat(msgs[e.error] || tr('לא הצלחתי להקליט. אפשר להקליד.'), 'err'); };
+      rec.onend = () => { setRec(false); if (errored) return; stat($s('#vtxt').value.trim() ? tr('הבנתי. בדקו ולחצו "הוסף"') : tr('לא שמעתי. לחצו על המיקרופון ונסו שוב')); };
       rec.start();
-    } catch (e) { setRec(false); stat('לא ניתן להפעיל הקלטה כאן. אפשר להקליד.', 'err'); }
+    } catch (e) { setRec(false); stat(tr('לא ניתן להפעיל הקלטה כאן. אפשר להקליד.'), 'err'); }
   };
   $s('#mic').onclick = () => { if ($s('#mic').classList.contains('rec')) { try { rec.stop(); } catch (e) {} } else start(); };
 
@@ -1625,17 +2002,17 @@ function openVoice() {
     if (moved) ui.date = tk.date;
     render({ scroll: moved });
     vib(8);
-    toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { ck(); save(); render(); });
+    toast(tr('נוסף · {0} · {1}–{2}', tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date), tk.start, tk.end), tr('ביטול'), () => { ck(); save(); render(); });
   };
-  $s('#vinbox').onclick = () => { if (!last || added) return; added = true; const tk = voiceTask(last), ck = checkpoint(['inbox']); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; ck.arm(); save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { ck(); save(); updateBadge(); }); };
+  $s('#vinbox').onclick = () => { if (!last || added) return; added = true; const tk = voiceTask(last), ck = checkpoint(['inbox']); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; ck.arm(); save(); close(); updateBadge(); toast(tr('נשמר בתיבה'), tr('ביטול'), () => { ck(); save(); updateBadge(); }); };
   $s('#vedit').onclick = () => { if (!last) return; const tk = voiceTask(last); close(); setTimeout(() => openTask({ date: tk.date, start: tk.start, prefill: tk }), 220); };
   start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
 }
 $('#vbtn').onclick = openVoice;
 
 /* ═════════ ייצוא ליומן של הטלפון (קובץ ICS) — כך מקבלים תזכורות אמיתיות ═════════ */
-const REMIND_OPTS = [[0, 'בזמן ההתחלה'], [5, '5 דקות לפני'], [10, '10 דקות לפני'], [15, '15 דקות לפני'], [30, '30 דקות לפני'], [60, 'שעה לפני'], [120, 'שעתיים לפני'], [1440, 'יום לפני']];
-const remindLabel = v => v === 'n' ? 'בלי תזכורת' : (REMIND_OPTS.find(o => o[0] === v) || [0, `${v} דקות לפני`])[1];
+const REMIND_OPTS = [[0, tr('בזמן ההתחלה')], [5, tr('5 דקות לפני')], [10, tr('10 דקות לפני')], [15, tr('15 דקות לפני')], [30, tr('30 דקות לפני')], [60, tr('שעה לפני')], [120, tr('שעתיים לפני')], [1440, tr('יום לפני')]];
+const remindLabel = v => v === 'n' ? tr('בלי תזכורת') : (REMIND_OPTS.find(o => o[0] === v) || [0, tr('{0} דקות לפני', v)])[1];
 const remindOf = t => t.remind === undefined ? S.remindDefault : t.remind;                // 'n' או מספר דקות
 const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 function icsFold(line) {                                  // שורה מקסימום 75 בתים, בלי לחתוך אות באמצע
@@ -1653,7 +2030,7 @@ function icsDT(d, m) {                                    // שעה "צפה" (ל
 }
 function buildICS(list) {
   const now = new Date(), stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
-  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//HE//', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:סדר יום'];
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//HE//', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', tr('X-WR-CALNAME:סדר יום')];
   const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
   list.forEach(t => {
     const p = span(t), rep = t.repeat || { type: 'none' };
@@ -1686,9 +2063,9 @@ async function deliverFile(name, mime, text) {            // iPhone: גיליו�
   return 'download';
 }
 async function exportICS(list, label) {
-  if (!list.length) { toast('אין משימות עתידיות לייצוא'); return; }
+  if (!list.length) { toast(tr('אין משימות עתידיות לייצוא')); return; }
   const how = await deliverFile(`agenda-${todayKey()}.ics`, 'text/calendar', buildICS(list));
-  if (how === 'download') toast(`${label} · פתחו את הקובץ כדי להוסיף ליומן`);
+  if (how === 'download') toast(tr('{0} · פתחו את הקובץ כדי להוסיף ליומן', label));
 }
 
 /* ═════════ משימות פתוחות: מה שלא בוצע + תיבה למשימות בלי שעה ═════════ */
@@ -1701,7 +2078,7 @@ function missedList() {                                   // משימות חד־
 function updateBadge() {
   const n = missedList().length + S.inbox.length, b = $('#bdg');
   b.hidden = n === 0; b.textContent = n > 99 ? '99+' : n;
-  $('#tray').setAttribute('aria-label', n ? `משימות פתוחות: ${n}` : 'משימות פתוחות');
+  $('#tray').setAttribute('aria-label', n ? tr('משימות פתוחות: {0}', n) : tr('משימות פתוחות'));
 }
 function moveToToday(t) {                                 // מעביר להיום: אותה שעה אם היא עוד לפנינו, אחרת למשבצת הקרובה. המשך נשמר
   const n = new Date(), nowMin = n.getHours() * 60 + n.getMinutes(), p = span(t), dur = (p.e - p.s + 1440) % 1440 || 60;
@@ -1710,18 +2087,18 @@ function moveToToday(t) {                                 // מעביר להיו
 }
 function openTray() {
   const { sheet, close } = openSheet(`
-    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>משימות פתוחות</h2><button type="button" class="lnk st" data-close>סיום</button></div></div>
-    <div class="qa"><input id="qa" placeholder="משימה בלי שעה, למשל: להתקשר לרופא" maxlength="80" enterkeyhint="done" aria-label="משימה חדשה בלי שעה"><button type="button" class="btn pri" id="qab">הוסף</button></div>
+    <div class="shh"><div class="grab"></div><div class="hd"><span style="min-width:56px"></span><h2>${tr('משימות פתוחות')}</h2><button type="button" class="lnk st" data-close>${tr('סיום')}</button></div></div>
+    <div class="qa"><input id="qa" placeholder="${tr('משימה בלי שעה, למשל: להתקשר לרופא')}" maxlength="80" enterkeyhint="done" aria-label="${tr('משימה חדשה בלי שעה')}"><button type="button" class="btn pri" id="qab">${tr('הוסף')}</button></div>
     <div id="trayBody"></div>`);
   const body = $('#trayBody', sheet);
-  const undoable = (msg, fn) => { const ck = checkpoint(['tasks', 'inbox']); fn(); ck.arm(); save(); draw(); render(); toast(msg, 'ביטול', () => { ck(); save(); draw(); render(); }); };
+  const undoable = (msg, fn) => { const ck = checkpoint(['tasks', 'inbox']); fn(); ck.arm(); save(); draw(); render(); toast(msg, tr('ביטול'), () => { ck(); save(); draw(); render(); }); };
   const draw = () => {
     const miss = missedList();
     const row = (kind, id, title, catId, label, btns) => `<div class="trow" data-kind="${kind}" data-id="${id}" style="--c:${cat(catId).color}"><i></i><div class="tr-t"><b>${esc(title)}</b><small>${label}</small></div><div class="tr-a">${btns}</div></div>`;
     let h = '';
-    if (miss.length) h += `<div class="sec">לא בוצעו</div>` + miss.map(t => row('m', t.id, t.title, t.cat, `${esc(dateLabel(t.date))} · <bdi>${t.start}–${t.end}</bdi>`, '<button class="mini" data-a="today">להיום</button><button class="mini" data-a="done">בוצע</button><button class="mini dng" data-a="drop">ויתור</button>')).join('');
-    if (S.inbox.length) h += `<div class="sec">בלי שעה</div>` + S.inbox.map(x => row('i', x.id, x.title, x.cat, esc(cat(x.cat).name), '<button class="mini" data-a="plan">תזמן</button><button class="mini dng" data-a="del">מחק</button>')).join('');
-    body.innerHTML = h || '<p class="empty">אין משימות פתוחות. מה שלא תספיקו יופיע כאן.</p>';
+    if (miss.length) h += `<div class="sec">${tr('לא בוצעו')}</div>` + miss.map(t => row('m', t.id, t.title, t.cat, `${esc(dateLabel(t.date))} · <bdi>${t.start}–${t.end}</bdi>`, tr('<button class="mini" data-a="today">להיום</button><button class="mini" data-a="done">בוצע</button><button class="mini dng" data-a="drop">ויתור</button>'))).join('');
+    if (S.inbox.length) h += `<div class="sec">${tr('בלי שעה')}</div>` + S.inbox.map(x => row('i', x.id, x.title, x.cat, esc(cat(x.cat).name), tr('<button class="mini" data-a="plan">תזמן</button><button class="mini dng" data-a="del">מחק</button>'))).join('');
+    body.innerHTML = h || tr('<p class="empty">אין משימות פתוחות. מה שלא תספיקו יופיע כאן.</p>');
     updateBadge();
   };
   draw();
@@ -1737,12 +2114,12 @@ function openTray() {
     const r = b.closest('.trow'), id = r.dataset.id, a = b.dataset.a;
     if (r.dataset.kind === 'm') {
       const t = findTask(id); if (!t) return;
-      if (a === 'today') undoable('הועבר להיום', () => moveToToday(t));
-      else if (a === 'done') undoable('סומן כבוצע', () => setDone(t, t.date, true));
-      else undoable('בוטל', () => { t.dismissed = true; });
+      if (a === 'today') undoable(tr('הועבר להיום'), () => moveToToday(t));
+      else if (a === 'done') undoable(tr('סומן כבוצע'), () => setDone(t, t.date, true));
+      else undoable(tr('בוטל'), () => { t.dismissed = true; });
     } else {
       const x = S.inbox.find(q => q.id === id); if (!x) return;
-      if (a === 'del') undoable('נמחק מהתיבה', () => { S.inbox = S.inbox.filter(q => q.id !== id); });
+      if (a === 'del') undoable(tr('נמחק מהתיבה'), () => { S.inbox = S.inbox.filter(q => q.id !== id); });
       else { close(); setTimeout(() => openTask({ date: todayKey(), start: nextSlot(todayKey()), prefill: { title: x.title, cat: x.cat, end: '', repeat: { type: 'none', days: [] }, routine: false }, inboxId: id }), 220); }
     }
   });
@@ -1753,7 +2130,7 @@ $('#tray').onclick = openTray;
 const OVERLOAD_MIN = 600;                                  // יותר מ־10 שעות מתוכננות ביום = יום עמוס
 const endAt = (t, k) => { const p = span(t), d0 = parseKey(k); return new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, p.over ? p.e + 1440 : p.e); };
 const durMin = t => { const p = span(t); return (p.e - p.s + 1440) % 1440 || 1440; };
-const fmtH = m => { const h = Math.floor(m / 60), r = m % 60; return `${h}${r ? ':' + pad(r) : ''} שע׳`; };
+const fmtH = m => { const h = Math.floor(m / 60), r = m % 60; return tr('{0}{1} שע׳', h, r ? ':' + pad(r) : ''); };
 
 /* משימות רגילות בלבד (שגרה לא נכללת). "מועד" = המשימה הסתיימה או כבר סומנה, ורק עליה מחשבים אחוז ביצוע */
 function weekStats(ws, now = new Date()) {
@@ -1789,21 +2166,21 @@ function streaks(now = new Date()) {
 function openSummary() {
   let ws = startOfWeek(parseKey(ui.date));
   const { sheet } = openSheet(`
-    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>סגור</button><h2>סיכום שבועי</h2><span style="min-width:56px"></span></div></div>
-    <div class="sm-nav"><button type="button" class="ib" data-d="-1" aria-label="שבוע קודם"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><b id="smr"></b><button type="button" class="ib" data-d="1" aria-label="שבוע הבא"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+    <div class="shh"><div class="grab"></div><div class="hd"><button type="button" class="lnk" data-close>${tr('סגור')}</button><h2>${tr('סיכום שבועי')}</h2><span style="min-width:56px"></span></div></div>
+    <div class="sm-nav"><button type="button" class="ib" data-d="-1" aria-label="${tr('שבוע קודם')}"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><b id="smr"></b><button type="button" class="ib" data-d="1" aria-label="${tr('שבוע הבא')}"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
     <div id="smBody"></div>`);
   const draw = () => {
     const st = weekStats(ws), tk = todayKey(), pct = st.due ? Math.round(st.done / st.due * 100) : 0;
     $('#smr', sheet).textContent = weekRange(ws);
-    let h = st.tasks ? `<div class="sm-big"><b>${st.done}</b><span>מתוך ${st.due} שהגיע זמנן בוצעו</span>${st.due ? `<em>${pct}%</em>` : ''}</div>
-      <div class="bar" role="img" aria-label="${pct} אחוז בוצעו"><i style="width:${pct}%"></i></div>
-      <p class="sm-sub">${st.tasks} משימות בשבוע · ${fmtH(st.planned)} מתוכננות${st.tasks - st.due > 0 ? ` · ${st.tasks - st.due} עוד לפניכם` : ''}</p>` : '<p class="empty">אין משימות בשבוע הזה.</p>';
+    let h = st.tasks ? `<div class="sm-big"><b>${st.done}</b><span>${tr('מתוך {0} שהגיע זמנן בוצעו', st.due)}</span>${st.due ? `<em>${pct}%</em>` : ''}</div>
+      <div class="bar" role="img" aria-label="${tr('{0} אחוז בוצעו', pct)}"><i style="width:${pct}%"></i></div>
+      <p class="sm-sub">${tr('{0} משימות בשבוע · {1} מתוכננות', st.tasks, fmtH(st.planned))}${st.tasks - st.due > 0 ? tr(' · {0} עוד לפניכם', st.tasks - st.due) : ''}</p>` : tr('<p class="empty">אין משימות בשבוע הזה.</p>');
     const cats = Object.entries(st.byCat).sort((a, b) => b[1].planned - a[1].planned), maxP = cats.length ? cats[0][1].planned : 1;
-    if (cats.length) h += `<div class="sec">לפי קטגוריה</div>` + cats.map(([id, c]) => `<div class="cr" style="--c:${cat(id).color}"><i></i><span class="cn">${esc(cat(id).name)}</span><span class="ch">${fmtH(c.planned)} · ${c.doneN}/${c.n}</span><div class="cb"><u style="width:${c.planned / maxP * 100}%"><s style="width:${c.doneMin / c.planned * 100}%"></s></u></div></div>`).join('');
-    if (st.tasks) h += `<div class="sec">לפי יום</div><div class="days">` + st.byDay.map((d, i) => `<div class="dc${d.heavy ? ' heavy' : ''}${d.k === tk ? ' today' : ''}"><div class="dbar"><u style="height:${Math.min(d.planned / 840, 1) * 100}%"><s style="height:${d.planned ? d.done / d.planned * 100 : 0}%"></s></u></div><small>${DL[i]}׳</small><small class="dh">${d.planned ? fmtH(d.planned) : ''}</small></div>`).join('') + '</div>' + (st.byDay.some(d => d.heavy) ? `<p class="sm-warn">יום עם יותר מ־${OVERLOAD_MIN / 60} שעות מתוכננות מסומן בכתום. כדאי להקל עליו.</p>` : '');
+    if (cats.length) h += `<div class="sec">${tr('לפי קטגוריה')}</div>` + cats.map(([id, c]) => `<div class="cr" style="--c:${cat(id).color}"><i></i><span class="cn">${esc(cat(id).name)}</span><span class="ch">${fmtH(c.planned)} · ${c.doneN}/${c.n}</span><div class="cb"><u style="width:${c.planned / maxP * 100}%"><s style="width:${c.doneMin / c.planned * 100}%"></s></u></div></div>`).join('');
+    if (st.tasks) h += `<div class="sec">${tr('לפי יום')}</div><div class="days">` + st.byDay.map((d, i) => `<div class="dc${d.heavy ? ' heavy' : ''}${d.k === tk ? ' today' : ''}"><div class="dbar"><u style="height:${Math.min(d.planned / 840, 1) * 100}%"><s style="height:${d.planned ? d.done / d.planned * 100 : 0}%"></s></u></div><small>${DL[i]}${tr('׳')}</small><small class="dh">${d.planned ? fmtH(d.planned) : ''}</small></div>`).join('') + '</div>' + (st.byDay.some(d => d.heavy) ? `<p class="sm-warn">${tr('יום עם יותר מ־{0} שעות מתוכננות מסומן בכתום. כדאי להקל עליו.', OVERLOAD_MIN / 60)}</p>` : '');
     const sk = streaks();
-    if (sk.length) h += `<div class="sec">רצפים</div>` + sk.map(x => `<div class="cr" style="--c:${cat(x.cat).color}"><i></i><span class="cn">${esc(cat(x.cat).name)}</span><span class="ch"><b>${x.n}</b> ברצף ללא החמצה</span></div>`).join('');
-    h += '<p class="vnote" style="margin-top:14px">שגרה (שינה, ארוחות) לא נכללת. משימה שעוד לא הגיע זמנה לא נחשבת החמצה.</p>';
+    if (sk.length) h += `<div class="sec">${tr('רצפים')}</div>` + sk.map(x => `<div class="cr" style="--c:${cat(x.cat).color}"><i></i><span class="cn">${esc(cat(x.cat).name)}</span><span class="ch"><b>${x.n}</b> ${tr('ברצף ללא החמצה')}</span></div>`).join('');
+    h += tr('<p class="vnote" style="margin-top:14px">שגרה (שינה, ארוחות) לא נכללת. משימה שעוד לא הגיע זמנה לא נחשבת החמצה.</p>');
     $('#smBody', sheet).innerHTML = h;
   };
   sheet.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { ws = addDays(ws, 7 * +b.dataset.d); draw(); });
@@ -1888,7 +2265,7 @@ function mergeRemote(raw) {
 let syncTimer = 0, syncing = false, again = false, syncUI = null;
 const setStatus = (st, err = '') => { sync.status = st; sync.err = err; if (syncUI) syncUI(); };
 function queueSync(ms = 2500) { if (!sync.key || DEMO) return; clearTimeout(syncTimer); syncTimer = setTimeout(doSync, ms); }
-const MSGS = { offline: 'אין חיבור', bad_key: 'המפתח לא תקין', full: 'השירות מלא כרגע', busy: 'השירות עמוס כרגע, נסו שוב בעוד שעה', too_big: 'הנתונים גדולים מדי', bad_data: 'שגיאה בנתונים' };
+const MSGS = { offline: tr('אין חיבור'), bad_key: tr('המפתח לא תקין'), full: tr('השירות מלא כרגע'), busy: tr('השירות עמוס כרגע, נסו שוב בעוד שעה'), too_big: tr('הנתונים גדולים מדי'), bad_data: tr('שגיאה בנתונים') };
 
 async function doSync() {
   if (!sync.key || DEMO) return;
@@ -1912,8 +2289,8 @@ async function doSync() {
     queueReminders(); refreshPush();
   } catch (e) {
     const m = String(e.message || e);
-    if (m === 'gone') { stopSync(); toast('הנתונים נמחקו מהענן, אז הסנכרון במכשיר הזה הופסק. המשימות נשארו כאן.'); return; }
-    setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? 'ננסה שוב בעוד רגע' : 'שגיאת סנכרון'));
+    if (m === 'gone') { stopSync(); toast(tr('הנתונים נמחקו מהענן, אז הסנכרון במכשיר הזה הופסק. המשימות נשארו כאן.')); return; }
+    setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? tr('ננסה שוב בעוד רגע') : tr('שגיאת סנכרון')));
     if (m !== 'offline' && m !== 'bad_key' && m !== 'full') queueSync(m === 'busy' ? 600000 : 30000);
   } finally {
     syncing = false;
@@ -1946,35 +2323,35 @@ setInterval(() => { if (document.visibilityState === 'visible') queueSync(50); }
 /* ממשק בהגדרות */
 function syncSection(sheet) {
   const box = $('#syncBox', sheet);
-  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'הרגע' : m < 60 ? `לפני ${m} דק׳` : `לפני ${Math.round(m / 60)} שע׳`; };
+  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? tr('הרגע') : m < 60 ? tr('לפני {0} דק׳', m) : tr('לפני {0} שע׳', Math.round(m / 60)); };
   let shown = false;
   const draw = () => {
     if (!sync.key) {
-      box.innerHTML = `<p class="sm-note">שומר את המשימות בענן, כדי שיופיעו בכל מכשיר ולא יאבדו. אין חשבון וסיסמה: מפתח אחד מזהה אתכם, ומי שיש לו אותו יכול לראות את המשימות.</p>
-        <div class="list"><button class="btn" id="sOn">הפעל סנכרון (מפתח חדש)</button><button class="btn" id="sJoin">יש לי מפתח ממכשיר אחר</button></div>
-        <div class="keyrow" id="sJoinBox" hidden><input id="sKeyIn" placeholder="XXXX-XXXX-XXXX-…" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="מפתח סנכרון"><button class="btn pri" id="sKeyGo">התחבר</button></div><div class="vstat err" id="sErr"></div>`;
-      $('#sOn', box).onclick = async () => { $('#sOn', box).disabled = true; const ok = await enableSync(); if (ok) toast('הסנכרון פעיל. שמרו את המפתח במקום בטוח'); draw(); };
+      box.innerHTML = `<p class="sm-note">${tr('שומר את המשימות בענן, כדי שיופיעו בכל מכשיר ולא יאבדו. אין חשבון וסיסמה: מפתח אחד מזהה אתכם, ומי שיש לו אותו יכול לראות את המשימות.')}</p>
+        <div class="list"><button class="btn" id="sOn">${tr('הפעל סנכרון (מפתח חדש)')}</button><button class="btn" id="sJoin">${tr('יש לי מפתח ממכשיר אחר')}</button></div>
+        <div class="keyrow" id="sJoinBox" hidden><input id="sKeyIn" placeholder="XXXX-XXXX-XXXX-…" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="${tr('מפתח סנכרון')}"><button class="btn pri" id="sKeyGo">${tr('התחבר')}</button></div><div class="vstat err" id="sErr"></div>`;
+      $('#sOn', box).onclick = async () => { $('#sOn', box).disabled = true; const ok = await enableSync(); if (ok) toast(tr('הסנכרון פעיל. שמרו את המפתח במקום בטוח')); draw(); };
       $('#sJoin', box).onclick = () => { $('#sJoinBox', box).hidden = false; $('#sKeyIn', box).focus(); };
       const go = async () => {
         const e = $('#sErr', box); e.textContent = '';
-        try { await joinSync($('#sKeyIn', box).value); toast('מחובר. המשימות מהמכשיר השני נטענו'); draw(); }
-        catch (x) { e.textContent = x.message === 'not_found' ? 'המפתח לא נמצא. בדקו שהעתקתם אותו נכון' : x.message === 'bad_key' ? 'המפתח לא נראה תקין (26 תווים)' : x.message === 'offline' ? 'אין חיבור לשרת' : 'לא הצלחנו להתחבר'; }
+        try { await joinSync($('#sKeyIn', box).value); toast(tr('מחובר. המשימות מהמכשיר השני נטענו')); draw(); }
+        catch (x) { e.textContent = x.message === 'not_found' ? tr('המפתח לא נמצא. בדקו שהעתקתם אותו נכון') : x.message === 'bad_key' ? tr('המפתח לא נראה תקין (26 תווים)') : x.message === 'offline' ? tr('אין חיבור לשרת') : tr('לא הצלחנו להתחבר'); }
       };
       $('#sKeyGo', box).onclick = go;
       $('#sKeyIn', box).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
       return;
     }
     const st = sync.status, cls = st === 'ok' ? 'ok' : st === 'syncing' ? 'syn' : st === 'idle' ? '' : 'err';
-    const txt = st === 'ok' ? `מסונכרן · ${ago(sync.last)}` : st === 'syncing' ? 'מסנכרן…' : st === 'offline' ? 'אין חיבור. הכול נשמר במכשיר ויסונכרן כשהחיבור יחזור' : st === 'idle' ? 'ממתין לסנכרון' : sync.err || 'שגיאת סנכרון';
+    const txt = st === 'ok' ? tr('מסונכרן · {0}', ago(sync.last)) : st === 'syncing' ? tr('מסנכרן…') : st === 'offline' ? tr('אין חיבור. הכול נשמר במכשיר ויסונכרן כשהחיבור יחזור') : st === 'idle' ? tr('ממתין לסנכרון') : sync.err || tr('שגיאת סנכרון');
     box.innerHTML = `<div class="srow"><i class="sd ${cls}"></i><span id="sStat">${esc(txt)}</span></div>
-      <div class="keyrow"><input id="sKey" readonly dir="ltr" aria-label="מפתח הסנכרון שלך" value="${shown ? fmtKey(sync.key) : '••••-••••-••••-••••-••••-••••-••'}"><button class="btn" id="sShow">${shown ? 'הסתר' : 'הצג'}</button><button class="btn" id="sCopy">העתק</button></div>
-      <p class="sm-note">את המפתח הזה מזינים במכשיר חדש כדי לחבר אותו. שמרו אותו במקום בטוח. אם הוא אובד, אי אפשר לחבר מכשיר נוסף.</p>
-      <div class="list"><button class="btn" id="sNow">סנכרן עכשיו</button><button class="btn" id="sOff">הפסק סנכרון במכשיר הזה</button><button class="btn dng" id="sDel">מחק את הנתונים שלי מהענן</button></div>`;
+      <div class="keyrow"><input id="sKey" readonly dir="ltr" aria-label="${tr('מפתח הסנכרון שלך')}" value="${shown ? fmtKey(sync.key) : '••••-••••-••••-••••-••••-••••-••'}"><button class="btn" id="sShow">${shown ? tr('הסתר') : tr('הצג')}</button><button class="btn" id="sCopy">${tr('העתק')}</button></div>
+      <p class="sm-note">${tr('את המפתח הזה מזינים במכשיר חדש כדי לחבר אותו. שמרו אותו במקום בטוח. אם הוא אובד, אי אפשר לחבר מכשיר נוסף.')}</p>
+      <div class="list"><button class="btn" id="sNow">${tr('סנכרן עכשיו')}</button><button class="btn" id="sOff">${tr('הפסק סנכרון במכשיר הזה')}</button><button class="btn dng" id="sDel">${tr('מחק את הנתונים שלי מהענן')}</button></div>`;
     $('#sShow', box).onclick = () => { shown = !shown; draw(); };
-    $('#sCopy', box).onclick = async () => { try { await navigator.clipboard.writeText(fmtKey(sync.key)); toast('המפתח הועתק'); } catch (e) { shown = true; draw(); const i = $('#sKey', box); i.select(); toast('סמנו והעתיקו ידנית'); } };
+    $('#sCopy', box).onclick = async () => { try { await navigator.clipboard.writeText(fmtKey(sync.key)); toast(tr('המפתח הועתק')); } catch (e) { shown = true; draw(); const i = $('#sKey', box); i.select(); toast(tr('סמנו והעתיקו ידנית')); } };
     $('#sNow', box).onclick = () => doSync();
-    $('#sOff', box).onclick = async () => { if (await ask('המכשיר הזה יפסיק להסתנכרן. הנתונים שבו והנתונים בענן נשארים.', 'הפסק')) { stopSync(); draw(); } };
-    $('#sDel', box).onclick = async () => { if (await ask('כל הנתונים שלכם יימחקו מהענן, ובכל המכשירים המחוברים הסנכרון יפסיק לעבוד. הנתונים שבמכשיר הזה נשארים.', 'מחק מהענן')) { try { await deleteCloud(); toast('נמחק מהענן'); } catch (e) { toast('המחיקה נכשלה, בדקו חיבור'); } draw(); } };
+    $('#sOff', box).onclick = async () => { if (await ask(tr('המכשיר הזה יפסיק להסתנכרן. הנתונים שבו והנתונים בענן נשארים.'), tr('הפסק'))) { stopSync(); draw(); } };
+    $('#sDel', box).onclick = async () => { if (await ask(tr('כל הנתונים שלכם יימחקו מהענן, ובכל המכשירים המחוברים הסנכרון יפסיק לעבוד. הנתונים שבמכשיר הזה נשארים.'), tr('מחק מהענן'))) { try { await deleteCloud(); toast(tr('נמחק מהענן')); } catch (e) { toast(tr('המחיקה נכשלה, בדקו חיבור')); } draw(); } };
   };
   syncUI = () => { draw(); drawPush(sheet); }; syncUI();
 }
@@ -1989,9 +2366,9 @@ const isStandalone = () => { try { return matchMedia('(display-mode: standalone)
 const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const b64uToBytes = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')), c => c.charCodeAt(0));
 
-const reminderBody = (t, r) => `${r === 0 ? 'מתחיל עכשיו' : 'בעוד ' + (r < 60 ? r + ' דקות' : r === 60 ? 'שעה' : r === 120 ? 'שעתיים' : 'יום')} · ${t.start}–${t.end}`;
+const reminderBody = (t, r) => `${r === 0 ? tr('מתחיל עכשיו') : r < 60 ? tr('בעוד {0} דקות', r) : r === 60 ? tr('בעוד שעה') : r === 120 ? tr('בעוד שעתיים') : tr('בעוד יום')} · ${t.start}–${t.end}`;
 function readTest(now) {
-  try { const o = JSON.parse(localStorage.getItem(TESTKEY)); if (o && new Date(o.at) > new Date(now.getTime() - 120000)) return { rid: o.rid, at: o.at, title: 'בדיקת התראה', body: 'ההתראות עובדות', url: './' }; } catch (e) {}
+  try { const o = JSON.parse(localStorage.getItem(TESTKEY)); if (o && new Date(o.at) > new Date(now.getTime() - 120000)) return { rid: o.rid, at: o.at, title: tr('בדיקת התראה'), body: tr('ההתראות עובדות'), url: './' }; } catch (e) {}
   return null;
 }
 function buildReminders(now = new Date(), days = 30) {            // רק משימות רגילות שעוד לא בוצעו ושהזמן שלהן בעתיד
@@ -2061,18 +2438,18 @@ async function sendTestPush() {                                   // תזכור�
 function drawPush(sheet) {
   const box = $('#pushBox', sheet); if (!box) return;
   const note = t => { box.innerHTML = `<p class="sm-note">${t}</p>`; };
-  if (!sync.key) return note('התראות דורשות סנכרון, כדי שהשרת ידע מה לתזכר. הפעילו קודם את הסנכרון.');
-  if (!pushSupported()) return note('הדפדפן הזה לא תומך בהתראות. אפשר להשתמש בייצוא ליומן של הטלפון.');
-  if (isIOS() && !isStandalone()) return note('באייפון ההתראות עובדות רק אחרי שמוסיפים את האפליקציה למסך הבית (שיתוף ← הוסף למסך הבית) ופותחים אותה משם.');
-  if (Notification.permission === 'denied') return note('ההתראות חסומות בהגדרות המכשיר. אפשר לאפשר אותן שם ולחזור לכאן.');
+  if (!sync.key) return note(tr('התראות דורשות סנכרון, כדי שהשרת ידע מה לתזכר. הפעילו קודם את הסנכרון.'));
+  if (!pushSupported()) return note(tr('הדפדפן הזה לא תומך בהתראות. אפשר להשתמש בייצוא ליומן של הטלפון.'));
+  if (isIOS() && !isStandalone()) return note(tr('באייפון ההתראות עובדות רק אחרי שמוסיפים את האפליקציה למסך הבית (שיתוף ← הוסף למסך הבית) ופותחים אותה משם.'));
+  if (Notification.permission === 'denied') return note(tr('ההתראות חסומות בהגדרות המכשיר. אפשר לאפשר אותן שם ולחזור לכאן.'));
   const on = pushOn();
-  box.innerHTML = `<p class="sm-note">${on ? 'פעיל במכשיר הזה. כל משימה תתריע לפי התזכורת שלה (ברירת מחדל: ' + esc(remindLabel(S.remindDefault)) + '), גם כשהאפליקציה סגורה.' : 'תקבלו התראה לפני כל משימה, גם כשהאפליקציה סגורה.'}</p>
-    <div class="list">${on ? '<button class="btn" id="pTest">שלח התראת בדיקה</button><button class="btn" id="pOff">כבה התראות במכשיר הזה</button>' : '<button class="btn pri" id="pOn">הפעל התראות</button>'}</div><div class="vstat err" id="pErr"></div>`;
+  box.innerHTML = `<p class="sm-note">${on ? tr('פעיל במכשיר הזה. כל משימה תתריע לפי התזכורת שלה (ברירת מחדל: ') + esc(remindLabel(S.remindDefault)) + tr('), גם כשהאפליקציה סגורה.') : tr('תקבלו התראה לפני כל משימה, גם כשהאפליקציה סגורה.')}</p>
+    <div class="list">${on ? tr('<button class="btn" id="pTest">שלח התראת בדיקה</button><button class="btn" id="pOff">כבה התראות במכשיר הזה</button>') : tr('<button class="btn pri" id="pOn">הפעל התראות</button>')}</div><div class="vstat err" id="pErr"></div>`;
   const err = m => { $('#pErr', box).textContent = m; };
-  const MSG = { need_sync: 'צריך להפעיל סנכרון קודם', unsupported: 'הדפדפן לא תומך', ios_install: 'צריך להוסיף למסך הבית קודם', denied: 'לא אישרתם התראות', no_vapid: 'השירות עוד לא מוכן, נסו שוב בעוד דקה', no_sw: 'האפליקציה עוד לא מוכנה להתראות. רעננו ונסו שוב', offline: 'אין חיבור לשרת' };
-  const on_ = $('#pOn', box); if (on_) on_.onclick = async () => { on_.disabled = true; try { await enablePush(); toast('ההתראות פעילות'); } catch (e) { err(MSG[e.message] || 'לא הצלחנו להפעיל התראות'); } drawPush(sheet); };
-  const t_ = $('#pTest', box); if (t_) t_.onclick = async () => { await sendTestPush(); toast('תגיע התראה בעוד כדקה. אפשר לסגור את האפליקציה'); };
-  const o_ = $('#pOff', box); if (o_) o_.onclick = async () => { await disablePush(); toast('ההתראות כובו במכשיר הזה'); drawPush(sheet); };
+  const MSG = { need_sync: tr('צריך להפעיל סנכרון קודם'), unsupported: tr('הדפדפן לא תומך'), ios_install: tr('צריך להוסיף למסך הבית קודם'), denied: tr('לא אישרתם התראות'), no_vapid: tr('השירות עוד לא מוכן, נסו שוב בעוד דקה'), no_sw: tr('האפליקציה עוד לא מוכנה להתראות. רעננו ונסו שוב'), offline: tr('אין חיבור לשרת') };
+  const on_ = $('#pOn', box); if (on_) on_.onclick = async () => { on_.disabled = true; try { await enablePush(); toast(tr('ההתראות פעילות')); } catch (e) { err(MSG[e.message] || tr('לא הצלחנו להפעיל התראות')); } drawPush(sheet); };
+  const t_ = $('#pTest', box); if (t_) t_.onclick = async () => { await sendTestPush(); toast(tr('תגיע התראה בעוד כדקה. אפשר לסגור את האפליקציה')); };
+  const o_ = $('#pOff', box); if (o_) o_.onclick = async () => { await disablePush(); toast(tr('ההתראות כובו במכשיר הזה')); drawPush(sheet); };
 }
 
 
@@ -2080,7 +2457,7 @@ function drawPush(sheet) {
 async function exportBackup() {
   const how = await deliverFile(`agenda-backup-${todayKey()}.json`, 'application/json', JSON.stringify(S, null, 1));
   if (how !== 'cancelled') { try { localStorage.setItem('agenda.lastExport', String(Date.now())); } catch (e) {} }
-  if (how === 'download') toast('הגיבוי ירד למכשיר');
+  if (how === 'download') toast(tr('הגיבוי ירד למכשיר'));
 }
 function maybeBackupNudge() {                              // בלי סנכרון: פעם ביום, אם עבר שבוע מהגיבוי האחרון
   if (DEMO || sync.key || S.tasks.length < 5) return;
@@ -2089,20 +2466,20 @@ function maybeBackupNudge() {                              // בלי סנכרו�
     if (localStorage.getItem('agenda.backupNag') === today || Date.now() - last < 7 * 86400000) return;
     localStorage.setItem('agenda.backupNag', today);
     const days = last ? Math.floor((Date.now() - last) / 86400000) : null;
-    setTimeout(() => toast(days === null ? 'הנתונים שמורים רק במכשיר הזה. כדאי לגבות או להפעיל סנכרון.' : `לא גיבית כבר ${days} ימים. הנתונים שמורים רק במכשיר הזה.`, 'גבה', exportBackup), 2500);
+    setTimeout(() => toast(days === null ? tr('הנתונים שמורים רק במכשיר הזה. כדאי לגבות או להפעיל סנכרון.') : tr('לא גיבית כבר {0} ימים. הנתונים שמורים רק במכשיר הזה.', days), tr('גבה'), exportBackup), 2500);
   } catch (e) {}
 }
 function loadTemplate() {                                  // שבוע לימודים רגיל. כל פריט אפשר לערוך או למחוק
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id), d = keyOf(startOfWeek(new Date()));
   const mk = (title, c, start, end, repeat, routine) => ({ id: uid(), title, cat: id(c), start, end, date: d, notes: '', done: {}, skip: [], repeat, routine: !!routine });
   S.tasks.push(
-    mk('בית ספר', 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
-    mk('שיעורי בית', 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
-    mk('אימון', 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
-    mk('מתיחות התאוששות', 'recovery', '21:45', '22:15', { type: 'daily', days: [] }),
-    mk('ארוחת ערב', 'personal', '19:15', '19:45', { type: 'daily', days: [] }, true),
-    mk('שינה', 'recovery', '23:00', '06:30', { type: 'daily', days: [] }, true));
-  save(); render({ scroll: true }); toast('התבנית נטענה. אפשר לערוך או למחוק כל פריט');
+    mk(tr('בית ספר'), 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
+    mk(tr('שיעורי בית'), 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
+    mk(tr('אימון'), 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
+    mk(tr('מתיחות התאוששות'), 'recovery', '21:45', '22:15', { type: 'daily', days: [] }),
+    mk(tr('ארוחת ערב'), 'personal', '19:15', '19:45', { type: 'daily', days: [] }, true),
+    mk(tr('שינה'), 'recovery', '23:00', '06:30', { type: 'daily', days: [] }, true));
+  save(); render({ scroll: true }); toast(tr('התבנית נטענה. אפשר לערוך או למחוק כל פריט'));
 }
 function maybeOnboard() {
   if (DEMO || S.tasks.length || S.inbox.length || sync.key) return;
@@ -2111,17 +2488,17 @@ function maybeOnboard() {
   const { sheet, close } = openSheet(`
     <div class="shh"><div class="grab"></div></div>
     <div class="onb">
-      <h2>ברוכים הבאים ל״סדר יום״</h2>
+      <h2>${tr('ברוכים הבאים ל״סדר יום״')}</h2>
       <ul>
-        <li><b>הוספה:</b> נוגעים ב־+ או במיקרופון ואומרים, למשל: "אימון מחר בחמש וחצי".</li>
-        <li><b>תזוזה:</b> לחיצה ארוכה על בלוק מרימה אותו, וגוררים לשעה אחרת או למשך אחר.</li>
-        <li><b>מה שלא הספקתם:</b> מחכה לכם בתיבה למעלה, ואפשר להעביר אותו להיום.</li>
-        <li><b>בכל מכשיר:</b> בהגדרות מפעילים סנכרון ומקבלים גם התראות.</li>
+        <li><b>${tr('הוספה:')}</b> ${tr('נוגעים ב־+ או במיקרופון ואומרים, למשל: "אימון מחר בחמש וחצי".')}</li>
+        <li><b>${tr('תזוזה:')}</b> ${tr('לחיצה ארוכה על בלוק מרימה אותו, וגוררים לשעה אחרת או למשך אחר.')}</li>
+        <li><b>${tr('מה שלא הספקתם:')}</b> ${tr('מחכה לכם בתיבה למעלה, ואפשר להעביר אותו להיום.')}</li>
+        <li><b>${tr('בכל מכשיר:')}</b> ${tr('בהגדרות מפעילים סנכרון ומקבלים גם התראות.')}</li>
       </ul>
       <div class="dels">
-        <button type="button" class="btn pri" id="oTpl">התחל עם שבוע לימודים לדוגמה</button>
-        <button type="button" class="btn" id="oEmpty">התחל ריק</button>
-        <button type="button" class="btn" id="oJoin">יש לי מפתח סנכרון ממכשיר אחר</button>
+        <button type="button" class="btn pri" id="oTpl">${tr('התחל עם שבוע לימודים לדוגמה')}</button>
+        <button type="button" class="btn" id="oEmpty">${tr('התחל ריק')}</button>
+        <button type="button" class="btn" id="oJoin">${tr('יש לי מפתח סנכרון ממכשיר אחר')}</button>
       </div>
     </div>`, mark);
   $('#oTpl', sheet).onclick = () => { close(); setTimeout(loadTemplate, 250); };
@@ -2136,14 +2513,26 @@ function loadExamples() {
   const before = S.tasks.length;
   const add = (...ts) => ts.forEach(t => { if (!S.tasks.some(x => x.title === t.title && x.start === t.start && x.end === t.end)) S.tasks.push(t); });
   add(
-    mk('בית ספר', 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
-    mk('שיעורי בית', 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
-    mk('אימון חדר כושר', 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
-    mk('זמן עם סינדי', 'cindy', '20:00', '21:30', { type: 'weekly', days: [1, 3, 5] }),
-    mk('מתיחות התאוששות', 'recovery', '21:45', '22:15', { type: 'daily', days: [] })
+    mk(tr('בית ספר'), 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
+    mk(tr('שיעורי בית'), 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
+    mk(tr('אימון חדר כושר'), 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
+    mk(tr('זמן עם סינדי'), 'cindy', '20:00', '21:30', { type: 'weekly', days: [1, 3, 5] }),
+    mk(tr('מתיחות התאוששות'), 'recovery', '21:45', '22:15', { type: 'daily', days: [] })
   );
-  save(); render({ scroll: true }); toast(S.tasks.length > before ? 'נוספו משימות לדוגמה — אפשר לערוך או למחוק' : 'הדוגמאות כבר קיימות');
+  save(); render({ scroll: true }); toast(S.tasks.length > before ? tr('נוספו משימות לדוגמה — אפשר לערוך או למחוק') : tr('הדוגמאות כבר קיימות'));
 }
+
+/* ═════════ טקסטים קבועים בדף ═════════ */
+function applyStatic() {
+  const set = (sel, attr, key) => { const el = $(sel); if (!el) return; if (attr === 'text') el.textContent = tr(key); else el.setAttribute(attr, tr(key)); };
+  [['#prev', 'aria-label', 'הקודם'], ['#next', 'aria-label', 'הבא'], ['#tray', 'aria-label', 'משימות פתוחות'], ['#gear', 'aria-label', 'הגדרות וקטגוריות'],
+   ['#nn', 'aria-label', 'עכשיו והבא'], ['#dock', 'aria-label', 'תצוגה'], ['#seg [data-v=day]', 'text', 'יום'], ['#seg [data-v=week]', 'text', 'שבוע'],
+   ['#todayBtn', 'text', 'היום'], ['#vbtn', 'aria-label', 'הוספה בדיבור'], ['#fab', 'aria-label', 'משימה חדשה']].forEach(([a, b, c]) => set(a, b, c));
+  document.title = tr('סדר יום');
+  const md = document.querySelector('meta[name=description]'); if (md) md.content = tr('מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.');
+  const mt = document.querySelector('meta[name=apple-mobile-web-app-title]'); if (mt) mt.content = tr('סדר יום');
+}
+applyStatic();
 
 /* ═════════ הפעלה ═════════ */
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // מבקש מהדפדפן לא למחוק את הנתונים לבד
@@ -2169,7 +2558,7 @@ setInterval(tickNow, 30000);
 try {                                                     // טיפ חד-פעמי בנייד: איך מזיזים בלוק
   if (S.tasks.length && matchMedia('(pointer:coarse)').matches && !localStorage.getItem('agenda.tip1')) {
     localStorage.setItem('agenda.tip1', '1');
-    setTimeout(() => toast('טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו'), 1200);
+    setTimeout(() => toast(tr('טיפ: החזיקו לחיצה על בלוק כדי להזיז או לשנות את משכו')), 1200);
   }
 } catch (e) {}
 /* אותה אפליקציה פתוחה בלשונית נוספת (או חלון מותקן ולשונית): ממזגים, כדי שאחת לא תדרוס את השנייה */
