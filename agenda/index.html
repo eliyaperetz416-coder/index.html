@@ -278,6 +278,10 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .nxt:empty{display:none}
 .fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
+.onb h2{margin:8px 0 10px;font-size:21px;letter-spacing:-.01em;text-align:center}
+.onb ul{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:9px;color:var(--mut);font-size:14.5px;line-height:1.5}
+.onb li{background:var(--s2);border-radius:13px;padding:10px 13px}
+.onb li b{color:var(--tx)}
 .sm-note{margin:8px 0;color:var(--mut);font-size:13px;line-height:1.5}
 .srow{display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 10px}
 .sd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--mut2)}
@@ -1242,7 +1246,7 @@ function openSettings() {
     S.cats.push({ id: uid(), name: n, color: $('#nc', sheet).value }); save();
     $('#nn', sheet).value = ''; $('#nc', sheet).value = PALETTE[S.cats.length % PALETTE.length]; drawCats();
   };
-  $('#ex', sheet).onclick = async () => { const how = await deliverFile(`agenda-backup-${todayKey()}.json`, 'application/json', JSON.stringify(S, null, 1)); if (how === 'download') toast('הגיבוי ירד למכשיר'); };
+  $('#ex', sheet).onclick = exportBackup;
   $('#sm', sheet).onclick = () => { close(); setTimeout(openSummary, 220); };
   $('#ics', sheet).onclick = () => exportICS(upcomingTasks(), 'הקובץ מוכן');
   $('#rd', sheet).onchange = e => { S.remindDefault = e.target.value === 'n' ? 'n' : +e.target.value; save(); };
@@ -1982,6 +1986,60 @@ function drawPush(sheet) {
   const o_ = $('#pOff', box); if (o_) o_.onclick = async () => { await disablePush(); toast('ההתראות כובו במכשיר הזה'); drawPush(sheet); };
 }
 
+
+/* ═════════ הדברים הקטנים: מסך פתיחה ותבנית, ותזכורת גיבוי ═════════ */
+async function exportBackup() {
+  const how = await deliverFile(`agenda-backup-${todayKey()}.json`, 'application/json', JSON.stringify(S, null, 1));
+  if (how !== 'cancelled') { try { localStorage.setItem('agenda.lastExport', String(Date.now())); } catch (e) {} }
+  if (how === 'download') toast('הגיבוי ירד למכשיר');
+}
+function maybeBackupNudge() {                              // בלי סנכרון: פעם ביום, אם עבר שבוע מהגיבוי האחרון
+  if (DEMO || sync.key || S.tasks.length < 5) return;
+  try {
+    const last = +localStorage.getItem('agenda.lastExport') || 0, today = todayKey();
+    if (localStorage.getItem('agenda.backupNag') === today || Date.now() - last < 7 * 86400000) return;
+    localStorage.setItem('agenda.backupNag', today);
+    const days = last ? Math.floor((Date.now() - last) / 86400000) : null;
+    setTimeout(() => toast(days === null ? 'הנתונים שמורים רק במכשיר הזה. כדאי לגבות או להפעיל סנכרון.' : `לא גיבית כבר ${days} ימים. הנתונים שמורים רק במכשיר הזה.`, 'גבה', exportBackup), 2500);
+  } catch (e) {}
+}
+function loadTemplate() {                                  // שבוע לימודים רגיל. כל פריט אפשר לערוך או למחוק
+  const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id), d = keyOf(startOfWeek(new Date()));
+  const mk = (title, c, start, end, repeat, routine) => ({ id: uid(), title, cat: id(c), start, end, date: d, notes: '', done: {}, skip: [], repeat, routine: !!routine });
+  S.tasks.push(
+    mk('בית ספר', 'school', '08:00', '14:30', { type: 'weekly', days: [0, 1, 2, 3, 4] }),
+    mk('שיעורי בית', 'school', '16:00', '17:15', { type: 'weekly', days: [0, 1, 2, 3] }),
+    mk('אימון', 'gym', '17:30', '19:00', { type: 'weekly', days: [0, 2, 4] }),
+    mk('מתיחות התאוששות', 'recovery', '21:45', '22:15', { type: 'daily', days: [] }),
+    mk('ארוחת ערב', 'personal', '19:15', '19:45', { type: 'daily', days: [] }, true),
+    mk('שינה', 'recovery', '23:00', '06:30', { type: 'daily', days: [] }, true));
+  save(); render({ scroll: true }); toast('התבנית נטענה. אפשר לערוך או למחוק כל פריט');
+}
+function maybeOnboard() {
+  if (DEMO || S.tasks.length || S.inbox.length || sync.key) return;
+  try { if (localStorage.getItem('agenda.onboarded')) return; } catch (e) { return; }
+  const mark = () => { try { localStorage.setItem('agenda.onboarded', '1'); } catch (e) {} };
+  const { sheet, close } = openSheet(`
+    <div class="shh"><div class="grab"></div></div>
+    <div class="onb">
+      <h2>ברוכים הבאים ל״סדר יום״</h2>
+      <ul>
+        <li><b>הוספה:</b> נוגעים ב־+ או במיקרופון ואומרים, למשל: "אימון מחר בחמש וחצי".</li>
+        <li><b>תזוזה:</b> לחיצה ארוכה על בלוק מרימה אותו, וגוררים לשעה אחרת או למשך אחר.</li>
+        <li><b>מה שלא הספקתם:</b> מחכה לכם בתיבה למעלה, ואפשר להעביר אותו להיום.</li>
+        <li><b>בכל מכשיר:</b> בהגדרות מפעילים סנכרון ומקבלים גם התראות.</li>
+      </ul>
+      <div class="dels">
+        <button type="button" class="btn pri" id="oTpl">התחל עם שבוע לימודים לדוגמה</button>
+        <button type="button" class="btn" id="oEmpty">התחל ריק</button>
+        <button type="button" class="btn" id="oJoin">יש לי מפתח סנכרון ממכשיר אחר</button>
+      </div>
+    </div>`, mark);
+  $('#oTpl', sheet).onclick = () => { close(); setTimeout(loadTemplate, 250); };
+  $('#oEmpty', sheet).onclick = close;
+  $('#oJoin', sheet).onclick = () => { close(); setTimeout(openSettings, 300); };
+}
+
 function loadExamples() {
   const id = c => (S.cats.find(x => x.id === c) ? c : S.cats[0].id);
   const d = keyOf(startOfWeek(new Date()));
@@ -2017,6 +2075,7 @@ if (DEMO && !S.tasks.length && !hadStore) loadExamples();
 else if (restored) { render({ scroll: true }); window.scrollTo({ top: restored.y, behavior: 'instant' }); }
 else render({ scroll: true });
 if (sync.key) queueSync(800);
+maybeOnboard(); maybeBackupNudge();
 setInterval(tickNow, 30000);
 try {                                                     // טיפ חד-פעמי בנייד: איך מזיזים בלוק
   if (S.tasks.length && matchMedia('(pointer:coarse)').matches && !localStorage.getItem('agenda.tip1')) {
