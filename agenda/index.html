@@ -1199,7 +1199,7 @@ function openSettings() {
     <div class="sec">קטגוריות</div>
     <div id="cats"></div>
     <div class="crow"><input type="color" id="nc" value="${PALETTE[S.cats.length % PALETTE.length]}" aria-label="צבע"><input type="text" id="nn" placeholder="קטגוריה חדשה…" maxlength="24"><button class="btn pri" id="na">הוסף</button></div>
-    ${DEMO ? '' : '<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div>'}
+    ${DEMO ? '' : '<div class="sec">סנכרון בין מכשירים</div><div id="syncBox"></div><div class="sec">התראות בטלפון</div><div id="pushBox"></div>'}
     <div class="sec">תזכורות</div>
     <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
     <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
@@ -1818,7 +1818,7 @@ async function doSync() {
       if (attempt === 3) throw new Error('conflict');          // הגיע שרת עסוק מדי: ננסה שוב מאוחר יותר
     }
     sync.last = Date.now(); saveSync(); setStatus('ok');
-    if (typeof queueReminders === 'function') queueReminders();
+    queueReminders(); refreshPush();
   } catch (e) {
     const m = String(e.message || e);
     setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? 'ננסה שוב בעוד רגע' : 'שגיאת סנכרון'));
@@ -1884,7 +1884,102 @@ function syncSection(sheet) {
     $('#sOff', box).onclick = async () => { if (await ask('המכשיר הזה יפסיק להסתנכרן. הנתונים שבו והנתונים בענן נשארים.', 'הפסק')) { stopSync(); draw(); } };
     $('#sDel', box).onclick = async () => { if (await ask('כל הנתונים שלכם יימחקו מהענן, ובכל המכשירים המחוברים הסנכרון יפסיק לעבוד. הנתונים שבמכשיר הזה נשארים.', 'מחק מהענן')) { try { await deleteCloud(); toast('נמחק מהענן'); } catch (e) { toast('המחיקה נכשלה, בדקו חיבור'); } draw(); } };
   };
-  syncUI = draw; draw();
+  syncUI = () => { draw(); drawPush(sheet); }; syncUI();
+}
+
+/* ═════════ התראות Push אמיתיות ═════════
+   המכשיר מחשב את כל התזכורות ל־30 הימים הקרובים ומעלה אותן, והשרת שולח כל אחת בזמנה גם כשהאפליקציה סגורה. */
+const PUSHKEY = 'agenda.push', TESTKEY = 'agenda.pushtest';
+const pushOn = () => { try { return localStorage.getItem(PUSHKEY) === '1'; } catch (e) { return false; } };
+const setPushOn = v => { try { v ? localStorage.setItem(PUSHKEY, '1') : localStorage.removeItem(PUSHKEY); } catch (e) {} };
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64uToBytes = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')), c => c.charCodeAt(0));
+
+const reminderBody = (t, r) => `${r === 0 ? 'מתחיל עכשיו' : 'בעוד ' + (r < 60 ? r + ' דקות' : r === 60 ? 'שעה' : r === 120 ? 'שעתיים' : 'יום')} · ${t.start}–${t.end}`;
+function readTest(now) {
+  try { const o = JSON.parse(localStorage.getItem(TESTKEY)); if (o && new Date(o.at) > new Date(now.getTime() - 120000)) return { rid: o.rid, at: o.at, title: 'בדיקת התראה', body: 'ההתראות עובדות', url: './' }; } catch (e) {}
+  return null;
+}
+function buildReminders(now = new Date(), days = 30) {            // רק משימות רגילות שעוד לא בוצעו ושהזמן שלהן בעתיד
+  const out = [], tk = keyOf(now);
+  for (let i = 0; i < days; i++) {
+    const k = keyOf(addDays(parseKey(tk), i)), d0 = parseKey(k);
+    occ(k).forEach(t => {
+      if (t.routine || isDone(t, k)) return;
+      const r = remindOf(t); if (r === 'n') return;
+      const at = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, span(t).s - r);
+      if (at <= new Date(now.getTime() + 30000)) return;
+      out.push({ rid: `${t.id}|${k}`, at: at.toISOString(), title: t.title.slice(0, 120), body: reminderBody(t, r), url: './' });
+    });
+  }
+  out.sort((a, b) => a.at.localeCompare(b.at));
+  const test = readTest(now); if (test) out.unshift(test);
+  return out.slice(0, 700);
+}
+
+let remTimer = 0, lastRem = '', pushRefreshed = false;
+function queueReminders(ms = 3000) { if (!sync.key || DEMO || !pushOn()) return; clearTimeout(remTimer); remTimer = setTimeout(() => uploadReminders(), ms); }
+async function uploadReminders(force) {
+  if (!sync.key || !pushOn()) return;
+  const items = buildReminders(), sig = canon(items.map(i => [i.rid, i.at, i.title, i.body]));
+  if (!force && sig === lastRem) return;
+  try { await cloud('agenda_set_reminders', { p_key: sync.key, p_items: items }); lastRem = sig; } catch (e) { /* ינסה שוב בסנכרון הבא */ }
+}
+async function refreshPush() {                                    // פעם בכל פתיחה: מוודא שהמנוי של המכשיר עדיין שמור בשרת
+  if (pushRefreshed || !pushOn() || !sync.key || !pushSupported()) return;
+  pushRefreshed = true;
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub) await cloud('agenda_save_push', { p_key: sync.key, p_sub: sub.toJSON() });
+  } catch (e) {}
+}
+const sameKey = (sub, bytes) => { try { const k = new Uint8Array(sub.options.applicationServerKey); return k.length === bytes.length && k.every((v, i) => v === bytes[i]); } catch (e) { return true; } };
+
+async function enablePush() {
+  if (!sync.key) throw new Error('need_sync');
+  if (!pushSupported()) throw new Error('unsupported');
+  if (isIOS() && !isStandalone()) throw new Error('ios_install');
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') throw new Error('denied');
+  const pub = await cloud('agenda_vapid', {});
+  if (!pub) throw new Error('no_vapid');
+  const bytes = b64uToBytes(pub), reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && !sameKey(sub, bytes)) { await sub.unsubscribe(); sub = null; }
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+  await cloud('agenda_save_push', { p_key: sync.key, p_sub: sub.toJSON() });
+  setPushOn(true); pushRefreshed = true;
+  await uploadReminders(true);
+}
+async function disablePush() {
+  setPushOn(false);
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub) { const ep = sub.endpoint; await sub.unsubscribe(); if (sync.key) await cloud('agenda_drop_push', { p_key: sync.key, p_endpoint: ep }).catch(() => {}); }
+  } catch (e) {}
+}
+async function sendTestPush() {                                   // תזכורת בדיקה בעוד כ־75 שניות; השרת שולח אותה בדקה הקרובה
+  try { localStorage.setItem(TESTKEY, JSON.stringify({ rid: 'test|' + Date.now(), at: new Date(Date.now() + 75000).toISOString() })); } catch (e) {}
+  await uploadReminders(true);
+}
+
+function drawPush(sheet) {
+  const box = $('#pushBox', sheet); if (!box) return;
+  const note = t => { box.innerHTML = `<p class="sm-note">${t}</p>`; };
+  if (!sync.key) return note('התראות דורשות סנכרון, כדי שהשרת ידע מה לתזכר. הפעילו קודם את הסנכרון.');
+  if (!pushSupported()) return note('הדפדפן הזה לא תומך בהתראות. אפשר להשתמש בייצוא ליומן של הטלפון.');
+  if (isIOS() && !isStandalone()) return note('באייפון ההתראות עובדות רק אחרי שמוסיפים את האפליקציה למסך הבית (שיתוף ← הוסף למסך הבית) ופותחים אותה משם.');
+  if (Notification.permission === 'denied') return note('ההתראות חסומות בהגדרות המכשיר. אפשר לאפשר אותן שם ולחזור לכאן.');
+  const on = pushOn();
+  box.innerHTML = `<p class="sm-note">${on ? 'פעיל במכשיר הזה. כל משימה תתריע לפי התזכורת שלה (ברירת מחדל: ' + esc(remindLabel(S.remindDefault)) + '), גם כשהאפליקציה סגורה.' : 'תקבלו התראה לפני כל משימה, גם כשהאפליקציה סגורה.'}</p>
+    <div class="list">${on ? '<button class="btn" id="pTest">שלח התראת בדיקה</button><button class="btn" id="pOff">כבה התראות במכשיר הזה</button>' : '<button class="btn pri" id="pOn">הפעל התראות</button>'}</div><div class="vstat err" id="pErr"></div>`;
+  const err = m => { $('#pErr', box).textContent = m; };
+  const MSG = { need_sync: 'צריך להפעיל סנכרון קודם', unsupported: 'הדפדפן לא תומך', ios_install: 'צריך להוסיף למסך הבית קודם', denied: 'לא אישרתם התראות', no_vapid: 'השירות עוד לא מוכן, נסו שוב בעוד דקה', offline: 'אין חיבור לשרת' };
+  const on_ = $('#pOn', box); if (on_) on_.onclick = async () => { on_.disabled = true; try { await enablePush(); toast('ההתראות פעילות'); } catch (e) { err(MSG[e.message] || 'לא הצלחנו להפעיל התראות'); } drawPush(sheet); };
+  const t_ = $('#pTest', box); if (t_) t_.onclick = async () => { await sendTestPush(); toast('תגיע התראה בעוד כדקה. אפשר לסגור את האפליקציה'); };
+  const o_ = $('#pOff', box); if (o_) o_.onclick = async () => { await disablePush(); toast('ההתראות כובו במכשיר הזה'); drawPush(sheet); };
 }
 
 function loadExamples() {
