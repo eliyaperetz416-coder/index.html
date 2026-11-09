@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.">
 <meta name="theme-color" content="#0a0a0d">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +18,7 @@
 :root{
   --bg:#0a0a0d; --s1:#131318; --s2:#1b1b22; --s3:#26262f;
   --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
-  --tx:#f4f4f7; --mut:#8b8b98; --mut2:#7b7b88;
+  --tx:#f4f4f7; --mut:#8c8c99; --mut2:#82828f;
   --ok:#3ddc97; --danger:#ff6b6b;
   --hh:72px;           /* גובה שעה בתצוגה יומית */
   --whh:46px;          /* גובה שעה בתצוגה שבועית */
@@ -41,7 +42,9 @@ input,textarea{font:inherit;color:inherit}
   background:rgba(10,10,13,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-bottom:1px solid var(--line)}
 .r1{display:flex;align-items:center;gap:2px}
-.r1 .ib{width:38px;height:38px}
+.r1 .ib{width:44px;height:44px}
+.ttl{min-width:0}
+#h2t{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .r1 .ttl{margin-inline-end:6px}
 .ttl{flex:1;min-width:0}
 .ttl h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.02em}
@@ -91,8 +94,8 @@ input,textarea{font:inherit;color:inherit}
 .dock .seg{background:transparent;padding:0}
 .dock .seg::before{top:0;bottom:0;inset-inline-start:0;width:50%;background:var(--s3);border-radius:999px}
 .dock .seg[data-v=week]::before{transform:translateX(-100%)}
-.dock .seg button{min-width:58px;padding:9px 14px;font-size:15px}
-.dock .todaybtn{min-width:62px;text-align:center;border-radius:999px;padding:9px 12px}
+.dock .seg button{min-width:58px;min-height:44px;padding:9px 14px;font-size:15px}
+.dock .todaybtn{min-width:62px;min-height:44px;text-align:center;border-radius:999px;padding:9px 12px}
 body.sheet-open .dock{transform:scale(.6);opacity:0;pointer-events:none}
 
 /* ───────── אזור ראשי ───────── */
@@ -278,6 +281,10 @@ body.sheet-open .fab,body.sheet-open .vbtn{transform:scale(.6);opacity:0;pointer
 .nxt:empty{display:none}
 .fld select{width:100%;background:none;border:0;outline:0;font-size:17px;font-weight:600;padding:3px 0;color:var(--tx);color-scheme:dark}
 .dels{display:grid;gap:8px;margin-top:2px}
+.priv{margin-top:14px;background:var(--s2);border-radius:14px;padding:4px 14px}
+.priv summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:15px}
+.priv ul{margin:0 0 10px;padding:0;list-style:none;display:grid;gap:8px;color:var(--mut);font-size:13.5px;line-height:1.5}
+.priv li b{color:var(--tx)}
 .onb h2{margin:8px 0 10px;font-size:21px;letter-spacing:-.01em;text-align:center}
 .onb ul{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:9px;color:var(--mut);font-size:14.5px;line-height:1.5}
 .onb li{background:var(--s2);border-radius:13px;padding:10px 13px}
@@ -1150,6 +1157,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
     render();
   };
 
+  let busy = false;
   f.addEventListener('submit', async ev => {
     ev.preventDefault();
     const catId = f.querySelector('[name=cat]:checked')?.value || S.cats[0].id;
@@ -1161,6 +1169,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
     const type = $f('rep').value;
     const dsel = [...f.querySelectorAll('[name=day]:checked')].map(x => +x.value);
     if (type === 'weekly' && !dsel.length) return fail('בחרו לפחות יום אחד בשבוע');
+    if (busy) return; busy = true;                          // לחיצה כפולה על "הוסף" לא יוצרת שתי משימות
     const data = { title, cat: catId, start: s, end: e, date: d, notes: $f('notes').value.trim(), routine: $f('routine').checked, repeat: { type, days: type === 'weekly' ? dsel : [] } };
     const rv = $f('remind').value; if (rv !== '') data.remind = rv === 'n' ? 'n' : +rv;
     const snap = JSON.stringify(S.tasks), snapI = JSON.stringify(S.inbox);
@@ -1171,7 +1180,7 @@ function openTask({ task, date, start, prefill, inboxId }) {
       let scope = 'all';
       if (sameSchedule && changed) {
         scope = await choose('המשימה הזו חוזרת. מה לשנות?', [['one', 'רק את היום הזה'], ['fwd', 'מהיום הזה והלאה'], ['all', 'כל הסדרה']]);
-        if (!scope) return;
+        if (!scope) { busy = false; return; }
       }
       applyEdit(task, data, scope, viewDate);
     } else S.tasks.push({ id: uid(), done: {}, skip: [], ...data });
@@ -1207,6 +1216,14 @@ function openSettings() {
     <div class="sec">תזכורות</div>
     <div class="fld"><label class="lbl" for="rd">תזכורת ברירת מחדל</label><select id="rd"><option value="n"${S.remindDefault === 'n' ? ' selected' : ''}>בלי תזכורת</option>${REMIND_OPTS.map(([v, l]) => `<option value="${v}"${S.remindDefault === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
     <p style="color:var(--mut2);font-size:12.5px;margin:8px 0 0">התזכורות נוצרות ביומן של הטלפון: לוחצים "ייצוא ליומן", ובוחרים להוסיף ליומן.</p>
+    ${DEMO ? '' : `<details class="priv"><summary>פרטיות ונתונים</summary>
+      <ul>
+        <li><b>במכשיר:</b> כל המשימות נשמרות בדפדפן של המכשיר הזה. בלי סנכרון, שום דבר לא יוצא ממנו.</li>
+        <li><b>סנכרון:</b> אם מפעילים אותו, המשימות, הקטגוריות, התיבה וההגדרות נשמרות בענן של Supabase (פרנקפורט), מזוהות לפי גיבוב של מפתח הסנכרון. מי שמחזיק במפתח רואה אותן. אפשר למחוק הכול מהענן בלחיצה.</li>
+        <li><b>התראות:</b> כותרות המשימות וזמני התזכורת נשמרים בענן כדי שיישלחו בזמן, והשליחה עוברת דרך שירות ההתראות של אפל, גוגל או מוזילה.</li>
+        <li><b>הקלטה:</b> נעשית בדפדפן או במערכת ההפעלה, ויכולה לעבור לגוגל או לאפל. האפליקציה לא שומרת הקלטות.</li>
+        <li><b>מה אין:</b> אין פרסומות, אין אנליטיקה, אין עוגיות ואין סקריפטים של צד שלישי.</li>
+      </ul></details>`}
     <div class="sec">נתונים</div>
     <div class="list">
       <button class="btn" id="sm">סיכום שבועי <span>▤</span></button>
@@ -1538,8 +1555,9 @@ function openVoice() {
   };
   $s('#mic').onclick = () => { if ($s('#mic').classList.contains('rec')) { try { rec.stop(); } catch (e) {} } else start(); };
 
+  let added = false;
   $s('#vadd').onclick = () => {
-    if (!last) return;
+    if (!last || added) return; added = true;
     const tk = voiceTask(last), snap = JSON.stringify(S.tasks);
     S.tasks.push({ id: uid(), done: {}, skip: [], ...tk });
     S.lastCat = tk.cat; save(); close();
@@ -1549,7 +1567,7 @@ function openVoice() {
     vib(8);
     toast(`נוסף · ${tk.repeat.type !== 'none' ? repeatLabel(tk.repeat) : dateLabel(tk.date)} · ${tk.start}–${tk.end}`, 'ביטול', () => { S.tasks = JSON.parse(snap); save(); render(); });
   };
-  $s('#vinbox').onclick = () => { if (!last) return; const tk = voiceTask(last), snap = JSON.stringify(S.inbox); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { S.inbox = JSON.parse(snap); save(); updateBadge(); }); };
+  $s('#vinbox').onclick = () => { if (!last || added) return; added = true; const tk = voiceTask(last), snap = JSON.stringify(S.inbox); S.inbox.unshift({ id: uid(), title: tk.title, cat: tk.cat }); S.lastCat = tk.cat; save(); close(); updateBadge(); toast('נשמר בתיבה', 'ביטול', () => { S.inbox = JSON.parse(snap); save(); updateBadge(); }); };
   $s('#vedit').onclick = () => { if (!last) return; const tk = voiceTask(last); close(); setTimeout(() => openTask({ date: tk.date, start: tk.start, prefill: tk }), 220); };
   start();                                                  // מתחיל להקשיב מיד (בתוך אותה נגיעה, כמו שנדרש)
 }
@@ -1803,7 +1821,7 @@ function mergeRemote(raw) {
 let syncTimer = 0, syncing = false, again = false, syncUI = null;
 const setStatus = (st, err = '') => { sync.status = st; sync.err = err; if (syncUI) syncUI(); };
 function queueSync(ms = 2500) { if (!sync.key || DEMO) return; clearTimeout(syncTimer); syncTimer = setTimeout(doSync, ms); }
-const MSGS = { offline: 'אין חיבור', bad_key: 'המפתח לא תקין', full: 'השירות מלא כרגע', too_big: 'הנתונים גדולים מדי', bad_data: 'שגיאה בנתונים' };
+const MSGS = { offline: 'אין חיבור', bad_key: 'המפתח לא תקין', full: 'השירות מלא כרגע', busy: 'השירות עמוס כרגע, נסו שוב בעוד שעה', too_big: 'הנתונים גדולים מדי', bad_data: 'שגיאה בנתונים' };
 
 async function doSync() {
   if (!sync.key || DEMO) return;
@@ -1826,7 +1844,7 @@ async function doSync() {
   } catch (e) {
     const m = String(e.message || e);
     setStatus(m === 'offline' ? 'offline' : 'error', MSGS[m] || (m === 'conflict' ? 'ננסה שוב בעוד רגע' : 'שגיאת סנכרון'));
-    if (m !== 'offline' && m !== 'bad_key' && m !== 'full') queueSync(30000);
+    if (m !== 'offline' && m !== 'bad_key' && m !== 'full') queueSync(m === 'busy' ? 600000 : 30000);
   } finally {
     syncing = false;
     if (again) { again = false; queueSync(400); }
@@ -1837,7 +1855,7 @@ async function enableSync() {
   S.tasks.forEach(t => { t.u = t.u || Date.now(); }); S.inbox.forEach(x => { x.u = x.u || Date.now(); });
   sync.key = genKey(); sync.base = 0; saveSync(); persistLocal();
   await doSync();
-  if (sync.status === 'error' && sync.err === MSGS.full) { sync.key = null; saveSync(); setStatus('off'); toast(MSGS.full); return false; }
+  if (sync.status === 'error' && (sync.err === MSGS.full || sync.err === MSGS.busy)) { const m = sync.err; sync.key = null; saveSync(); setStatus('off'); toast(m); return false; }
   return true;
 }
 async function joinSync(raw) {
