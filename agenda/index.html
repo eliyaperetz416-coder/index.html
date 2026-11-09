@@ -27,11 +27,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="סדר יום">
+<meta name="apple-mobile-web-app-title" content="Yomi">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>סדר יום</title>
+<title>יומי · Yomi</title>
 <style>
 :root{
   --bg:#0a0a0d; --s1:#131318; --s2:#1b1b22; --s3:#26262f;
@@ -478,7 +478,7 @@ html[dir=ltr] #prev svg,html[dir=ltr] #next svg,html[dir=ltr] .sm-nav .ib svg{tr
 const LANGKEY = 'agenda.lang';
 const LANG = window.__LANG === 'en' ? 'en' : 'he', RTL = LANG === 'he';
 const I18N_EN = {
-  "סדר יום": "Day Planner",
+  "יומי": "Yomi",
   "מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.": "A daily planner: timeline, week view, recurring tasks, reminders and sync between devices.",
   "ראשון": "Sunday",
   "שני": "Monday",
@@ -663,7 +663,7 @@ const I18N_EN = {
   "הגיבוי ירד למכשיר": "The backup was downloaded",
   "הדוגמאות כבר קיימות": "The examples are already there",
   "נוספו משימות לדוגמה — אפשר לערוך או למחוק": "Example tasks added — you can edit or delete them",
-  "X-WR-CALNAME:סדר יום": "X-WR-CALNAME:Day Planner",
+  "X-WR-CALNAME:יומי": "X-WR-CALNAME:Yomi",
   "שומר את המשימות בענן, כדי שיופיעו בכל מכשיר ולא יאבדו. אין חשבון וסיסמה: מפתח אחד מזהה אתכם, ומי שיש לו אותו יכול לראות את המשימות.": "Keeps your tasks in the cloud so they show up on every device and are not lost. No account or password: one key identifies you, and whoever has it can see the tasks.",
   "הפעל סנכרון (מפתח חדש)": "Turn on sync (new key)",
   "יש לי מפתח ממכשיר אחר": "I have a key from another device",
@@ -778,7 +778,7 @@ const I18N_EN = {
   "ברצף ללא החמצה": "in a row with no miss",
   "<p class=\"vnote\" style=\"margin-top:14px\">שגרה (שינה, ארוחות) לא נכללת. משימה שעוד לא הגיע זמנה לא נחשבת החמצה.</p>": "<p class=\"vnote\" style=\"margin-top:14px\">Routines (sleep, meals) are not included. A task that is not due yet does not count as a miss.</p>",
   "ללא קטגוריה": "No category",
-  "ברוכים הבאים ל״סדר יום״": "Welcome to Day Planner",
+  "ברוכים הבאים ל־Yomi · יומי": "Welcome to Yomi",
   "הוספה:": "Adding:",
   "נוגעים ב־+ או במיקרופון ואומרים, למשל: \"אימון מחר בחמש וחצי\".": "Tap + or the microphone and say, for example: \"gym tomorrow at 5:30\".",
   "תזוזה:": "Moving:",
@@ -2030,7 +2030,7 @@ function icsDT(d, m) {                                    // שעה "צפה" (ל
 }
 function buildICS(list) {
   const now = new Date(), stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
-  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//HE//', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', tr('X-WR-CALNAME:סדר יום')];
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//HE//', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', tr('X-WR-CALNAME:יומי')];
   const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
   list.forEach(t => {
     const p = span(t), rep = t.repeat || { type: 'none' };
@@ -2488,7 +2488,7 @@ function maybeOnboard() {
   const { sheet, close } = openSheet(`
     <div class="shh"><div class="grab"></div></div>
     <div class="onb">
-      <h2>${tr('ברוכים הבאים ל״סדר יום״')}</h2>
+      <h2>${tr('ברוכים הבאים ל־Yomi · יומי')}</h2>
       <ul>
         <li><b>${tr('הוספה:')}</b> ${tr('נוגעים ב־+ או במיקרופון ואומרים, למשל: "אימון מחר בחמש וחצי".')}</li>
         <li><b>${tr('תזוזה:')}</b> ${tr('לחיצה ארוכה על בלוק מרימה אותו, וגוררים לשעה אחרת או למשך אחר.')}</li>
@@ -2528,9 +2528,9 @@ function applyStatic() {
   [['#prev', 'aria-label', 'הקודם'], ['#next', 'aria-label', 'הבא'], ['#tray', 'aria-label', 'משימות פתוחות'], ['#gear', 'aria-label', 'הגדרות וקטגוריות'],
    ['#nn', 'aria-label', 'עכשיו והבא'], ['#dock', 'aria-label', 'תצוגה'], ['#seg [data-v=day]', 'text', 'יום'], ['#seg [data-v=week]', 'text', 'שבוע'],
    ['#todayBtn', 'text', 'היום'], ['#vbtn', 'aria-label', 'הוספה בדיבור'], ['#fab', 'aria-label', 'משימה חדשה']].forEach(([a, b, c]) => set(a, b, c));
-  document.title = tr('סדר יום');
+  document.title = tr('יומי');
   const md = document.querySelector('meta[name=description]'); if (md) md.content = tr('מתכנן יום בעברית: קו זמן, שבוע, משימות חוזרות, תזכורות וסנכרון בין מכשירים.');
-  const mt = document.querySelector('meta[name=apple-mobile-web-app-title]'); if (mt) mt.content = tr('סדר יום');
+  const mt = document.querySelector('meta[name=apple-mobile-web-app-title]'); if (mt) mt.content = 'Yomi';
 }
 applyStatic();
 
