@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+.vercel
+.firebase
+# secrets: Firebase connection details live only here
+.env
+.env.*
+!.env.example

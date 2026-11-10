@@ -1,0 +1,191 @@
+:root {
+  --bg: #0e1014;
+  --surface: #161920;
+  --surface-2: #1d212a;
+  --border: #262b36;
+  --text: #e9ecf1;
+  --muted: #8b93a1;
+  --accent: #6ea8ff;
+  --accent-ink: #0b1220;
+  --danger: #ff8a80;
+  --radius: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Heebo Variable', 'Heebo', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+h1 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+code {
+  font-size: 0.9em;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
+.screen {
+  min-height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+}
+
+.brand {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.brand h1 {
+  font-size: 40px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topbar {
+  padding-top: 12px;
+}
+
+.topbar h1 {
+  font-size: 30px;
+}
+
+.empty {
+  flex: 1;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 15px;
+  text-align: center;
+}
+
+/* Buttons: big, thumb-friendly */
+.btn {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  min-height: 58px;
+  padding: 0 24px;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 180ms var(--ease),
+    background-color 220ms var(--ease),
+    opacity 220ms var(--ease);
+}
+
+.btn > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  animation: spin 700ms linear infinite;
+}
+
+.fade-in {
+  animation: fade-in 420ms var(--ease) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+  .btn {
+    transition: none;
+  }
+}
