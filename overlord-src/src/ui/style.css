@@ -1,0 +1,201 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #03040b;
+  color: #e8ecff;
+  font: 14px/1.3 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* The HUD floats above the canvas; only its panels catch clicks. */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  gap: 8px;
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.top {
+  flex-wrap: wrap;
+}
+
+.bottom {
+  margin-top: auto;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.chip,
+.card,
+.alert,
+.hint:not(:empty) {
+  background: rgba(10, 13, 34, 0.78);
+  border: 1px solid rgba(140, 160, 255, 0.22);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.chip {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 10px var(--c);
+  align-self: center;
+}
+
+.chip .label {
+  color: #9aa3d0;
+}
+
+.chip b {
+  color: var(--c);
+}
+
+.chip small {
+  color: #7dff8a;
+}
+
+.chip small.neg {
+  color: #ff5d7a;
+}
+
+.alerts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.alert {
+  padding: 6px 11px;
+  color: #ffb3c0;
+  border-color: rgba(255, 93, 122, 0.6);
+  box-shadow: 0 0 14px rgba(255, 93, 122, 0.25);
+}
+
+.hint {
+  align-self: center;
+  margin-top: auto;
+  padding: 7px 14px;
+  color: #bfe9ff;
+}
+
+.hint:empty {
+  padding: 0;
+}
+
+.hint + .bottom {
+  margin-top: 0;
+}
+
+.hint.flash {
+  animation: flash 0.5s;
+}
+
+@keyframes flash {
+  from {
+    color: #ff5d7a;
+    transform: scale(1.08);
+  }
+}
+
+.card {
+  flex: 0 0 auto;
+  width: 138px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 11px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-top: 2px solid var(--c, #8892c8);
+  transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
+}
+
+.card strong {
+  color: var(--c, #e8ecff);
+}
+
+.card span {
+  color: #9aa3d0;
+  font-size: 12px;
+  min-height: 2.6em;
+}
+
+.card em {
+  font-style: normal;
+  font-size: 12px;
+  color: #e8ecff;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card.active {
+  box-shadow: 0 0 0 1px var(--c), 0 0 22px color-mix(in srgb, var(--c) 55%, transparent);
+  transform: translateY(-3px);
+}
+
+.card.poor {
+  opacity: 0.5;
+}
+
+.card.poor em {
+  color: #ff5d7a;
+}
+
+.card.reset {
+  width: 110px;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .chip .label {
+    display: none;
+  }
+  .chip {
+    padding: 6px 9px;
+  }
+  .card {
+    width: 124px;
+  }
+}
