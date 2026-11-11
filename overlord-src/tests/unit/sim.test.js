@@ -64,3 +64,71 @@ describe('base simulation', () => {
     expect(rates(s).food).toBeLessThan(0);
   });
 });
+
+import { step } from '../../src/sim/game.js';
+import { queueShip, canQueueShip, upgradeShip, canUpgradeShip, shipStats, fleetRank, fleetCap } from '../../src/sim/fleet.js';
+
+function richBase() {
+  const s = createState();
+  s.resources.metal = 200;
+  s.resources.credits = 5000;
+  placeModule(s, 'storage', -1, 0);
+  placeModule(s, 'storage', 0, -1);
+  s.resources.metal = 700;
+  return s;
+}
+
+describe('fleet', () => {
+  it('needs a shipyard before any ship can be built', () => {
+    const s = richBase();
+    expect(canQueueShip(s, 'scout').reason).toMatch(/Shipyard/);
+    expect(queueShip(s, 'scout')).toBe(false);
+  });
+
+  it('builds a queued ship after its build time', () => {
+    const s = richBase();
+    placeModule(s, 'shipyard', 1, 0);
+    s.resources.energy = 200;
+    const metal = s.resources.metal;
+    expect(queueShip(s, 'scout')).toBe(true);
+    expect(s.resources.metal).toBe(metal - 80);
+    let launched = null;
+    for (let i = 0; i < 4 * 19; i++) launched = launched ?? step(s, 0.25);
+    expect(s.ships.length).toBe(0);
+    for (let i = 0; i < 8; i++) launched = launched ?? step(s, 0.25);
+    expect(launched?.type).toBe('scout');
+    expect(s.ships).toHaveLength(1);
+    expect(s.queue).toHaveLength(0);
+    expect(fleetRank(s)).toBe(1);
+  });
+
+  it('limits the queue and the fleet size', () => {
+    const s = richBase();
+    placeModule(s, 'shipyard', 1, 0);
+    s.resources.metal = 100000;
+    expect(fleetCap(s)).toBe(4);
+    for (let i = 0; i < 3; i++) expect(queueShip(s, 'scout')).toBe(true);
+    expect(canQueueShip(s, 'scout').reason).toMatch(/queue/i);
+    s.ships.push({ id: 90, type: 'scout', level: 1 });
+    s.queue.length = 2;
+    expect(queueShip(s, 'scout')).toBe(true);
+    s.queue.length = 0;
+    s.ships.push({ id: 91, type: 'scout', level: 1 }, { id: 92, type: 'scout', level: 1 }, { id: 93, type: 'scout', level: 1 });
+    expect(canQueueShip(s, 'scout').reason).toMatch(/full/i);
+  });
+
+  it('upgrades raise stats and rank, cost more each level, and stop at level 3', () => {
+    const s = richBase();
+    placeModule(s, 'shipyard', 1, 0);
+    s.resources.metal = 700;
+    s.ships.push({ id: 50, type: 'frigate', level: 1 });
+    expect(shipStats(s.ships[0])).toEqual({ cargo: 12, attack: 8, hull: 60 });
+    expect(upgradeShip(s, 50)).toBe(true);
+    expect(s.resources.metal).toBe(540);
+    expect(shipStats(s.ships[0])).toEqual({ cargo: 18, attack: 12, hull: 90 });
+    expect(upgradeShip(s, 50)).toBe(true);
+    expect(s.resources.metal).toBe(220);
+    expect(fleetRank(s)).toBe(3);
+    expect(canUpgradeShip(s, 50).reason).toMatch(/max/i);
+  });
+});

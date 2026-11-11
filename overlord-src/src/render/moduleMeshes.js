@@ -67,6 +67,15 @@ const builders = {
     g.add(mesh(new THREE.BoxGeometry(1.14, 0.1, 1.14), lit, -0.6, 1.0, -0.5));
     g.add(mesh(new THREE.BoxGeometry(1.14, 0.1, 1.14), lit, 0.6, 1.0, 0.2));
   },
+  shipyard(g, lit) {
+    g.add(mesh(new THREE.BoxGeometry(2.4, 0.3, 2.4), hullLight, 0, 0.45));
+    for (const x of [-1.05, 1.05]) g.add(mesh(new THREE.BoxGeometry(0.25, 2.6, 0.25), hull, x, 1.6, 0));
+    g.add(mesh(new THREE.BoxGeometry(2.35, 0.2, 0.3), hull, 0, 2.9, 0));
+    // Spinning construction ring between the two pylons.
+    const ring = mesh(new THREE.TorusGeometry(0.8, 0.07, 8, 24), lit, 0, 1.7);
+    ring.userData.spin = 1.5;
+    g.add(ring);
+  },
 };
 
 export function createModuleMesh(type) {

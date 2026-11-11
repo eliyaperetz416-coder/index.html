@@ -10,6 +10,8 @@ export function createState() {
     resources: { ...STARTING },
     rare: Object.fromEntries(RARE.map((r) => [r.id, 0])),
     modules: [{ id: 1, type: 'core', x: 0, z: 0 }],
+    ships: [], // { id, type, level }
+    queue: [], // ships being built: { type, remaining seconds }
     nextId: 2,
     // How well the base ran on the last tick (1 = perfect).
     status: { power: 1, life: 1 },
@@ -91,9 +93,16 @@ export function moduleAt(state, x, z) {
   return state.modules.find((m) => m.x === x && m.z === z);
 }
 
-export function canAfford(state, type) {
-  return Object.entries(MODULES[type].cost).every(([res, amount]) => state.resources[res] >= amount);
+/** cost looks like { metal: 30, credits: 10 } */
+export function canPay(state, cost) {
+  return Object.entries(cost).every(([res, amount]) => state.resources[res] >= amount);
 }
+
+export function pay(state, cost) {
+  for (const [res, amount] of Object.entries(cost)) state.resources[res] -= amount;
+}
+
+export const canAfford = (state, type) => canPay(state, MODULES[type].cost);
 
 /** Modules snap together: a new one must touch an existing one (up/down/left/right). */
 export function canPlace(state, type, x, z) {
@@ -109,7 +118,7 @@ export function canPlace(state, type, x, z) {
 /** Pay for and add a module. Returns the new module, or null if it was not allowed. */
 export function placeModule(state, type, x, z) {
   if (!canPlace(state, type, x, z).ok) return null;
-  for (const [res, amount] of Object.entries(MODULES[type].cost)) state.resources[res] -= amount;
+  pay(state, MODULES[type].cost);
   const module = { id: state.nextId++, type, x, z };
   state.modules.push(module);
   return module;

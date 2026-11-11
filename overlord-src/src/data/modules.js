@@ -62,10 +62,17 @@ export const MODULES = {
     cost: { metal: 60 },
     storage: 250,
   },
+  shipyard: {
+    name: 'Shipyard',
+    desc: 'Builds and upgrades ships.',
+    color: '#6f8cff',
+    cost: { metal: 120, credits: 80 },
+    energy: 1,
+  },
 };
 
 /** The order modules appear in the build bar. */
-export const BUILDABLE = ['solar', 'mine', 'oxygen', 'hydro', 'habitat', 'storage'];
+export const BUILDABLE = ['solar', 'mine', 'oxygen', 'hydro', 'habitat', 'storage', 'shipyard'];
 
 /** The base grid goes from -GRID_RADIUS to +GRID_RADIUS on both axes. */
 export const GRID_RADIUS = 6;

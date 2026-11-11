@@ -3,25 +3,16 @@
 import { BASIC } from '../data/resources.js';
 import { MODULES, BUILDABLE } from '../data/modules.js';
 import { summarize, rates, alerts, canAfford } from '../sim/state.js';
-
-const el = (tag, className, text) => {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text != null) node.textContent = text;
-  return node;
-};
-
-const costText = (cost) =>
-  Object.entries(cost)
-    .map(([res, amount]) => `${amount} ${BASIC.find((b) => b.id === res).name}`)
-    .join(' · ');
+import { el, costText } from './dom.js';
+import { createFleetPanel } from './fleetPanel.js';
 
 /**
  * @param root     the #hud element
  * @param onSelect called with a module type (or null) when the player picks what to build
  * @param onReset  called when the player confirms a new game
+ * @param onBuildShip / onUpgradeShip  passed on to the Fleet panel
  */
-export function createHud(root, { onSelect, onReset }) {
+export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip }) {
   // --- top bar: resources ---
   const top = el('div', 'bar top');
   const chips = {};
@@ -57,6 +48,17 @@ export function createHud(root, { onSelect, onReset }) {
     cards[type] = card;
     bottom.append(card);
   }
+  const fleet = createFleetPanel({ onBuild: onBuildShip, onUpgrade: onUpgradeShip });
+  const fleetButton = el('button', 'card menu');
+  fleetButton.style.setProperty('--c', '#6f8cff');
+  const fleetCount = el('span');
+  fleetButton.append(el('strong', null, 'Fleet'), fleetCount);
+  fleetButton.addEventListener('click', () => {
+    fleet.toggle();
+    fleetButton.classList.toggle('active', !fleet.panel.hidden);
+  });
+  bottom.prepend(fleetButton);
+
   const reset = el('button', 'card reset');
   reset.append(el('strong', null, 'New game'), el('span', null, 'Erase this base.'));
   reset.addEventListener('click', () => {
@@ -64,12 +66,15 @@ export function createHud(root, { onSelect, onReset }) {
   });
   bottom.append(reset);
 
-  root.append(top, alertBox, hint, bottom);
+  root.append(top, alertBox, fleet.panel, hint, bottom);
+
+  const buildHint = () => (selected ? `Tap a glowing spot to build: ${MODULES[selected].name}  (Esc to cancel)` : '');
+  let flashTimer = 0;
 
   function select(type) {
     selected = type;
     for (const [t, card] of Object.entries(cards)) card.classList.toggle('active', t === type);
-    hint.textContent = type ? `Tap a glowing spot to build: ${MODULES[type].name}  (Esc to cancel)` : '';
+    hint.textContent = buildHint();
     onSelect(type);
   }
 
@@ -79,6 +84,8 @@ export function createHud(root, { onSelect, onReset }) {
     hint.classList.remove('flash');
     void hint.offsetWidth; // restart the CSS animation
     hint.classList.add('flash');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => (hint.textContent = buildHint()), 2500);
   }
 
   function update(state) {
@@ -93,6 +100,8 @@ export function createHud(root, { onSelect, onReset }) {
     }
     crewValue.textContent = sum.crew;
     for (const type of BUILDABLE) cards[type].classList.toggle('poor', !canAfford(state, type));
+    fleetCount.textContent = state.queue.length ? `${state.ships.length} ships · building…` : `${state.ships.length} ships`;
+    fleet.update(state);
     alertBox.replaceChildren(...alerts(state).map((a) => el('div', 'alert', `⚠ ${a}`)));
   }
 

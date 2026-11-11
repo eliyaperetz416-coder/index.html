@@ -4,12 +4,17 @@ import './ui/style.css';
 import { createScene } from './render/scene.js';
 import { createBaseView } from './render/baseView.js';
 import { createHud } from './ui/hud.js';
-import { createState, tick, canPlace, placeModule } from './sim/state.js';
+import { createFleetView } from './render/fleetView.js';
+import { createState, canPlace, placeModule } from './sim/state.js';
+import { step } from './sim/game.js';
+import { SHIPS } from './data/ships.js';
+import { canQueueShip, queueShip, canUpgradeShip, upgradeShip } from './sim/fleet.js';
 import { load, save, clearSave } from './sim/save.js';
 
 const canvas = document.getElementById('scene');
 const world = createScene(canvas);
 const base = createBaseView(world);
+const fleet = createFleetView(world);
 
 let state = load();
 
@@ -23,9 +28,30 @@ const hud = createHud(document.getElementById('hud'), {
     state = createState();
     hud.select(null);
     base.sync(state);
+    fleet.sync(state);
+  },
+  onBuildShip(type) {
+    const check = canQueueShip(state, type);
+    if (!check.ok) return hud.flash(check.reason);
+    queueShip(state, type);
+    changed();
+  },
+  onUpgradeShip(id) {
+    const check = canUpgradeShip(state, id);
+    if (!check.ok) return hud.flash(check.reason);
+    upgradeShip(state, id);
+    fleet.sync(state);
+    changed();
   },
 });
 base.sync(state);
+fleet.sync(state);
+
+/** Call after the player changes something: refresh the HUD and save right away. */
+function changed() {
+  hud.update(state);
+  save(state);
+}
 hud.update(state);
 
 // --- building: hover shows a preview, a click (not a camera drag) places the module ---
@@ -71,7 +97,11 @@ function frame(now) {
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
-    tick(state, STEP);
+    const launched = step(state, STEP);
+    if (launched) {
+      fleet.sync(state);
+      hud.flash(`${SHIPS[launched.type].name} launched!`);
+    }
     hud.update(state);
   }
   sinceSave += dt;
@@ -80,6 +110,7 @@ function frame(now) {
     save(state);
   }
   base.update(now / 1000, dt);
+  fleet.update(now / 1000);
   world.render(dt);
   requestAnimationFrame(frame);
 }

@@ -199,3 +199,152 @@ body {
     width: 124px;
   }
 }
+
+/* --- menu buttons in the bottom bar --- */
+.card.menu {
+  width: 110px;
+}
+
+/* --- side panels (Fleet) --- */
+.panel {
+  pointer-events: auto;
+  align-self: flex-end;
+  width: min(340px, 100%);
+  max-height: 52vh;
+  margin-top: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(10, 13, 34, 0.86);
+  border: 1px solid rgba(111, 140, 255, 0.5);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 26px rgba(111, 140, 255, 0.18);
+}
+
+.panel[hidden],
+.queue[hidden] {
+  display: none;
+}
+
+.panel:not([hidden]) ~ .hint {
+  margin-top: 0;
+}
+
+.panel h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #a9baff;
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.muted {
+  margin: 0;
+  color: #9aa3d0;
+}
+
+.queue-label {
+  font-size: 12px;
+  color: #bfe9ff;
+  margin-bottom: 4px;
+}
+
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(140, 160, 255, 0.18);
+  overflow: hidden;
+}
+
+.progress div {
+  height: 100%;
+  background: #4de3ff;
+  box-shadow: 0 0 10px #4de3ff;
+  transition: width 0.25s linear;
+}
+
+.build-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: rgba(140, 160, 255, 0.08);
+  border: 1px solid color-mix(in srgb, var(--c, #8892c8) 60%, transparent);
+  border-radius: 10px;
+}
+
+.btn:hover {
+  background: rgba(140, 160, 255, 0.16);
+}
+
+.btn strong {
+  color: var(--c, #e8ecff);
+}
+
+.btn span,
+.ship span {
+  color: #9aa3d0;
+  font-size: 12px;
+}
+
+.btn em {
+  font-style: normal;
+  font-size: 12px;
+}
+
+.btn.poor {
+  opacity: 0.5;
+}
+
+.btn.poor em {
+  color: #ff5d7a;
+}
+
+.btn.small {
+  flex: 0 0 auto;
+  max-width: 150px;
+}
+
+.ship {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  background: rgba(140, 160, 255, 0.06);
+}
+
+.ship > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ship strong {
+  color: var(--c);
+}
+
+.ship .max {
+  color: #ffd23f;
+  font-weight: 700;
+}
