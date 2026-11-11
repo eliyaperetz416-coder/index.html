@@ -8,6 +8,9 @@ import { createFleetPanel } from './fleetPanel.js';
 import { createMapPanel, expeditionLine } from './mapPanel.js';
 import { createEventDialog } from './eventDialog.js';
 import { createWarPanel, warLine } from './warPanel.js';
+import { createScoreScreen } from './scoreScreen.js';
+import { totalScore, timeLeft } from '../sim/score.js';
+import { TERM } from '../data/term.js';
 
 /**
  * @param root     the #hud element
@@ -17,9 +20,10 @@ import { createWarPanel, warLine } from './warPanel.js';
  * @param onLaunch / onRecall          passed on to the Star Map panel
  * @param onChoose                     passed on to the event dialog
  * @param onJoin / onOrder / onRetreat passed on to the War panel
+ * @param onNewTerm                    passed on to the score screen
  */
 export function createHud(root, callbacks) {
-  const { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall, onChoose, onJoin, onOrder, onRetreat } = callbacks;
+  const { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall, onChoose, onJoin, onOrder, onRetreat, onNewTerm } = callbacks;
   // --- top bar: resources ---
   const top = el('div', 'bar top');
   const chips = {};
@@ -37,6 +41,13 @@ export function createHud(root, callbacks) {
   const crewValue = el('b');
   crewChip.append(el('i'), el('span', 'label', 'Crew'), crewValue);
   top.append(crewChip);
+
+  const termChip = el('div', 'chip term');
+  termChip.style.setProperty('--c', '#ffd23f');
+  const termValue = el('b');
+  const scoreValue = el('small');
+  termChip.append(el('i'), el('span', 'label'), termValue, scoreValue);
+  top.append(termChip);
 
   // --- alerts + hint ---
   const alertBox = el('div', 'alerts');
@@ -59,6 +70,7 @@ export function createHud(root, callbacks) {
   const map = createMapPanel({ onLaunch, onRecall });
   const events = createEventDialog({ onChoose });
   const war = createWarPanel({ onJoin, onOrder, onRetreat });
+  const scoreScreen = createScoreScreen({ onNewTerm });
 
   // Menu buttons open a panel; only one panel is open at a time.
   const menus = [];
@@ -86,7 +98,7 @@ export function createHud(root, callbacks) {
   });
   bottom.append(reset);
 
-  root.append(top, alertBox, fleet.panel, map.panel, war.panel, hint, bottom, events.backdrop);
+  root.append(top, alertBox, fleet.panel, map.panel, war.panel, hint, bottom, events.backdrop, scoreScreen.backdrop);
 
   const buildHint = () => (selected ? `Tap a glowing spot to build: ${MODULES[selected].name}  (Esc to cancel)` : '');
   let flashTimer = 0;
@@ -119,6 +131,11 @@ export function createHud(root, callbacks) {
       chips[b.id].rate.classList.toggle('neg', r < 0);
     }
     crewValue.textContent = sum.crew;
+    const left = Math.ceil(timeLeft(state));
+    termChip.querySelector('.label').textContent = `Term ${state.term}`;
+    termValue.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    scoreValue.textContent = `${totalScore(state)} pts`;
+    termChip.classList.toggle('ending', left <= TERM.warnAt);
     for (const type of BUILDABLE) cards[type].classList.toggle('poor', !canAfford(state, type));
     fleetCount.textContent = state.queue.length ? `${state.ships.length} ships · building…` : `${state.ships.length} ships`;
     fleet.update(state);
@@ -133,5 +150,5 @@ export function createHud(root, callbacks) {
     alertBox.replaceChildren(...lines);
   }
 
-  return { update, select, flash, getSelected: () => selected, showWarResult: war.showResult };
+  return { update, select, flash, getSelected: () => selected, showWarResult: war.showResult, showScore: scoreScreen.show };
 }

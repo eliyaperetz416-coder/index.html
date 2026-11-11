@@ -14,7 +14,9 @@ import { canChoose, resolveEvent } from './sim/events.js';
 import { canJoinBattle, joinBattle, giveOrder, retreat } from './sim/war.js';
 import { PLANETS } from './data/planets.js';
 import { lootText } from './ui/mapPanel.js';
-import { load, save, clearSave } from './sim/save.js';
+import { load, save, clearSave, loadScores, addScore } from './sim/save.js';
+import { totalScore, titleFor } from './sim/score.js';
+import { RACES } from './data/races.js';
 
 const canvas = document.getElementById('scene');
 const world = createScene(canvas);
@@ -31,11 +33,10 @@ const hud = createHud(document.getElementById('hud'), {
     base.showSlots(state, type);
   },
   onReset() {
-    clearSave();
-    state = createState(newSeed());
-    hud.select(null);
-    base.sync(state);
-    fleet.sync(state);
+    startTerm(state.term); // replay this term from scratch
+  },
+  onNewTerm() {
+    startTerm(state.term + 1);
   },
   onBuildShip(type) {
     const check = canQueueShip(state, type);
@@ -90,6 +91,28 @@ const hud = createHud(document.getElementById('hud'), {
 base.sync(state);
 fleet.sync(state);
 
+function startTerm(number) {
+  clearSave();
+  state = createState(newSeed(), number);
+  hud.select(null);
+  base.sync(state);
+  fleet.sync(state);
+  changed();
+}
+
+/** Record the final score (once) and show the end-of-term screen. */
+function endTerm() {
+  hud.select(null);
+  if (!state.scored) {
+    const score = totalScore(state);
+    addScore({ runId: state.runId, term: state.term, score, title: titleFor(score), date: Date.now() });
+    state.scored = true;
+    save(state);
+  }
+  hud.showScore(state, loadScores());
+}
+if (state.over) endTerm();
+
 /** Call after the player changes something: refresh the HUD and save right away. */
 function changed() {
   hud.update(state);
@@ -140,7 +163,7 @@ function frame(now) {
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
-    const { launched, expedition, war } = step(state, STEP);
+    const { launched, expedition, war, termOver } = step(state, STEP);
     if (war) {
       if (war.type === 'offer') hud.flash('A battle is starting at the front! Open the War panel to join.');
       if (war.type === 'won' || war.type === 'lost') {
@@ -149,6 +172,8 @@ function frame(now) {
       }
       if (war.type !== 'offer' && war.type !== 'ignored') fleet.sync(state); // ships may be lost or back home
     }
+    if (war?.ended) hud.flash(`The war is over — the ${RACES[war.ended].name} have won!`);
+    if (termOver) endTerm();
     if (launched) {
       fleet.sync(state);
       hud.flash(`${SHIPS[launched.type].name} launched!`);

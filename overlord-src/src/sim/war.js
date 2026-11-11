@@ -5,6 +5,7 @@
 //   timer     seconds until the next thing happens (a battle starts, or the offer runs out)
 //   offer     null, or { strength: 1–3 } while a battle is open for you to join
 //   battle    null, or the battle you are fighting (see joinBattle)
+//   ended     null, or the race that won the war (when the front reaches ±100)
 // }
 
 import { WAR } from '../data/war.js';
@@ -119,7 +120,7 @@ function fightRound(state) {
     changeRep(state, b.side, rep);
     changeRep(state, enemyOf(b.side), -rep);
     shiftFront(state, b.side, WAR.front[0] + WAR.front[1] * s);
-    state.war.wins = (state.war.wins ?? 0) + 1;
+    state.stats.battlesWon++;
     return endBattle(state, {
       type: 'won',
       side: b.side,
@@ -154,9 +155,21 @@ function fightRound(state) {
 
 /**
  * Advance the war by dt seconds. Returns what just happened, if anything:
- * { type: 'offer' | 'ignored' | 'round' | 'won' | 'lost', ... }
+ * { type: 'offer' | 'ignored' | 'round' | 'won' | 'lost' | 'ended', ... }
+ * When this step ended the war, the event also has `ended` set to the winning race.
  */
 export function tickWar(state, dt) {
+  const war = state.war;
+  if (war.ended) return null;
+  const event = advanceWar(state, dt);
+  // The front can also be pushed to the end by a retreat, between ticks.
+  if (Math.abs(war.front) < 100) return event;
+  war.ended = war.front > 0 ? POSITIVE : NEGATIVE;
+  war.offer = null;
+  return { ...(event ?? { type: 'ended' }), ended: war.ended };
+}
+
+function advanceWar(state, dt) {
   const war = state.war;
   war.timer -= dt;
   if (war.timer > 0) return null;

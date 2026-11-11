@@ -130,5 +130,6 @@ export function resolveEvent(state, index) {
     changes.push('Fleet heads home');
   }
   e.event = null;
+  state.stats.events++;
   return { won, text: event.fill(outcome.text), changes };
 }

@@ -731,3 +731,94 @@ body {
 .alert.war {
   color: #ffd0d8;
 }
+
+/* --- Term timer --- */
+.chip.term small {
+  color: #ffd23f;
+}
+
+.chip.term.ending {
+  border-color: rgba(255, 93, 122, 0.8);
+  animation: ending 1s infinite alternate;
+}
+
+.chip.term.ending b {
+  color: #ff5d7a;
+}
+
+@keyframes ending {
+  to {
+    box-shadow: 0 0 18px rgba(255, 93, 122, 0.5);
+  }
+}
+
+/* --- End-of-term score screen --- */
+.score-screen {
+  background: rgba(3, 4, 11, 0.8);
+}
+
+.score-total {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffd23f;
+  text-shadow: 0 0 24px rgba(255, 210, 63, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 48px;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.score-row span {
+  color: #9aa3d0;
+}
+
+.score-row b {
+  text-align: right;
+  color: #7dff8a;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-row b.bad {
+  color: #ff5d7a;
+}
+
+.dialog h4 {
+  margin: 6px 0 0;
+  color: #a9baff;
+}
+
+.highscores {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.highscores li {
+  color: #9aa3d0;
+}
+
+.highscores b {
+  display: inline-block;
+  min-width: 52px;
+  color: #e8ecff;
+}
+
+.highscores li.mine,
+.highscores li.mine b {
+  color: #ffd23f;
+}

@@ -3,12 +3,22 @@
 import { BASIC, RARE, STARTING, CREW } from '../data/resources.js';
 import { MODULES, GRID_RADIUS } from '../data/modules.js';
 import { WAR } from '../data/war.js';
+import { TERM } from '../data/term.js';
 
-/** @param seed starting point for the game's random numbers (events, fights) */
-export function createState(seed = 12345) {
+/**
+ * @param seed  starting point for the game's random numbers (events, fights)
+ * @param term  which term (run) this is: 1, 2, 3…
+ */
+export function createState(seed = 12345, term = 1) {
   return {
     version: 1,
     time: 0,
+    term,
+    termEnds: TERM.length, // the term is over when time reaches this
+    over: false, // true once the term has ended
+    scored: false, // true once the final score is in the high-score table
+    runId: seed, // tells this run apart in the high-score table
+    stats: { expeditions: 0, events: 0, battlesWon: 0 }, // counted for the score
     resources: { ...STARTING },
     rare: Object.fromEntries(RARE.map((r) => [r.id, 0])),
     modules: [{ id: 1, type: 'core', x: 0, z: 0 }],
@@ -16,7 +26,7 @@ export function createState(seed = 12345) {
     queue: [], // ships being built: { type, remaining seconds }
     expedition: null, // see sim/expedition.js
     reputation: { lumari: 0, drakh: 0, veil: 0 }, // -100 … +100 with each race
-    war: { front: 0, timer: WAR.firstBattle, offer: null, battle: null, wins: 0 }, // see sim/war.js
+    war: { front: 0, timer: WAR.firstBattle, offer: null, battle: null, ended: null }, // see sim/war.js
     seed,
     nextId: 2,
     // How well the base ran on the last tick (1 = perfect).

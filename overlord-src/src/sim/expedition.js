@@ -90,5 +90,6 @@ export function tickExpedition(state, dt) {
     state.rare[id] = (state.rare[id] ?? 0) + loot[id];
   }
   state.expedition = null;
+  state.stats.expeditions++;
   return { type: 'returned', planet: e.planet, loot };
 }

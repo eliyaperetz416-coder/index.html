@@ -407,3 +407,79 @@ describe('the war', () => {
     expect(s.war.front).toBe(-10);
   });
 });
+
+import { scoreBreakdown, totalScore, titleFor, timeLeft } from '../../src/sim/score.js';
+import { TERM } from '../../src/data/term.js';
+import { addScore, loadScores } from '../../src/sim/save.js';
+
+describe('the term and the score', () => {
+  it('ends after the term length and then the game stands still', () => {
+    const s = createState();
+    let over = false;
+    for (let i = 0; i < TERM.length * 4 && !over; i++) over = step(s, 0.25).termOver;
+    expect(over).toBe(true);
+    expect(s.time).toBeCloseTo(TERM.length);
+    expect(timeLeft(s)).toBe(0);
+    const credits = s.resources.credits;
+    expect(step(s, 0.25)).toEqual({});
+    expect(s.resources.credits).toBe(credits);
+  });
+
+  it('adds up every part of the run', () => {
+    const s = fleetBase(); // core + 2 storage + shipyard, frigate L2 + scout L1, 5000 credits
+    s.rare.lightMetal = 10;
+    s.stats = { expeditions: 2, events: 3, battlesWon: 1 };
+    s.reputation = { lumari: 40, drakh: -40, veil: 0 };
+    const points = Object.fromEntries(scoreBreakdown(s).map((r) => [r.label, r.points]));
+    expect(points).toEqual({
+      Base: 30,
+      Fleet: 75,
+      'Rare resources': 20,
+      Expeditions: 40,
+      'Crises handled': 30,
+      'Battles won': 40,
+      Alliances: 50,
+      'The war': 0,
+      Treasury: 250,
+    });
+    expect(totalScore(s)).toBe(535);
+    expect(titleFor(535)).toBe('Captain');
+    expect(titleFor(0)).toBe('Cadet');
+    expect(titleFor(5000)).toBe('Space Overlord');
+  });
+
+  it('counts expeditions and events as they happen', () => {
+    const s = fleetBase();
+    launchExpedition(s, 'kessa', [50]);
+    runUntil(s, 'event');
+    resolveEvent(s, currentEvent(s).choices.length - 1);
+    runUntil(s, 'returned');
+    expect(s.stats).toMatchObject({ expeditions: 1, events: 1 });
+  });
+
+  it('the war ends at the edge of the front, and backing the winner scores a bonus', () => {
+    const s = atOffer(1);
+    s.war.front = 90;
+    s.ships.push({ id: 60, type: 'frigate', level: 3 });
+    joinBattle(s, 'lumari', [51, 60]);
+    let ended = null;
+    for (let i = 0; i < 400 && !ended; i++) ended = step(s, 0.25).war?.ended;
+    expect(ended).toBe('lumari');
+    expect(s.war.ended).toBe('lumari');
+    expect(s.stats.battlesWon).toBe(1);
+    expect(warUntil(s, ['offer'], 300)).toBe(null); // no more battles
+    const war = scoreBreakdown(s).find((r) => r.label === 'The war');
+    expect(war.points).toBe(TERM.points.warWon);
+  });
+
+  it('keeps the ten best scores, best first', () => {
+    const store = new Map();
+    globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
+    for (let i = 1; i <= 12; i++) addScore({ runId: i, term: i, score: i * 100 });
+    const list = loadScores();
+    expect(list).toHaveLength(10);
+    expect(list[0].score).toBe(1200);
+    expect(list.at(-1).score).toBe(300);
+    delete globalThis.localStorage;
+  });
+});

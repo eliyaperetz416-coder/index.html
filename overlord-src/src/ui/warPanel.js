@@ -16,6 +16,7 @@ const RESULT_TITLES = { won: 'Victory!', lost: 'Defeat', retreated: 'Retreated' 
 /** One-line summary of the war for the menu card and the top of the screen. */
 export function warLine(state) {
   const war = state.war;
+  if (war.ended) return `${RACES[war.ended].name} won the war`;
   if (war.battle) return `In battle · round ${war.battle.round + 1}`;
   if (war.offer) return `Battle open · ${secs(war.timer)} to join`;
   const ahead = leader(state);
@@ -161,7 +162,7 @@ export function createWarPanel({ onJoin, onOrder, onRetreat }) {
       nodes.push(box);
     }
     nodes.push(live.timer);
-    nodes.push(el('p', 'muted', 'Join battles to push the front, earn reputation with one side and lose it with the other.'));
+    if (!state.war.ended) nodes.push(el('p', 'muted', 'Join battles to push the front, earn reputation with one side and lose it with the other. Push the front to the end and the war is won.'));
     return nodes;
   }
 
@@ -181,6 +182,7 @@ export function createWarPanel({ onJoin, onOrder, onRetreat }) {
       mode === 'offer' && [side, [...picked], state.ships.map((s) => [s.id, s.level, shipBusy(state, s.id)])],
       mode === 'battle' && war.battle.ships.length,
       result,
+      war.ended,
     ]);
     if (signature !== drawn) {
       drawn = signature;
@@ -188,7 +190,7 @@ export function createWarPanel({ onJoin, onOrder, onRetreat }) {
     }
 
     if (mode === 'offer') live.timer.textContent = `${secs(war.timer)} left to join.`;
-    if (mode === 'quiet') live.timer.textContent = `Next battle in ${secs(war.timer)}.`;
+    if (mode === 'quiet') live.timer.textContent = war.ended ? `The war is over. The ${RACES[war.ended].name} have won.` : `Next battle in ${secs(war.timer)}.`;
     if (mode === 'battle') {
       const b = war.battle;
       live.enemyBar.style.width = `${(100 * b.enemyHp) / b.enemyMax}%`;
