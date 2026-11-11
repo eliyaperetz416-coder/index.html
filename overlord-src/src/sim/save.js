@@ -12,18 +12,19 @@ export function save(state) {
   }
 }
 
-export function load() {
+/** @param seed used only when there is no save and a new game starts */
+export function load(seed) {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY));
     if (saved?.version === 1 && Array.isArray(saved.modules)) {
       // Start from a fresh state so saves from older versions get any fields added since.
-      const fresh = createState();
-      return { ...fresh, ...saved, rare: { ...fresh.rare, ...saved.rare } };
+      const fresh = createState(seed);
+      return { ...fresh, ...saved, rare: { ...fresh.rare, ...saved.rare }, reputation: { ...fresh.reputation, ...saved.reputation } };
     }
   } catch {
     // Broken save: start fresh.
   }
-  return createState();
+  return createState(seed);
 }
 
 export function clearSave() {

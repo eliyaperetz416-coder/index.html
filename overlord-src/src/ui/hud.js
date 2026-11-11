@@ -6,6 +6,7 @@ import { summarize, rates, alerts, canAfford } from '../sim/state.js';
 import { el, costText } from './dom.js';
 import { createFleetPanel } from './fleetPanel.js';
 import { createMapPanel, expeditionLine } from './mapPanel.js';
+import { createEventDialog } from './eventDialog.js';
 
 /**
  * @param root     the #hud element
@@ -13,8 +14,9 @@ import { createMapPanel, expeditionLine } from './mapPanel.js';
  * @param onReset  called when the player confirms a new game
  * @param onBuildShip / onUpgradeShip  passed on to the Fleet panel
  * @param onLaunch / onRecall          passed on to the Star Map panel
+ * @param onChoose                     passed on to the event dialog
  */
-export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall }) {
+export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall, onChoose }) {
   // --- top bar: resources ---
   const top = el('div', 'bar top');
   const chips = {};
@@ -52,6 +54,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
   }
   const fleet = createFleetPanel({ onBuild: onBuildShip, onUpgrade: onUpgradeShip });
   const map = createMapPanel({ onLaunch, onRecall });
+  const events = createEventDialog({ onChoose });
 
   // Menu buttons open a panel; only one panel is open at a time.
   const menus = [];
@@ -78,7 +81,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
   });
   bottom.append(reset);
 
-  root.append(top, alertBox, fleet.panel, map.panel, hint, bottom);
+  root.append(top, alertBox, fleet.panel, map.panel, hint, bottom, events.backdrop);
 
   const buildHint = () => (selected ? `Tap a glowing spot to build: ${MODULES[selected].name}  (Esc to cancel)` : '');
   let flashTimer = 0;
@@ -115,6 +118,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
     fleetCount.textContent = state.queue.length ? `${state.ships.length} ships · building…` : `${state.ships.length} ships`;
     fleet.update(state);
     map.update(state);
+    events.update(state);
     mapStatus.textContent = state.expedition ? expeditionLine(state.expedition) : 'Send an expedition';
     const lines = alerts(state).map((a) => el('div', 'alert', `⚠ ${a}`));
     if (state.expedition) lines.unshift(el('div', 'alert info', `🚀 ${expeditionLine(state.expedition)}`));

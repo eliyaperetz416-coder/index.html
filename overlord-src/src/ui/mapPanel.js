@@ -5,10 +5,13 @@ import { SHIPS } from '../data/ships.js';
 import { RARE } from '../data/resources.js';
 import { canLaunch, expeditionCost, lootTotal } from '../sim/expedition.js';
 import { fleetRank } from '../sim/fleet.js';
+import { standing } from '../sim/events.js';
+import { RACES } from '../data/races.js';
 import { el, costText } from './dom.js';
 
 const rareName = (id) => RARE.find((r) => r.id === id).name;
 const PHASES = { outbound: 'Flying out', onsite: 'Gathering resources', return: 'Flying home' };
+const signed = (n) => (n > 0 ? `+${n}` : `${n}`.replace('-', '−'));
 
 /** How long the current phase lasts in total, for the progress bar. */
 function phaseLength(expedition) {
@@ -58,7 +61,7 @@ export function createMapPanel({ onLaunch, onRecall }) {
       card.append(
         el('i'),
         el('strong', null, p.name),
-        el('span', null, `Home of the ${p.race}`),
+        el('span', `rep ${standing(state.reputation[p.race]).toLowerCase()}`, `${RACES[p.race].name} · ${standing(state.reputation[p.race])}`),
         el('span', null, `${p.travel}s away`),
         el('span', 'need', `Needs level ${p.minRank} ship`),
         el('em', null, p.rare.map(rareName).join(' + ')),
@@ -111,6 +114,20 @@ export function createMapPanel({ onLaunch, onRecall }) {
     return nodes;
   }
 
+  /** Where you stand with each race. */
+  function renderRaces(state) {
+    const box = el('div', 'races');
+    for (const [id, race] of Object.entries(RACES)) {
+      const rep = state.reputation[id];
+      const line = el('div', 'race');
+      line.style.setProperty('--c', race.color);
+      const enemy = race.enemy ? ` At war with the ${RACES[race.enemy].name}.` : '';
+      line.append(el('strong', null, race.name), el('b', `rep ${standing(rep).toLowerCase()}`, `${standing(rep)} ${signed(rep)}`), el('span', null, race.desc + enemy));
+      box.append(line);
+    }
+    return box;
+  }
+
   function renderHold(state) {
     const owned = RARE.filter((r) => state.rare[r.id] > 0);
     const hold = el('div', 'hold');
@@ -129,13 +146,14 @@ export function createMapPanel({ onLaunch, onRecall }) {
       e ? [e.planet, e.phase] : [planetId, [...picked], canLaunch(state, planetId, [...picked])],
       state.ships,
       state.rare,
+      state.reputation,
     ]);
     if (signature !== drawn) {
       drawn = signature;
-      body.replaceChildren(...(e ? renderActive(state) : renderPlanning(state)), renderHold(state));
+      body.replaceChildren(...(e ? renderActive(state) : renderPlanning(state)), renderRaces(state), renderHold(state));
     }
     if (e) {
-      live.phase.textContent = `${PHASES[e.phase]} · ${Math.ceil(Math.max(0, e.remaining))}s`;
+      live.phase.textContent = e.event ? 'Waiting for your orders' : `${PHASES[e.phase]} · ${Math.ceil(Math.max(0, e.remaining))}s`;
       live.bar.style.width = `${100 * (1 - Math.max(0, e.remaining) / phaseLength(e))}%`;
       live.cargo.textContent = `Cargo ${Math.floor(lootTotal(e))}/${e.cargo}`;
     }
@@ -146,6 +164,7 @@ export function createMapPanel({ onLaunch, onRecall }) {
 
 /** One-line summary of an expedition for the top of the screen. */
 export function expeditionLine(expedition) {
+  if (expedition.event) return `Orders needed · ${PLANETS[expedition.planet].name}`;
   return `${PHASES[expedition.phase]} · ${PLANETS[expedition.planet].name} · ${Math.ceil(Math.max(0, expedition.remaining))}s`;
 }
 

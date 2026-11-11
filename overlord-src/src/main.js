@@ -10,6 +10,7 @@ import { step } from './sim/game.js';
 import { SHIPS } from './data/ships.js';
 import { canQueueShip, queueShip, canUpgradeShip, upgradeShip } from './sim/fleet.js';
 import { canLaunch, launchExpedition, recallExpedition } from './sim/expedition.js';
+import { canChoose, resolveEvent } from './sim/events.js';
 import { PLANETS } from './data/planets.js';
 import { lootText } from './ui/mapPanel.js';
 import { load, save, clearSave } from './sim/save.js';
@@ -19,7 +20,9 @@ const world = createScene(canvas);
 const base = createBaseView(world);
 const fleet = createFleetView(world);
 
-let state = load();
+const newSeed = () => Math.floor(Math.random() * 2 ** 31);
+
+let state = load(newSeed());
 
 const hud = createHud(document.getElementById('hud'), {
   onSelect(type) {
@@ -28,7 +31,7 @@ const hud = createHud(document.getElementById('hud'), {
   },
   onReset() {
     clearSave();
-    state = createState();
+    state = createState(newSeed());
     hud.select(null);
     base.sync(state);
     fleet.sync(state);
@@ -53,6 +56,13 @@ const hud = createHud(document.getElementById('hud'), {
     fleet.sync(state);
     hud.flash(`Expedition launched to ${PLANETS[planetId].name}!`);
     changed();
+  },
+  onChoose(index) {
+    const check = canChoose(state, index);
+    if (!check.ok) return hud.flash(check.reason), null;
+    const result = resolveEvent(state, index);
+    changed();
+    return result;
   },
   onRecall() {
     if (recallExpedition(state)) hud.flash('Fleet recalled — heading home.');

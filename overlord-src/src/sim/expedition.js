@@ -1,11 +1,13 @@
 // Expedition rules: send ships to a planet, gather rare resources, fly home. Pure logic.
 //
 // state.expedition is null, or:
-//   { planet, shipIds, phase: 'outbound' | 'onsite' | 'return', remaining, cargo, loot: { rareId: amount } }
+//   { planet, shipIds, phase: 'outbound' | 'onsite' | 'return', remaining, cargo, loot: { rareId: amount },
+//     eventsLeft, event }   — event is set while the player must make a choice (see sim/events.js)
 
 import { PLANETS } from '../data/planets.js';
 import { canPay, pay } from './state.js';
 import { shipStats } from './fleet.js';
+import { startEvent, yieldBonus } from './events.js';
 
 /** Supplies needed to send `shipCount` ships to a planet. */
 export function expeditionCost(planetId, shipCount) {
@@ -31,7 +33,7 @@ export function launchExpedition(state, planetId, shipIds) {
   if (!canLaunch(state, planetId, shipIds).ok) return false;
   pay(state, expeditionCost(planetId, shipIds.length));
   const cargo = shipIds.reduce((sum, id) => sum + shipStats(state.ships.find((s) => s.id === id)).cargo, 0);
-  state.expedition = { planet: planetId, shipIds: [...shipIds], phase: 'outbound', remaining: PLANETS[planetId].travel, cargo, loot: {} };
+  state.expedition = { planet: planetId, shipIds: [...shipIds], phase: 'outbound', remaining: PLANETS[planetId].travel, cargo, loot: {}, eventsLeft: PLANETS[planetId].events, event: null };
   return true;
 }
 
@@ -47,18 +49,27 @@ export function recallExpedition(state) {
 
 /**
  * Advance the expedition by dt seconds.
- * Returns what just happened, if anything: { type: 'arrived' | 'leaving' | 'returned', planet, loot }.
+ * Returns what just happened, if anything: { type: 'arrived' | 'event' | 'leaving' | 'returned', planet, loot }.
  */
 export function tickExpedition(state, dt) {
   const e = state.expedition;
-  if (!e) return null;
+  if (!e || e.event) return null; // nothing out, or waiting for the player to answer an event
   const planet = PLANETS[e.planet];
   e.remaining -= dt;
 
   if (e.phase === 'onsite') {
+    // Events are spread evenly over the stay: with 2 events they come at 1/3 and 2/3 of it.
+    const elapsed = planet.stay - e.remaining;
+    const nextEventAt = (planet.stay * (planet.events - e.eventsLeft + 1)) / (planet.events + 1);
+    if (e.eventsLeft > 0 && elapsed >= nextEventAt) {
+      e.eventsLeft--;
+      startEvent(state);
+      return { type: 'event', planet: e.planet };
+    }
+
     // Gather the planet's rare resources evenly until the cargo holds are full.
     const room = Math.max(0, e.cargo - lootTotal(e));
-    const gathered = Math.min(room, planet.yield * dt);
+    const gathered = Math.min(room, planet.yield * yieldBonus(state, e.planet) * dt);
     for (const id of planet.rare) e.loot[id] = (e.loot[id] ?? 0) + gathered / planet.rare.length;
     if (e.remaining > 0 && gathered < room) return null;
     e.phase = 'return';

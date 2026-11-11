@@ -3,6 +3,7 @@
 // cargo   how much loot it can carry home from an expedition
 // attack  damage in battles
 // hull    how much damage it can take
+// maxLevelRare  rare resources needed (on top of the normal price) for the final upgrade
 
 export const SHIPS = {
   scout: {
@@ -11,6 +12,7 @@ export const SHIPS = {
     color: '#4de3ff',
     cost: { metal: 80, credits: 60 },
     buildTime: 20,
+    maxLevelRare: { lightMetal: 20 },
     cargo: 30,
     attack: 2,
     hull: 20,
@@ -21,6 +23,7 @@ export const SHIPS = {
     color: '#ff5d7a',
     cost: { metal: 160, credits: 120 },
     buildTime: 40,
+    maxLevelRare: { lightMetal: 15, bioMatter: 15 },
     cargo: 12,
     attack: 8,
     hull: 60,

@@ -126,8 +126,12 @@ describe('fleet', () => {
     expect(upgradeShip(s, 50)).toBe(true);
     expect(s.resources.metal).toBe(540);
     expect(shipStats(s.ships[0])).toEqual({ cargo: 18, attack: 12, hull: 90 });
+    expect(canUpgradeShip(s, 50).reason).toMatch(/resources/); // level 3 needs rare resources
+    s.rare.lightMetal = 15;
+    s.rare.bioMatter = 20;
     expect(upgradeShip(s, 50)).toBe(true);
     expect(s.resources.metal).toBe(220);
+    expect(s.rare).toMatchObject({ lightMetal: 0, bioMatter: 5 });
     expect(fleetRank(s)).toBe(3);
     expect(canUpgradeShip(s, 50).reason).toMatch(/max/i);
   });
@@ -141,6 +145,12 @@ function fleetBase() {
   s.resources = { metal: 700, energy: 700, oxygen: 700, food: 700, credits: 5000 };
   s.ships.push({ id: 50, type: 'scout', level: 1 }, { id: 51, type: 'frigate', level: 2 });
   return s;
+}
+
+/** Launch with events switched off, so timing and loot are exact. */
+function launchQuiet(s, planet, ids) {
+  launchExpedition(s, planet, ids);
+  s.expedition.eventsLeft = 0;
 }
 
 /** Run the game until an expedition event of this type happens (or give up after `seconds`). */
@@ -175,7 +185,7 @@ describe('expeditions', () => {
 
   it('flies out, gathers, and brings the rare loot home', () => {
     const s = fleetBase();
-    launchExpedition(s, 'kessa', [50]); // scout: cargo 30
+    launchQuiet(s, 'kessa', [50]); // scout: cargo 30
     expect(runUntil(s, 'arrived')).toBeTruthy();
     expect(s.time).toBeCloseTo(20, 0);
     expect(runUntil(s, 'leaving')).toBeTruthy(); // hold fills (30 at 0.8/s) before the 45s stay ends
@@ -190,7 +200,7 @@ describe('expeditions', () => {
   it('leaves when the stay is over even if the hold is not full', () => {
     const s = fleetBase();
     s.ships.push({ id: 52, type: 'scout', level: 3 }); // cargo 60, more than 45s × 0.8
-    launchExpedition(s, 'kessa', [52]);
+    launchQuiet(s, 'kessa', [52]);
     const home = runUntil(s, 'returned');
     expect(home.loot.lightMetal + home.loot.bioMatter).toBe(36);
     expect(s.time).toBeCloseTo(20 + 45 + 20, 0);
@@ -198,12 +208,105 @@ describe('expeditions', () => {
 
   it('recall turns the fleet around', () => {
     const s = fleetBase();
-    launchExpedition(s, 'kessa', [50]);
+    launchQuiet(s, 'kessa', [50]);
     for (let i = 0; i < 20; i++) step(s, 0.25); // 5s out
     expect(recallExpedition(s)).toBe(true);
     expect(s.expedition.remaining).toBeCloseTo(5);
     expect(recallExpedition(s)).toBe(false);
     const home = runUntil(s, 'returned');
     expect(home.loot).toEqual({});
+  });
+});
+
+import { currentEvent, resolveEvent, canChoose, choiceChance, yieldBonus, standing } from '../../src/sim/events.js';
+import { EVENTS } from '../../src/data/events.js';
+import { PLANETS } from '../../src/data/planets.js';
+
+/** Put the fleet on a planet with a chosen event waiting. */
+function atEvent(planet, ids, eventId) {
+  const s = fleetBase();
+  launchExpedition(s, planet, ids);
+  runUntil(s, 'arrived');
+  s.expedition.event = { id: eventId };
+  return s;
+}
+
+describe('events and reputation', () => {
+  it('an event interrupts the stay and waits for an answer', () => {
+    const s = fleetBase();
+    launchExpedition(s, 'kessa', [50]);
+    expect(runUntil(s, 'event')).toBeTruthy();
+    expect(s.time).toBeCloseTo(20 + 22.5, 0);
+    const before = { ...s.expedition, loot: { ...s.expedition.loot } };
+    for (let i = 0; i < 40; i++) step(s, 0.25);
+    expect(s.expedition.remaining).toBe(before.remaining);
+    const event = currentEvent(s);
+    expect(event.text).not.toMatch(/[{}]/);
+    resolveEvent(s, event.choices.length - 1);
+    expect(s.expedition.event).toBe(null);
+    expect(runUntil(s, 'returned')).toBeTruthy();
+  });
+
+  it('every event on every planet resolves cleanly whichever way the dice fall', () => {
+    for (const planet of Object.keys(PLANETS)) {
+      for (const [id, ev] of Object.entries(EVENTS)) {
+        ev.choices.forEach((_, i) => {
+          for (const seed of [1, 2, 3, 4]) {
+            const s = atEvent('kessa', [50, 51], id);
+            s.expedition.planet = planet;
+            s.seed = seed;
+            const result = resolveEvent(s, i);
+            expect(result.text).not.toMatch(/[{}]|undefined/);
+            expect(s.expedition.event).toBe(null);
+            for (const v of Object.values(s.expedition.loot)) expect(v).toBeGreaterThanOrEqual(0);
+            for (const v of Object.values(s.reputation)) expect(Number.isFinite(v)).toBe(true);
+          }
+        });
+      }
+    }
+  });
+
+  it('a stronger fleet wins fights more often', () => {
+    const weak = atEvent('kessa', [50], 'distress'); // attack 2
+    const strong = atEvent('kessa', [50, 51], 'distress'); // attack 14
+    const fight = EVENTS.distress.choices[0];
+    expect(choiceChance(weak, fight)).toBeCloseTo(0.2);
+    expect(choiceChance(strong, fight)).toBeCloseTo(14 / 22);
+  });
+
+  it('choices change cargo, credits and reputation with both sides of the war', () => {
+    const s = atEvent('kessa', [50], 'patrol');
+    const credits = s.resources.credits;
+    const result = resolveEvent(s, 1); // sell Lumari plans to the Drakh
+    expect(s.resources.credits).toBe(credits + 150);
+    expect(s.reputation).toEqual({ lumari: -25, drakh: 15, veil: 0 });
+    expect(result.changes).toEqual(['+150 Credits', 'Lumari −25', 'Drakh +15']);
+  });
+
+  it('paid choices need the credits, and cargo never overflows the hold', () => {
+    const s = atEvent('kessa', [50], 'trader');
+    s.resources.credits = 10;
+    expect(canChoose(s, 0).ok).toBe(false);
+    expect(resolveEvent(s, 0)).toBe(null);
+    s.resources.credits = 100;
+    s.expedition.loot = { lightMetal: 12, bioMatter: 12 }; // 24 of 30
+    expect(resolveEvent(s, 0).changes[0]).toMatch(/hold full/);
+    expect(s.expedition.loot.lightMetal + s.expedition.loot.bioMatter).toBe(30);
+    expect(s.resources.credits).toBe(20);
+  });
+
+  it('friendly races boost gathering and hostile ones slow it', () => {
+    const s = fleetBase();
+    expect(yieldBonus(s, 'kessa')).toBe(1);
+    s.reputation.lumari = 30;
+    expect(standing(30)).toBe('Friendly');
+    expect(yieldBonus(s, 'kessa')).toBe(1.5);
+    s.reputation.lumari = -40;
+    expect(standing(-40)).toBe('Hostile');
+    expect(yieldBonus(s, 'kessa')).toBe(0.5);
+    s.ships.push({ id: 52, type: 'scout', level: 3 });
+    launchQuiet(s, 'kessa', [52]);
+    const home = runUntil(s, 'returned');
+    expect(home.loot.lightMetal + home.loot.bioMatter).toBe(18); // half of the usual 36
   });
 });

@@ -37,9 +37,14 @@ export function queueShip(state, type) {
   return true;
 }
 
-/** Price to take a ship from its current level to the next: level 1→2 costs 1× the ship, 2→3 costs 2×. */
+/**
+ * Price to take a ship from its current level to the next: level 1→2 costs 1× the ship, 2→3 costs 2×.
+ * The final level also needs rare resources from expeditions.
+ */
 export function upgradeCost(ship) {
-  return Object.fromEntries(Object.entries(SHIPS[ship.type].cost).map(([res, amount]) => [res, amount * ship.level]));
+  const def = SHIPS[ship.type];
+  const cost = Object.fromEntries(Object.entries(def.cost).map(([res, amount]) => [res, amount * ship.level]));
+  return ship.level + 1 === MAX_LEVEL ? { ...cost, ...def.maxLevelRare } : cost;
 }
 
 export function canUpgradeShip(state, id) {

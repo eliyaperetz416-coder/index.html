@@ -3,7 +3,8 @@
 import { BASIC, RARE, STARTING, CREW } from '../data/resources.js';
 import { MODULES, GRID_RADIUS } from '../data/modules.js';
 
-export function createState() {
+/** @param seed starting point for the game's random numbers (events, fights) */
+export function createState(seed = 12345) {
   return {
     version: 1,
     time: 0,
@@ -13,6 +14,8 @@ export function createState() {
     ships: [], // { id, type, level }
     queue: [], // ships being built: { type, remaining seconds }
     expedition: null, // see sim/expedition.js
+    reputation: { lumari: 0, drakh: 0, veil: 0 }, // -100 … +100 with each race
+    seed,
     nextId: 2,
     // How well the base ran on the last tick (1 = perfect).
     status: { power: 1, life: 1 },
@@ -94,13 +97,16 @@ export function moduleAt(state, x, z) {
   return state.modules.find((m) => m.x === x && m.z === z);
 }
 
-/** cost looks like { metal: 30, credits: 10 } */
+/** Basic resources live in state.resources, rare ones in state.rare. */
+const pool = (state, res) => (res in state.resources ? state.resources : state.rare);
+
+/** cost looks like { metal: 30, credits: 10 } and may include rare resources too. */
 export function canPay(state, cost) {
-  return Object.entries(cost).every(([res, amount]) => state.resources[res] >= amount);
+  return Object.entries(cost).every(([res, amount]) => pool(state, res)[res] >= amount);
 }
 
 export function pay(state, cost) {
-  for (const [res, amount] of Object.entries(cost)) state.resources[res] -= amount;
+  for (const [res, amount] of Object.entries(cost)) pool(state, res)[res] -= amount;
 }
 
 export const canAfford = (state, type) => canPay(state, MODULES[type].cost);

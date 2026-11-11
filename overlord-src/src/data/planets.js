@@ -6,12 +6,14 @@
 // supplies  what EACH ship takes from the base when it leaves
 // rare      rare resources found there (ids from data/resources.js)
 // yield     rare resources gathered per second while on site
-// race      the aliens who live there (they start to matter in the next steps)
+// race      the aliens who live there (id from data/races.js)
+// events    how many events happen during one stay
 
 export const PLANETS = {
   kessa: {
     name: 'Kessa',
-    race: 'Lumari',
+    race: 'lumari',
+    events: 1,
     color: '#4dffb0',
     travel: 20,
     stay: 45,
@@ -22,7 +24,8 @@ export const PLANETS = {
   },
   vorn: {
     name: 'Vorn',
-    race: 'Drakh',
+    race: 'drakh',
+    events: 2,
     color: '#ff8a4d',
     travel: 40,
     stay: 60,
@@ -33,7 +36,8 @@ export const PLANETS = {
   },
   nyx: {
     name: 'Nyx-7',
-    race: 'Veil',
+    race: 'veil',
+    events: 2,
     color: '#b48cff',
     travel: 70,
     stay: 75,
