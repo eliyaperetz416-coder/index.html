@@ -3,7 +3,7 @@
 import { createState } from './state.js';
 import { TERM } from '../data/term.js';
 
-const KEY = 'space-overlord-save-v1';
+const KEY = 'space-overlord-save-v2';
 
 export function save(state) {
   try {
@@ -27,6 +27,7 @@ export function load(seed) {
         reputation: { ...fresh.reputation, ...saved.reputation },
         war: { ...fresh.war, ...saved.war },
         stats: { ...fresh.stats, ...saved.stats },
+        suit: { ...fresh.suit, ...saved.suit },
         // Saves from before terms existed get a full term from where they are now.
         termEnds: saved.termEnds ?? saved.time + TERM.length,
         runId: saved.runId ?? fresh.runId,

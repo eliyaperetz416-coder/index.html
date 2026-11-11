@@ -12,7 +12,7 @@ export function scoreBreakdown(state) {
   const modules = state.modules.length - 1; // the Command Core is free
   const levels = sum(state.ships.map((s) => s.level));
   const rare = sum(Object.values(state.rare));
-  const { expeditions, events, battlesWon } = state.stats;
+  const { expeditions, events, battlesWon, blackouts } = state.stats;
   const friends = Object.keys(RACES).filter((id) => state.reputation[id] >= FRIENDLY);
   const foes = Object.keys(RACES).filter((id) => state.reputation[id] <= HOSTILE);
   const winner = state.war.ended;
@@ -35,6 +35,7 @@ export function scoreBreakdown(state) {
     { label: 'Battles won', detail: `${battlesWon} won`, points: battlesWon * P.battleWon },
     { label: 'Alliances', detail: alliances.join(' · ') || 'No strong ties', points: friends.length * P.ally - foes.length * P.hated },
     { label: 'The war', detail: war, points: backedWinner ? P.warWon : 0 },
+    { label: 'Suit failures', detail: `${blackouts} blackouts`, points: -blackouts * P.blackout },
     { label: 'Treasury', detail: `${credits} credits`, points: Math.floor(credits / P.creditsPer) },
   ];
 }

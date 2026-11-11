@@ -428,7 +428,7 @@ describe('the term and the score', () => {
   it('adds up every part of the run', () => {
     const s = fleetBase(); // core + 2 storage + shipyard, frigate L2 + scout L1, 5000 credits
     s.rare.lightMetal = 10;
-    s.stats = { expeditions: 2, events: 3, battlesWon: 1 };
+    s.stats = { expeditions: 2, events: 3, battlesWon: 1, blackouts: 0 };
     s.reputation = { lumari: 40, drakh: -40, veil: 0 };
     const points = Object.fromEntries(scoreBreakdown(s).map((r) => [r.label, r.points]));
     expect(points).toEqual({
@@ -440,6 +440,7 @@ describe('the term and the score', () => {
       'Battles won': 40,
       Alliances: 50,
       'The war': 0,
+      'Suit failures': -0,
       Treasury: 250,
     });
     expect(totalScore(s)).toBe(535);
@@ -481,5 +482,94 @@ describe('the term and the score', () => {
     expect(list[0].score).toBe(1200);
     expect(list.at(-1).score).toBe(300);
     delete globalThis.localStorage;
+  });
+});
+
+import { tickSuit, SUIT } from '../../src/sim/suit.js';
+import { planBase, buildColliders, locate, collide, sightLimit, CELL, FLOOR } from '../../src/base/layout.js';
+
+describe('the suit', () => {
+  it('drains outside and blacks out when empty', () => {
+    const s = createState();
+    let event = null;
+    for (let i = 0; i < SUIT.seconds * 4 - 4; i++) event = event ?? tickSuit(s, 0.25, false);
+    expect(event).toBe(null);
+    expect(s.suit.oxygen).toBeGreaterThan(0);
+    for (let i = 0; i < 8; i++) event = event ?? tickSuit(s, 0.25, false);
+    expect(event).toBe('blackout');
+    expect(s.suit.oxygen).toBe(50);
+    expect(s.resources.credits).toBe(50);
+    expect(s.stats.blackouts).toBe(1);
+    expect(scoreBreakdown(s).find((r) => r.label === 'Suit failures').points).toBe(-30);
+  });
+
+  it('refills indoors from the base oxygen', () => {
+    const s = createState();
+    s.suit.oxygen = 20;
+    for (let i = 0; i < 20; i++) tickSuit(s, 0.25, true);
+    expect(s.suit.oxygen).toBe(100);
+    expect(s.resources.oxygen).toBeCloseTo(80 - 80 * SUIT.baseCost);
+    s.suit.oxygen = 40;
+    s.resources.oxygen = 0;
+    tickSuit(s, 1, true); // no air in the base: the suit keeps draining, slowly
+    expect(s.suit.oxygen).toBeLessThan(40);
+  });
+});
+
+describe('the floor plan', () => {
+  const modules = [
+    { id: 1, type: 'core', x: 0, z: 0 },
+    { id: 2, type: 'habitat', x: 1, z: 0 },
+    { id: 3, type: 'solar', x: -1, z: 0 },
+  ];
+  const plan = planBase(modules);
+  const colliders = buildColliders(plan);
+
+  it('joins rooms with doors and gives the base one airlock', () => {
+    const core = plan.rooms[0];
+    expect(core.sides[2]).toBe('door'); // towards the habitat
+    expect(core.sides[6]).toBe('solid'); // towards the solar field
+    expect(core.sides[0]).toBe('airlock');
+    expect(core.sides[4]).toBe('window');
+    expect(plan.rooms[1].sides[6]).toBe('door');
+    expect(plan.connectors).toEqual([{ x: CELL / 2, z: 0, alongX: true }]);
+    expect(plan.conduits).toHaveLength(1);
+    expect(plan.airlock).toMatchObject({ x: 0, z: 5, side: 0 });
+  });
+
+  it('moves the airlock when its side is built over', () => {
+    const blocked = planBase([...modules, { id: 4, type: 'storage', x: 0, z: 1 }]);
+    expect(blocked.rooms[0].sides[0]).toBe('door');
+    expect(blocked.airlock.roomId).toBe(1);
+    expect(blocked.airlock.side).toBe(4);
+  });
+
+  it('knows indoors from outdoors', () => {
+    expect(locate(plan, 0, 0)).toMatchObject({ floor: FLOOR, indoors: true });
+    expect(locate(plan, 5, 0).indoors).toBe(true); // the corridor
+    expect(locate(plan, 0, 5).indoors).toBe(true); // the airlock vestibule
+    expect(locate(plan, 0, 6.7).indoors).toBe(false); // on the ramp
+    expect(locate(plan, 0, 6.7).floor).toBeLessThan(FLOOR);
+    expect(locate(plan, -10, 0).indoors).toBe(false); // on the solar pad
+    expect(locate(plan, 0, 20)).toBe(null);
+  });
+
+  it('walls stop the player, doorways let them through', () => {
+    const walk = (x, z, dx, dz, steps) => {
+      const p = { x, z };
+      for (let i = 0; i < steps; i++) { p.x += dx * 0.05; p.z += dz * 0.05; collide(colliders, p, 0.38); }
+      return p;
+    };
+    expect(walk(0, 2, 0, -1, 400).z).toBeGreaterThan(-4); // north wall holds (start beside the table)
+    expect(walk(2, 0, 1, 0, 300).x).toBeGreaterThan(9); // through the door into the habitat
+    expect(walk(0, 2, 0, 1, 200).z).toBeGreaterThan(8); // out through the airlock
+    expect(walk(-2, 0, -1, 0, 200).x).toBeGreaterThan(-4); // solid wall towards the solar field
+  });
+
+  it('walls block the camera, doorways and the sky do not', () => {
+    const eye = { x: 0, y: 1.8, z: 2 };
+    expect(sightLimit(colliders, eye, { x: 3, y: 2.5, z: -8 })).toBeLessThan(0.7);
+    expect(sightLimit(colliders, eye, { x: 0, y: 2.2, z: 9 })).toBe(1);
+    expect(sightLimit(colliders, { x: 0, y: 1.8, z: 12 }, { x: 0, y: 9, z: 2 })).toBe(1);
   });
 });

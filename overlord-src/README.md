@@ -16,10 +16,25 @@ npm run publish   # build into ../overlord (the folder the website serves)
 
 ## How a term plays
 
-A term lasts 15 minutes. Build up the base, build ships in **Fleet**, send them
-to planets from the **Star Map**, answer events on the way, and join battles in
-the **War** panel. When the timer runs out you get a score and a title, and the
-score goes into the high-score table. Then the next term starts from scratch.
+You are the commander, walking around a moon base in third person. A term lasts
+15 minutes. Your suit holds about 2½ minutes of air outside; it refills when you
+step through the airlock into any pressurised room.
 
-Tuning lives in `src/data/`: `term.js` (length, points, titles), `war.js`,
-`events.js`, `planets.js`, `ships.js`, `modules.js`, `resources.js`.
+- **Walk** W A S D (Shift to run, Space to jump), drag the mouse to look, wheel to zoom.
+- **Build** press B outside, pick a module (1–7), look at a marked site, press E.
+- **Consoles** walk up to a console in the Command module (star map, fleet, war room)
+  or the Shipyard and press E.
+- **Lamp** F. **Sound** M. On a phone: left thumb walks, right thumb looks, buttons for the rest.
+
+When the timer runs out you get a score and a title, then the next term starts from scratch.
+
+## Code map
+
+- `src/sim/` the rules (no 3D), unit-tested: `npm test`
+- `src/world/` terrain, sky, procedural textures, materials
+- `src/base/` floor plan (`layout.js`), module/ship models, the base and fleet in the scene
+- `src/player/` the astronaut and the third-person camera
+- `src/engine/` renderer and post-processing, input, synthesised sound, modelling kit
+- `src/ui/` everything drawn over the 3D view
+
+Everything is made in code: no image, model or sound files. Tuning lives in `src/data/`.

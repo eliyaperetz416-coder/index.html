@@ -1,4 +1,4 @@
-// Base modules. To add a new building, add an entry here and a mesh in render/moduleMeshes.js.
+// Base modules. To add a new building, add an entry here and a model in base/modules.js.
 //
 // cost      what you pay once to build it
 // produces  resources per second at full efficiency
@@ -9,8 +9,8 @@
 export const MODULES = {
   core: {
     name: 'Command Core',
-    desc: 'Heart of the base. Cannot be built.',
-    color: '#ff9df0',
+    desc: 'Heart of the base: star map, fleet and war consoles.',
+    color: '#c9a3c4',
     cost: {},
     produces: { energy: 2, metal: 0.5, oxygen: 0.3, food: 0.2 },
     crew: 4,
@@ -19,14 +19,14 @@ export const MODULES = {
   solar: {
     name: 'Solar Array',
     desc: 'Makes energy.',
-    color: '#ffd23f',
+    color: '#e0b85a',
     cost: { metal: 30 },
     produces: { energy: 3 },
   },
   mine: {
     name: 'Mine',
     desc: 'Digs up metal.',
-    color: '#9fb4d6',
+    color: '#aab4c2',
     cost: { metal: 40 },
     produces: { metal: 1.2 },
     energy: 1.5,
@@ -34,7 +34,7 @@ export const MODULES = {
   oxygen: {
     name: 'O₂ Generator',
     desc: 'Keeps the crew breathing.',
-    color: '#4de3ff',
+    color: '#7cc4d4',
     cost: { metal: 50 },
     produces: { oxygen: 0.6 },
     energy: 1,
@@ -42,15 +42,15 @@ export const MODULES = {
   hydro: {
     name: 'Hydroponics',
     desc: 'Grows food.',
-    color: '#7dff8a',
+    color: '#8fc48a',
     cost: { metal: 50 },
     produces: { food: 0.5 },
     energy: 1,
   },
   habitat: {
     name: 'Habitat',
-    desc: '+4 crew. Crew earn credits.',
-    color: '#ff8a4d',
+    desc: 'Bunks for 4 more crew. Crew earn credits.',
+    color: '#d98a5a',
     cost: { metal: 80, credits: 50 },
     crew: 4,
     energy: 0.5,
@@ -58,14 +58,14 @@ export const MODULES = {
   storage: {
     name: 'Storage',
     desc: '+250 room for everything.',
-    color: '#b48cff',
+    color: '#a394d6',
     cost: { metal: 60 },
     storage: 250,
   },
   shipyard: {
     name: 'Shipyard',
-    desc: 'Builds and upgrades ships.',
-    color: '#6f8cff',
+    desc: 'Builds and upgrades ships. Has a fleet console.',
+    color: '#8a9bc9',
     cost: { metal: 120, credits: 80 },
     energy: 1,
   },
@@ -75,4 +75,4 @@ export const MODULES = {
 export const BUILDABLE = ['solar', 'mine', 'oxygen', 'hydro', 'habitat', 'storage', 'shipyard'];
 
 /** The base grid goes from -GRID_RADIUS to +GRID_RADIUS on both axes. */
-export const GRID_RADIUS = 6;
+export const GRID_RADIUS = 3;

@@ -2,11 +2,11 @@
 
 /** Basic resources: produced and spent at the base every second. */
 export const BASIC = [
-  { id: 'metal', name: 'Metal', color: '#9fb4d6' },
-  { id: 'energy', name: 'Energy', color: '#ffd23f' },
-  { id: 'oxygen', name: 'Oxygen', color: '#4de3ff' },
-  { id: 'food', name: 'Food', color: '#7dff8a' },
-  { id: 'credits', name: 'Credits', color: '#ff9df0', uncapped: true },
+  { id: 'metal', name: 'Metal', color: '#aab4c2' },
+  { id: 'energy', name: 'Energy', color: '#e0b85a' },
+  { id: 'oxygen', name: 'Oxygen', color: '#7cc4d4' },
+  { id: 'food', name: 'Food', color: '#8fc48a' },
+  { id: 'credits', name: 'Credits', color: '#c9a3c4', uncapped: true },
 ];
 
 /** Rare resources: only found on expeditions (not used yet — arrives with the expedition step). */

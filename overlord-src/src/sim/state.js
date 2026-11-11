@@ -18,7 +18,8 @@ export function createState(seed = 12345, term = 1) {
     over: false, // true once the term has ended
     scored: false, // true once the final score is in the high-score table
     runId: seed, // tells this run apart in the high-score table
-    stats: { expeditions: 0, events: 0, battlesWon: 0 }, // counted for the score
+    stats: { expeditions: 0, events: 0, battlesWon: 0, blackouts: 0 }, // counted for the score
+    suit: { oxygen: 100 }, // the commander's own air, in percent (see sim/suit.js)
     resources: { ...STARTING },
     rare: Object.fromEntries(RARE.map((r) => [r.id, 0])),
     modules: [{ id: 1, type: 'core', x: 0, z: 0 }],

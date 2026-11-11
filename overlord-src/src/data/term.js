@@ -14,6 +14,7 @@ export const TERM = {
     battleWon: 40, // per battle won
     ally: 75, // per Friendly race
     hated: 25, // taken off per Hostile race
+    blackout: 30, // taken off each time the commander runs out of air
     warWon: 200, // the war ended and the side you backed won
     creditsPer: 20, // 1 point per this many credits
   },

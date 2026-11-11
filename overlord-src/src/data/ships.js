@@ -9,7 +9,7 @@ export const SHIPS = {
   scout: {
     name: 'Scout',
     desc: 'Fast explorer with a big hold.',
-    color: '#4de3ff',
+    color: '#7cc4d4',
     cost: { metal: 80, credits: 60 },
     buildTime: 20,
     maxLevelRare: { lightMetal: 20 },
@@ -20,7 +20,7 @@ export const SHIPS = {
   frigate: {
     name: 'Frigate',
     desc: 'Warship. Wins fights.',
-    color: '#ff5d7a',
+    color: '#d9736b',
     cost: { metal: 160, credits: 120 },
     buildTime: 40,
     maxLevelRare: { lightMetal: 15, bioMatter: 15 },

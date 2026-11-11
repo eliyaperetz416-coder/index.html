@@ -71,7 +71,7 @@ export function createMapPanel({ onLaunch, onRecall }) {
     nodes.push(row);
 
     if (state.ships.length === 0) {
-      nodes.push(el('p', 'muted', 'You have no ships. Build a Shipyard, then build ships in the Fleet panel.'));
+      nodes.push(el('p', 'muted', 'You have no ships. Build a Shipyard, then order ships at a fleet console.'));
     } else {
       nodes.push(el('p', 'muted', 'Ships to send:'));
       const ships = el('div', 'ship-picks');

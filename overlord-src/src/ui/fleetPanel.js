@@ -34,7 +34,7 @@ export function createFleetPanel({ onBuild, onUpgrade }) {
 
   function renderBody(state) {
     const nodes = [];
-    if (shipyardCount(state) === 0) nodes.push(el('p', 'muted', 'Build a Shipyard module to construct ships.'));
+    if (shipyardCount(state) === 0) nodes.push(el('p', 'muted', 'Build a Shipyard module (press B outside) to construct ships.'));
 
     const buildRow = el('div', 'build-row');
     for (const [type, def] of Object.entries(SHIPS)) {

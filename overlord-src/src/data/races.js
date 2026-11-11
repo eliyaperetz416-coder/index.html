@@ -3,9 +3,9 @@
 // enemy  the race they are at war with (null = stays out of wars)
 
 export const RACES = {
-  lumari: { name: 'Lumari', color: '#4dffb0', enemy: 'drakh', desc: 'Peaceful growers and traders.' },
-  drakh: { name: 'Drakh', color: '#ff8a4d', enemy: 'lumari', desc: 'Proud warrior clans.' },
-  veil: { name: 'Veil', color: '#b48cff', enemy: null, desc: 'Secretive brokers who profit from every war.' },
+  lumari: { name: 'Lumari', color: '#7fc79a', enemy: 'drakh', desc: 'Peaceful growers and traders.' },
+  drakh: { name: 'Drakh', color: '#d98a5a', enemy: 'lumari', desc: 'Proud warrior clans.' },
+  veil: { name: 'Veil', color: '#a394d6', enemy: null, desc: 'Secretive brokers who profit from every war.' },
 };
 
 /** At or past these numbers a race treats you differently (see yieldBonus in sim/events.js). */
