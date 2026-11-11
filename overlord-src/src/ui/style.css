@@ -625,3 +625,109 @@ body {
   color: #ff5d7a;
   background: rgba(255, 93, 122, 0.1);
 }
+
+/* --- War panel --- */
+.panel.war {
+  width: min(420px, 100%);
+  border-color: rgba(255, 93, 122, 0.5);
+  box-shadow: 0 0 26px rgba(255, 93, 122, 0.16);
+}
+
+.panel.war h3 {
+  color: #ffb3c0;
+}
+
+.card.menu.active,
+.btn.active {
+  border-color: var(--c);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--c) 45%, transparent);
+}
+
+.front {
+  flex: 0 0 auto;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--b);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--b) 50%, transparent);
+}
+
+.front div {
+  height: 100%;
+  background: var(--a);
+  border-right: 2px solid #fff;
+  transition: width 0.6s;
+}
+
+.front-label {
+  font-size: 12px;
+  color: #9aa3d0;
+  text-align: center;
+}
+
+.war-title {
+  margin: 0;
+  font-size: 15px;
+}
+
+.hp-row {
+  display: grid;
+  grid-template-columns: 96px 1fr 58px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.hp-row strong {
+  color: var(--c);
+}
+
+.hp-row span {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hp-row .progress div {
+  background: var(--c);
+  box-shadow: 0 0 10px var(--c);
+}
+
+.hp-row.dead {
+  opacity: 0.45;
+}
+
+.battle-log {
+  margin: 0;
+  min-height: 2.6em;
+  font-size: 13px;
+  color: #bfe9ff;
+}
+
+.war-result {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(125, 255, 138, 0.07);
+}
+
+.war-result h4 {
+  margin: 0 0 6px;
+  color: #7dff8a;
+}
+
+.war-result.lost,
+.war-result.retreated {
+  background: rgba(255, 93, 122, 0.07);
+}
+
+.war-result.lost h4,
+.war-result.retreated h4 {
+  color: #ff5d7a;
+}
+
+.btn.join {
+  --c: #ff5d7a;
+}
+
+.alert.war {
+  color: #ffd0d8;
+}

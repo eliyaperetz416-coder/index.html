@@ -310,3 +310,100 @@ describe('events and reputation', () => {
     expect(home.loot.lightMetal + home.loot.bioMatter).toBe(18); // half of the usual 36
   });
 });
+
+import { canJoinBattle, joinBattle, giveOrder, canOrder, retreat, leader } from '../../src/sim/war.js';
+import { WAR } from '../../src/data/war.js';
+
+/** Run until a war event of one of these types happens. */
+function warUntil(s, types, seconds = 600) {
+  for (let i = 0; i < seconds * 4; i++) {
+    const event = step(s, 0.25).war;
+    if (event && types.includes(event.type)) return event;
+  }
+  return null;
+}
+
+function atOffer(strength = 1) {
+  const s = fleetBase();
+  warUntil(s, ['offer']);
+  s.war.offer.strength = strength;
+  return s;
+}
+
+describe('the war', () => {
+  it('offers a battle after a while, and the front moves without you if you ignore it', () => {
+    const s = fleetBase();
+    expect(canJoinBattle(s, 'lumari', [51]).ok).toBe(false);
+    expect(warUntil(s, ['offer'])).toBeTruthy();
+    expect(s.time).toBeCloseTo(WAR.firstBattle, 0);
+    const ignored = warUntil(s, ['ignored']);
+    expect(Math.abs(s.war.front)).toBe(WAR.ignoredShift);
+    expect(leader(s)).toBe(ignored.winner);
+    expect(s.war.offer).toBe(null);
+  });
+
+  it('needs a side and free ships to join', () => {
+    const s = atOffer();
+    expect(canJoinBattle(s, 'veil', [51]).ok).toBe(false);
+    expect(canJoinBattle(s, 'lumari', []).ok).toBe(false);
+    launchQuiet(s, 'kessa', [50]);
+    expect(canJoinBattle(s, 'lumari', [50]).reason).toMatch(/away/);
+    expect(joinBattle(s, 'lumari', [51])).toBe(true);
+    s.expedition = null;
+    expect(canLaunch(s, 'kessa', [51]).reason).toMatch(/battle/);
+    expect(canUpgradeShip(s, 51).reason).toMatch(/away/);
+  });
+
+  it('a strong fleet wins: rewards, reputation and the front all move your way', () => {
+    const s = atOffer(1);
+    s.ships.push({ id: 60, type: 'frigate', level: 3 });
+    const credits = s.resources.credits;
+    joinBattle(s, 'drakh', [51, 60]);
+    const end = warUntil(s, ['won', 'lost']);
+    expect(end.type).toBe('won');
+    expect(s.resources.credits).toBeGreaterThan(credits + 79);
+    expect(s.reputation.drakh).toBe(15);
+    expect(s.reputation.lumari).toBe(-15);
+    expect(s.war.front).toBe(-15);
+    expect(end.loot).toEqual({ energyCrystal: 6, techChip: 6 });
+    expect(s.rare.techChip).toBe(6);
+    expect(s.war.battle).toBe(null);
+    expect(s.ships).toHaveLength(3);
+  });
+
+  it('a weak fleet is destroyed and the ships are gone for good', () => {
+    const s = atOffer(3);
+    joinBattle(s, 'lumari', [50]); // one level 1 scout against strength 3
+    const end = warUntil(s, ['won', 'lost']);
+    expect(end.type).toBe('lost');
+    expect(s.ships.map((x) => x.id)).toEqual([51]);
+    expect(s.war.front).toBeLessThan(0);
+  });
+
+  it('orders last one round and then recharge', () => {
+    const s = atOffer(3);
+    joinBattle(s, 'lumari', [51]);
+    expect(giveOrder(s, 'shields')).toBe(true);
+    expect(giveOrder(s, 'focus')).toBe(false); // one order per round
+    warUntil(s, ['round']);
+    expect(s.war.battle.ships[0].hp).toBe(90 - Math.round(24 * WAR.shieldBlock));
+    expect(canOrder(s, 'shields')).toBe(false);
+    expect(giveOrder(s, 'focus')).toBe(true);
+    warUntil(s, ['round']);
+    expect(s.war.battle.ships[0].hp).toBe(83 - Math.round(24 * WAR.focusRisk));
+    warUntil(s, ['round']);
+    warUntil(s, ['round']);
+    expect(canOrder(s, 'shields')).toBe(true);
+  });
+
+  it('retreat saves the ships but costs reputation and ground', () => {
+    const s = atOffer(3);
+    joinBattle(s, 'lumari', [51]);
+    warUntil(s, ['round']);
+    expect(retreat(s).type).toBe('retreated');
+    expect(s.war.battle).toBe(null);
+    expect(s.ships).toHaveLength(2);
+    expect(s.reputation.lumari).toBe(-5);
+    expect(s.war.front).toBe(-10);
+  });
+});

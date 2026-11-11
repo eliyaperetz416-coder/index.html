@@ -11,6 +11,7 @@ import { SHIPS } from './data/ships.js';
 import { canQueueShip, queueShip, canUpgradeShip, upgradeShip } from './sim/fleet.js';
 import { canLaunch, launchExpedition, recallExpedition } from './sim/expedition.js';
 import { canChoose, resolveEvent } from './sim/events.js';
+import { canJoinBattle, joinBattle, giveOrder, retreat } from './sim/war.js';
 import { PLANETS } from './data/planets.js';
 import { lootText } from './ui/mapPanel.js';
 import { load, save, clearSave } from './sim/save.js';
@@ -63,6 +64,23 @@ const hud = createHud(document.getElementById('hud'), {
     const result = resolveEvent(state, index);
     changed();
     return result;
+  },
+  onJoin(side, shipIds) {
+    const check = canJoinBattle(state, side, shipIds);
+    if (!check.ok) return hud.flash(check.reason);
+    joinBattle(state, side, shipIds);
+    fleet.sync(state);
+    changed();
+  },
+  onOrder(order) {
+    giveOrder(state, order);
+    changed();
+  },
+  onRetreat() {
+    const result = retreat(state);
+    if (result) hud.showWarResult(result);
+    fleet.sync(state);
+    changed();
   },
   onRecall() {
     if (recallExpedition(state)) hud.flash('Fleet recalled — heading home.');
@@ -122,7 +140,15 @@ function frame(now) {
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
-    const { launched, expedition } = step(state, STEP);
+    const { launched, expedition, war } = step(state, STEP);
+    if (war) {
+      if (war.type === 'offer') hud.flash('A battle is starting at the front! Open the War panel to join.');
+      if (war.type === 'won' || war.type === 'lost') {
+        hud.showWarResult(war);
+        save(state);
+      }
+      if (war.type !== 'offer' && war.type !== 'ignored') fleet.sync(state); // ships may be lost or back home
+    }
     if (launched) {
       fleet.sync(state);
       hud.flash(`${SHIPS[launched.type].name} launched!`);

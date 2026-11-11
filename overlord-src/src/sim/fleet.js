@@ -6,6 +6,13 @@ import { canPay, pay } from './state.js';
 export const shipyardCount = (state) => state.modules.filter((m) => m.type === 'shipyard').length;
 export const fleetCap = (state) => shipyardCount(state) * FLEET_PER_SHIPYARD;
 
+/** What a ship is doing away from the base: 'expedition', 'battle', or null if it is home. */
+export function shipBusy(state, id) {
+  if (state.expedition?.shipIds.includes(id)) return 'expedition';
+  if (state.war?.battle?.ships.some((s) => s.id === id && s.hp > 0)) return 'battle';
+  return null;
+}
+
 /** A ship's real stats at its current level: +50% per level above 1. */
 export function shipStats(ship) {
   const def = SHIPS[ship.type];
@@ -51,7 +58,7 @@ export function canUpgradeShip(state, id) {
   const ship = state.ships.find((s) => s.id === id);
   if (!ship) return { ok: false, reason: 'No such ship' };
   if (shipyardCount(state) === 0) return { ok: false, reason: 'Build a Shipyard first' };
-  if (state.expedition?.shipIds.includes(id)) return { ok: false, reason: 'That ship is away on an expedition' };
+  if (shipBusy(state, id)) return { ok: false, reason: 'That ship is away' };
   if (ship.level >= MAX_LEVEL) return { ok: false, reason: 'Already at max level' };
   if (!canPay(state, upgradeCost(ship))) return { ok: false, reason: 'Not enough resources' };
   return { ok: true };

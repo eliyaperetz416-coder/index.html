@@ -19,7 +19,7 @@ export function load(seed) {
     if (saved?.version === 1 && Array.isArray(saved.modules)) {
       // Start from a fresh state so saves from older versions get any fields added since.
       const fresh = createState(seed);
-      return { ...fresh, ...saved, rare: { ...fresh.rare, ...saved.rare }, reputation: { ...fresh.reputation, ...saved.reputation } };
+      return { ...fresh, ...saved, rare: { ...fresh.rare, ...saved.rare }, reputation: { ...fresh.reputation, ...saved.reputation }, war: { ...fresh.war, ...saved.war } };
     }
   } catch {
     // Broken save: start fresh.

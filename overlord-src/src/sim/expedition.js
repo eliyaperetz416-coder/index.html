@@ -6,7 +6,7 @@
 
 import { PLANETS } from '../data/planets.js';
 import { canPay, pay } from './state.js';
-import { shipStats } from './fleet.js';
+import { shipStats, shipBusy } from './fleet.js';
 import { startEvent, yieldBonus } from './events.js';
 
 /** Supplies needed to send `shipCount` ships to a planet. */
@@ -14,7 +14,6 @@ export function expeditionCost(planetId, shipCount) {
   return Object.fromEntries(Object.entries(PLANETS[planetId].supplies).map(([res, amount]) => [res, amount * shipCount]));
 }
 
-export const isAway = (state, shipId) => !!state.expedition?.shipIds.includes(shipId);
 export const lootTotal = (expedition) => Object.values(expedition.loot).reduce((a, b) => a + b, 0);
 
 export function canLaunch(state, planetId, shipIds) {
@@ -24,6 +23,7 @@ export function canLaunch(state, planetId, shipIds) {
   const ships = shipIds.map((id) => state.ships.find((s) => s.id === id));
   if (ships.length === 0) return { ok: false, reason: 'Pick at least one ship' };
   if (ships.some((s) => !s)) return { ok: false, reason: 'No such ship' };
+  if (shipIds.some((id) => shipBusy(state, id))) return { ok: false, reason: 'One of those ships is in battle' };
   if (Math.max(...ships.map((s) => s.level)) < planet.minRank) return { ok: false, reason: `${planet.name} needs a level ${planet.minRank} ship` };
   if (!canPay(state, expeditionCost(planetId, ships.length))) return { ok: false, reason: 'Not enough supplies' };
   return { ok: true };

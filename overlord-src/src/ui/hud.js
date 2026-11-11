@@ -7,6 +7,7 @@ import { el, costText } from './dom.js';
 import { createFleetPanel } from './fleetPanel.js';
 import { createMapPanel, expeditionLine } from './mapPanel.js';
 import { createEventDialog } from './eventDialog.js';
+import { createWarPanel, warLine } from './warPanel.js';
 
 /**
  * @param root     the #hud element
@@ -15,8 +16,10 @@ import { createEventDialog } from './eventDialog.js';
  * @param onBuildShip / onUpgradeShip  passed on to the Fleet panel
  * @param onLaunch / onRecall          passed on to the Star Map panel
  * @param onChoose                     passed on to the event dialog
+ * @param onJoin / onOrder / onRetreat passed on to the War panel
  */
-export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall, onChoose }) {
+export function createHud(root, callbacks) {
+  const { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall, onChoose, onJoin, onOrder, onRetreat } = callbacks;
   // --- top bar: resources ---
   const top = el('div', 'bar top');
   const chips = {};
@@ -55,6 +58,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
   const fleet = createFleetPanel({ onBuild: onBuildShip, onUpgrade: onUpgradeShip });
   const map = createMapPanel({ onLaunch, onRecall });
   const events = createEventDialog({ onChoose });
+  const war = createWarPanel({ onJoin, onOrder, onRetreat });
 
   // Menu buttons open a panel; only one panel is open at a time.
   const menus = [];
@@ -72,6 +76,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
   }
   const fleetCount = addMenu('Fleet', '#6f8cff', fleet.panel);
   const mapStatus = addMenu('Star Map', '#4dffb0', map.panel);
+  const warStatus = addMenu('War', '#ff5d7a', war.panel);
   bottom.prepend(...menus.map((m) => m.button));
 
   const reset = el('button', 'card reset');
@@ -81,7 +86,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
   });
   bottom.append(reset);
 
-  root.append(top, alertBox, fleet.panel, map.panel, hint, bottom, events.backdrop);
+  root.append(top, alertBox, fleet.panel, map.panel, war.panel, hint, bottom, events.backdrop);
 
   const buildHint = () => (selected ? `Tap a glowing spot to build: ${MODULES[selected].name}  (Esc to cancel)` : '');
   let flashTimer = 0;
@@ -119,11 +124,14 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip,
     fleet.update(state);
     map.update(state);
     events.update(state);
+    war.update(state);
+    warStatus.textContent = warLine(state);
     mapStatus.textContent = state.expedition ? expeditionLine(state.expedition) : 'Send an expedition';
     const lines = alerts(state).map((a) => el('div', 'alert', `⚠ ${a}`));
     if (state.expedition) lines.unshift(el('div', 'alert info', `🚀 ${expeditionLine(state.expedition)}`));
+    if (state.war.offer || state.war.battle) lines.unshift(el('div', 'alert war', `⚔ ${warLine(state)}`));
     alertBox.replaceChildren(...lines);
   }
 
-  return { update, select, flash, getSelected: () => selected };
+  return { update, select, flash, getSelected: () => selected, showWarResult: war.showResult };
 }

@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import { SHIPS } from '../data/ships.js';
+import { shipBusy } from '../sim/fleet.js';
 
 const hull = new THREE.MeshStandardMaterial({ color: '#59639c', roughness: 0.45, metalness: 0.6, flatShading: true });
 const dark = new THREE.MeshStandardMaterial({ color: '#232848', roughness: 0.6, metalness: 0.6 });
@@ -47,8 +48,8 @@ export function createFleetView({ scene }) {
   const ahead = new THREE.Vector3();
 
   function sync(state) {
-    // Ships away on an expedition are not drawn at the base.
-    const home = state.ships.filter((s) => !state.expedition?.shipIds.includes(s.id));
+    // Ships away on an expedition or in a battle are not drawn at the base.
+    const home = state.ships.filter((s) => !shipBusy(state, s.id));
     const wanted = new Map(home.map((s) => [`${s.id}:${s.level}`, s]));
     for (const c of [...ships.children]) {
       if (wanted.has(c.userData.key)) wanted.delete(c.userData.key);

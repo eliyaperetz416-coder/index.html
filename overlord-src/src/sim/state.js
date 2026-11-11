@@ -2,6 +2,7 @@
 
 import { BASIC, RARE, STARTING, CREW } from '../data/resources.js';
 import { MODULES, GRID_RADIUS } from '../data/modules.js';
+import { WAR } from '../data/war.js';
 
 /** @param seed starting point for the game's random numbers (events, fights) */
 export function createState(seed = 12345) {
@@ -15,6 +16,7 @@ export function createState(seed = 12345) {
     queue: [], // ships being built: { type, remaining seconds }
     expedition: null, // see sim/expedition.js
     reputation: { lumari: 0, drakh: 0, veil: 0 }, // -100 … +100 with each race
+    war: { front: 0, timer: WAR.firstBattle, offer: null, battle: null, wins: 0 }, // see sim/war.js
     seed,
     nextId: 2,
     // How well the base ran on the last tick (1 = perfect).

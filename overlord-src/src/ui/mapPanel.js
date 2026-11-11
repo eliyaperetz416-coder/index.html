@@ -4,7 +4,7 @@ import { PLANETS } from '../data/planets.js';
 import { SHIPS } from '../data/ships.js';
 import { RARE } from '../data/resources.js';
 import { canLaunch, expeditionCost, lootTotal } from '../sim/expedition.js';
-import { fleetRank } from '../sim/fleet.js';
+import { fleetRank, shipBusy } from '../sim/fleet.js';
 import { standing } from '../sim/events.js';
 import { RACES } from '../data/races.js';
 import { el, costText } from './dom.js';
@@ -75,7 +75,7 @@ export function createMapPanel({ onLaunch, onRecall }) {
     } else {
       nodes.push(el('p', 'muted', 'Ships to send:'));
       const ships = el('div', 'ship-picks');
-      for (const ship of state.ships) {
+      for (const ship of state.ships.filter((s) => !shipBusy(state, s.id))) {
         const chip = el('button', 'pick', `${SHIPS[ship.type].name} L${ship.level}`);
         chip.dataset.ship = ship.id;
         chip.style.setProperty('--c', SHIPS[ship.type].color);
@@ -139,12 +139,12 @@ export function createMapPanel({ onLaunch, onRecall }) {
 
   function update(state) {
     last = state;
-    for (const id of [...picked]) if (!state.ships.some((s) => s.id === id)) picked.delete(id);
+    for (const id of [...picked]) if (!state.ships.some((s) => s.id === id) || shipBusy(state, id)) picked.delete(id);
     const e = state.expedition;
 
     const signature = JSON.stringify([
       e ? [e.planet, e.phase] : [planetId, [...picked], canLaunch(state, planetId, [...picked])],
-      state.ships,
+      state.ships.map((s) => [s, shipBusy(state, s.id)]),
       state.rare,
       state.reputation,
     ]);
