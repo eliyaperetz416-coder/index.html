@@ -15,7 +15,11 @@ export function save(state) {
 export function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY));
-    if (saved?.version === 1 && Array.isArray(saved.modules)) return { ...createState(), ...saved };
+    if (saved?.version === 1 && Array.isArray(saved.modules)) {
+      // Start from a fresh state so saves from older versions get any fields added since.
+      const fresh = createState();
+      return { ...fresh, ...saved, rare: { ...fresh.rare, ...saved.rare } };
+    }
   } catch {
     // Broken save: start fresh.
   }

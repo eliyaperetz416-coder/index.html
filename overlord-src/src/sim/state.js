@@ -12,6 +12,7 @@ export function createState() {
     modules: [{ id: 1, type: 'core', x: 0, z: 0 }],
     ships: [], // { id, type, level }
     queue: [], // ships being built: { type, remaining seconds }
+    expedition: null, // see sim/expedition.js
     nextId: 2,
     // How well the base ran on the last tick (1 = perfect).
     status: { power: 1, life: 1 },

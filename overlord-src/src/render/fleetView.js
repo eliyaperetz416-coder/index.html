@@ -47,7 +47,9 @@ export function createFleetView({ scene }) {
   const ahead = new THREE.Vector3();
 
   function sync(state) {
-    const wanted = new Map(state.ships.map((s) => [`${s.id}:${s.level}`, s]));
+    // Ships away on an expedition are not drawn at the base.
+    const home = state.ships.filter((s) => !state.expedition?.shipIds.includes(s.id));
+    const wanted = new Map(home.map((s) => [`${s.id}:${s.level}`, s]));
     for (const c of [...ships.children]) {
       if (wanted.has(c.userData.key)) wanted.delete(c.userData.key);
       else ships.remove(c);

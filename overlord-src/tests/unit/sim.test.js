@@ -93,9 +93,9 @@ describe('fleet', () => {
     expect(queueShip(s, 'scout')).toBe(true);
     expect(s.resources.metal).toBe(metal - 80);
     let launched = null;
-    for (let i = 0; i < 4 * 19; i++) launched = launched ?? step(s, 0.25);
+    for (let i = 0; i < 4 * 19; i++) launched = launched ?? step(s, 0.25).launched;
     expect(s.ships.length).toBe(0);
-    for (let i = 0; i < 8; i++) launched = launched ?? step(s, 0.25);
+    for (let i = 0; i < 8; i++) launched = launched ?? step(s, 0.25).launched;
     expect(launched?.type).toBe('scout');
     expect(s.ships).toHaveLength(1);
     expect(s.queue).toHaveLength(0);
@@ -130,5 +130,80 @@ describe('fleet', () => {
     expect(s.resources.metal).toBe(220);
     expect(fleetRank(s)).toBe(3);
     expect(canUpgradeShip(s, 50).reason).toMatch(/max/i);
+  });
+});
+
+import { canLaunch, launchExpedition, recallExpedition, expeditionCost } from '../../src/sim/expedition.js';
+
+function fleetBase() {
+  const s = richBase();
+  placeModule(s, 'shipyard', 1, 0);
+  s.resources = { metal: 700, energy: 700, oxygen: 700, food: 700, credits: 5000 };
+  s.ships.push({ id: 50, type: 'scout', level: 1 }, { id: 51, type: 'frigate', level: 2 });
+  return s;
+}
+
+/** Run the game until an expedition event of this type happens (or give up after `seconds`). */
+function runUntil(s, type, seconds = 400) {
+  for (let i = 0; i < seconds * 4; i++) {
+    const event = step(s, 0.25).expedition;
+    if (event?.type === type) return event;
+  }
+  return null;
+}
+
+describe('expeditions', () => {
+  it('checks ships, rank and supplies before launch', () => {
+    const s = fleetBase();
+    expect(canLaunch(s, 'kessa', []).reason).toMatch(/ship/);
+    expect(canLaunch(s, 'kessa', [999]).ok).toBe(false);
+    expect(canLaunch(s, 'vorn', [50]).reason).toMatch(/level 2/);
+    expect(canLaunch(s, 'vorn', [50, 51]).ok).toBe(true);
+    expect(canLaunch(s, 'nyx', [50, 51]).reason).toMatch(/level 3/);
+    s.resources.oxygen = 10;
+    expect(canLaunch(s, 'kessa', [50]).reason).toMatch(/supplies/);
+  });
+
+  it('takes supplies per ship and allows only one expedition at a time', () => {
+    const s = fleetBase();
+    expect(expeditionCost('kessa', 2)).toEqual({ energy: 60, oxygen: 30, food: 30 });
+    expect(launchExpedition(s, 'kessa', [50, 51])).toBe(true);
+    expect(s.resources.oxygen).toBe(670);
+    expect(canLaunch(s, 'kessa', [50]).reason).toMatch(/already/);
+    expect(canUpgradeShip(s, 51).reason).toMatch(/away/);
+  });
+
+  it('flies out, gathers, and brings the rare loot home', () => {
+    const s = fleetBase();
+    launchExpedition(s, 'kessa', [50]); // scout: cargo 30
+    expect(runUntil(s, 'arrived')).toBeTruthy();
+    expect(s.time).toBeCloseTo(20, 0);
+    expect(runUntil(s, 'leaving')).toBeTruthy(); // hold fills (30 at 0.8/s) before the 45s stay ends
+    expect(s.time).toBeLessThan(20 + 45);
+    const home = runUntil(s, 'returned');
+    expect(home.loot).toEqual({ lightMetal: 15, bioMatter: 15 });
+    expect(s.rare.lightMetal).toBe(15);
+    expect(s.rare.bioMatter).toBe(15);
+    expect(s.expedition).toBe(null);
+  });
+
+  it('leaves when the stay is over even if the hold is not full', () => {
+    const s = fleetBase();
+    s.ships.push({ id: 52, type: 'scout', level: 3 }); // cargo 60, more than 45s × 0.8
+    launchExpedition(s, 'kessa', [52]);
+    const home = runUntil(s, 'returned');
+    expect(home.loot.lightMetal + home.loot.bioMatter).toBe(36);
+    expect(s.time).toBeCloseTo(20 + 45 + 20, 0);
+  });
+
+  it('recall turns the fleet around', () => {
+    const s = fleetBase();
+    launchExpedition(s, 'kessa', [50]);
+    for (let i = 0; i < 20; i++) step(s, 0.25); // 5s out
+    expect(recallExpedition(s)).toBe(true);
+    expect(s.expedition.remaining).toBeCloseTo(5);
+    expect(recallExpedition(s)).toBe(false);
+    const home = runUntil(s, 'returned');
+    expect(home.loot).toEqual({});
   });
 });

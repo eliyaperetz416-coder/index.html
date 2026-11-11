@@ -9,6 +9,9 @@ import { createState, canPlace, placeModule } from './sim/state.js';
 import { step } from './sim/game.js';
 import { SHIPS } from './data/ships.js';
 import { canQueueShip, queueShip, canUpgradeShip, upgradeShip } from './sim/fleet.js';
+import { canLaunch, launchExpedition, recallExpedition } from './sim/expedition.js';
+import { PLANETS } from './data/planets.js';
+import { lootText } from './ui/mapPanel.js';
 import { load, save, clearSave } from './sim/save.js';
 
 const canvas = document.getElementById('scene');
@@ -41,6 +44,18 @@ const hud = createHud(document.getElementById('hud'), {
     if (!check.ok) return hud.flash(check.reason);
     upgradeShip(state, id);
     fleet.sync(state);
+    changed();
+  },
+  onLaunch(planetId, shipIds) {
+    const check = canLaunch(state, planetId, shipIds);
+    if (!check.ok) return hud.flash(check.reason);
+    launchExpedition(state, planetId, shipIds);
+    fleet.sync(state);
+    hud.flash(`Expedition launched to ${PLANETS[planetId].name}!`);
+    changed();
+  },
+  onRecall() {
+    if (recallExpedition(state)) hud.flash('Fleet recalled — heading home.');
     changed();
   },
 });
@@ -97,10 +112,20 @@ function frame(now) {
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
-    const launched = step(state, STEP);
+    const { launched, expedition } = step(state, STEP);
     if (launched) {
       fleet.sync(state);
       hud.flash(`${SHIPS[launched.type].name} launched!`);
+    }
+    if (expedition) {
+      const name = PLANETS[expedition.planet].name;
+      if (expedition.type === 'arrived') hud.flash(`Fleet arrived at ${name}. Gathering resources.`);
+      if (expedition.type === 'leaving') hud.flash(`Fleet is leaving ${name}.`);
+      if (expedition.type === 'returned') {
+        fleet.sync(state);
+        hud.flash(`Expedition home! Loot: ${lootText(expedition.loot) || 'nothing'}`);
+        save(state);
+      }
     }
     hud.update(state);
   }

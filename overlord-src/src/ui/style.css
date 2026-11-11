@@ -348,3 +348,162 @@ body {
   color: #ffd23f;
   font-weight: 700;
 }
+
+/* --- Star Map panel --- */
+.panel.map {
+  width: min(460px, 100%);
+  border-color: rgba(77, 255, 176, 0.45);
+  box-shadow: 0 0 26px rgba(77, 255, 176, 0.14);
+}
+
+.panel.map h3 {
+  color: #9dffd6;
+}
+
+.planets {
+  display: flex;
+  gap: 8px;
+}
+
+.planet {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: rgba(140, 160, 255, 0.06);
+  border: 1px solid rgba(140, 160, 255, 0.22);
+  border-radius: 12px;
+}
+
+/* The planet itself: a lit ball with a coloured glow. */
+.planet i,
+.active-trip i {
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #fff, var(--c) 30%, color-mix(in srgb, var(--c) 25%, #03040b) 75%);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c) 70%, transparent);
+}
+
+.planet strong {
+  color: var(--c);
+}
+
+.planet span,
+.planet em {
+  font-size: 12px;
+  color: #9aa3d0;
+  font-style: normal;
+}
+
+.planet em {
+  color: #e8ecff;
+}
+
+.planet .need {
+  display: none;
+  color: #ff5d7a;
+}
+
+.planet.locked .need {
+  display: block;
+}
+
+.planet.locked i {
+  filter: grayscale(0.8) brightness(0.6);
+}
+
+.planet.active {
+  border-color: var(--c);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 40%, transparent);
+}
+
+.ship-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pick {
+  padding: 6px 10px;
+  font: inherit;
+  color: #9aa3d0;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid rgba(140, 160, 255, 0.3);
+  border-radius: 999px;
+}
+
+.pick.active {
+  color: #03040b;
+  font-weight: 700;
+  background: var(--c);
+  border-color: var(--c);
+  box-shadow: 0 0 12px var(--c);
+}
+
+.btn.launch {
+  --c: #4dffb0;
+  flex: 0 0 auto;
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+}
+
+.btn.launch.poor strong {
+  color: #ff9db0;
+}
+
+.active-trip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.active-trip h4 {
+  margin: 0;
+  color: var(--c);
+}
+
+.active-trip .progress {
+  width: 100%;
+}
+
+.active-trip .progress div {
+  background: var(--c);
+  box-shadow: 0 0 10px var(--c);
+}
+
+.hold {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(140, 160, 255, 0.18);
+  font-size: 12px;
+}
+
+.hold b {
+  color: #ffd23f;
+}
+
+.ship .away {
+  color: #4dffb0;
+  font-weight: 700;
+}
+
+.alert.info {
+  color: #9dffd6;
+  border-color: rgba(77, 255, 176, 0.5);
+  box-shadow: 0 0 14px rgba(77, 255, 176, 0.18);
+}

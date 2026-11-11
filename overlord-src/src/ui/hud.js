@@ -5,14 +5,16 @@ import { MODULES, BUILDABLE } from '../data/modules.js';
 import { summarize, rates, alerts, canAfford } from '../sim/state.js';
 import { el, costText } from './dom.js';
 import { createFleetPanel } from './fleetPanel.js';
+import { createMapPanel, expeditionLine } from './mapPanel.js';
 
 /**
  * @param root     the #hud element
  * @param onSelect called with a module type (or null) when the player picks what to build
  * @param onReset  called when the player confirms a new game
  * @param onBuildShip / onUpgradeShip  passed on to the Fleet panel
+ * @param onLaunch / onRecall          passed on to the Star Map panel
  */
-export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip }) {
+export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip, onLaunch, onRecall }) {
   // --- top bar: resources ---
   const top = el('div', 'bar top');
   const chips = {};
@@ -49,15 +51,25 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip 
     bottom.append(card);
   }
   const fleet = createFleetPanel({ onBuild: onBuildShip, onUpgrade: onUpgradeShip });
-  const fleetButton = el('button', 'card menu');
-  fleetButton.style.setProperty('--c', '#6f8cff');
-  const fleetCount = el('span');
-  fleetButton.append(el('strong', null, 'Fleet'), fleetCount);
-  fleetButton.addEventListener('click', () => {
-    fleet.toggle();
-    fleetButton.classList.toggle('active', !fleet.panel.hidden);
-  });
-  bottom.prepend(fleetButton);
+  const map = createMapPanel({ onLaunch, onRecall });
+
+  // Menu buttons open a panel; only one panel is open at a time.
+  const menus = [];
+  function addMenu(name, color, panel) {
+    const button = el('button', 'card menu');
+    button.style.setProperty('--c', color);
+    const status = el('span');
+    button.append(el('strong', null, name), status);
+    button.addEventListener('click', () => {
+      for (const m of menus) m.panel.hidden = m.panel !== panel || !panel.hidden;
+      for (const m of menus) m.button.classList.toggle('active', !m.panel.hidden);
+    });
+    menus.push({ button, panel });
+    return status;
+  }
+  const fleetCount = addMenu('Fleet', '#6f8cff', fleet.panel);
+  const mapStatus = addMenu('Star Map', '#4dffb0', map.panel);
+  bottom.prepend(...menus.map((m) => m.button));
 
   const reset = el('button', 'card reset');
   reset.append(el('strong', null, 'New game'), el('span', null, 'Erase this base.'));
@@ -66,7 +78,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip 
   });
   bottom.append(reset);
 
-  root.append(top, alertBox, fleet.panel, hint, bottom);
+  root.append(top, alertBox, fleet.panel, map.panel, hint, bottom);
 
   const buildHint = () => (selected ? `Tap a glowing spot to build: ${MODULES[selected].name}  (Esc to cancel)` : '');
   let flashTimer = 0;
@@ -85,7 +97,7 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip 
     void hint.offsetWidth; // restart the CSS animation
     hint.classList.add('flash');
     clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => (hint.textContent = buildHint()), 2500);
+    flashTimer = setTimeout(() => (hint.textContent = buildHint()), 4000);
   }
 
   function update(state) {
@@ -102,7 +114,11 @@ export function createHud(root, { onSelect, onReset, onBuildShip, onUpgradeShip 
     for (const type of BUILDABLE) cards[type].classList.toggle('poor', !canAfford(state, type));
     fleetCount.textContent = state.queue.length ? `${state.ships.length} ships · building…` : `${state.ships.length} ships`;
     fleet.update(state);
-    alertBox.replaceChildren(...alerts(state).map((a) => el('div', 'alert', `⚠ ${a}`)));
+    map.update(state);
+    mapStatus.textContent = state.expedition ? expeditionLine(state.expedition) : 'Send an expedition';
+    const lines = alerts(state).map((a) => el('div', 'alert', `⚠ ${a}`));
+    if (state.expedition) lines.unshift(el('div', 'alert info', `🚀 ${expeditionLine(state.expedition)}`));
+    alertBox.replaceChildren(...lines);
   }
 
   return { update, select, flash, getSelected: () => selected };

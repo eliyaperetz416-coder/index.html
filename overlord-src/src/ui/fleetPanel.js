@@ -3,6 +3,7 @@
 import { SHIPS, MAX_LEVEL } from '../data/ships.js';
 import { canPay } from '../sim/state.js';
 import { shipyardCount, fleetCap, fleetRank, shipStats, upgradeCost, canQueueShip, canUpgradeShip } from '../sim/fleet.js';
+import { isAway } from '../sim/expedition.js';
 import { el, costText } from './dom.js';
 
 /**
@@ -58,7 +59,8 @@ export function createFleetPanel({ onBuild, onUpgrade }) {
         el('span', null, `Cargo ${stats.cargo} · Attack ${stats.attack} · Hull ${stats.hull}`),
       );
       row.append(info);
-      if (ship.level >= MAX_LEVEL) row.append(el('span', 'max', 'MAX'));
+      if (isAway(state, ship.id)) row.append(el('span', 'away', 'AWAY'));
+      else if (ship.level >= MAX_LEVEL) row.append(el('span', 'max', 'MAX'));
       else {
         const up = el('button', 'btn small');
         up.dataset.upgrade = ship.id;
@@ -85,6 +87,7 @@ export function createFleetPanel({ onBuild, onUpgrade }) {
     const signature = JSON.stringify([
       state.ships,
       state.queue.length,
+      state.expedition?.shipIds,
       shipyardCount(state),
       Object.keys(SHIPS).map((t) => canQueueShip(state, t).ok),
       state.ships.map((s) => canPay(state, upgradeCost(s))),
@@ -95,5 +98,5 @@ export function createFleetPanel({ onBuild, onUpgrade }) {
     }
   }
 
-  return { panel, update, toggle: () => (panel.hidden = !panel.hidden) };
+  return { panel, update };
 }
