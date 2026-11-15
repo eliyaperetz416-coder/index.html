@@ -95,6 +95,46 @@
     .card h1 { font-size: 40px; } #overScore { font-size: 48px; }
   }
   @media (max-height: 480px) { .card { padding: 12px 16px; } .card h1 { font-size: 34px; } .card p { margin: 4px 0; } .btn { margin-top: 8px; padding: 9px 22px; } #overScore { font-size: 40px; } }
+  #hudWrap[data-mode=e] [data-m]:not([data-m*=e]), #hudWrap[data-mode=f] [data-m]:not([data-m*=f]), #hudWrap[data-mode=r] [data-m]:not([data-m*=r]) { display: none !important; }
+  #racePos { font-size: 64px; font-weight: 900; font-style: italic; line-height: 0.9; color: var(--yellow); }
+  #racePos small { font-size: 26px; margin-left: 2px; } #racePos span { font-size: 26px; color: var(--muted); margin-left: 6px; }
+  #raceTime { font-size: 40px; font-weight: 900; font-style: italic; line-height: 1; }
+  #raceCp { font-size: 13px; letter-spacing: 2px; font-weight: 700; color: var(--yellow); margin-top: 4px; }
+  #nav { font-size: 22px; font-weight: 800; font-style: italic; color: var(--yellow); letter-spacing: 1px; }
+  #nav b { font-style: normal; margin-right: 4px; } #nav small { display: block; font-size: 13px; letter-spacing: 2px; color: var(--text); font-style: normal; font-weight: 700; }
+  #raceBar { left: 50%; top: max(58px, calc(env(safe-area-inset-top) + 46px)); transform: translateX(-50%); width: min(320px, 46vw); height: 6px; border-radius: 3px; background: rgba(255,255,255,0.22); }
+  #raceBar i { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.5); }
+  #raceBar i.you { width: 16px; height: 16px; margin: -8px 0 0 -8px; background: var(--yellow); border: 2px solid #111; z-index: 2; }
+  #wrong { color: var(--red); border: 1.5px solid var(--red); }
+  #boostRow { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 6px; }
+  #boostBar { width: 220px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
+  #boostFill { height: 100%; width: 100%; background: var(--teal); }
+  #pops { top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
+  #countdown { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); font-family: var(--hud); font-weight: 900; font-style: italic; font-size: 140px; color: var(--yellow); text-shadow: 0 6px 24px rgba(0,0,0,0.5); pointer-events: none; }
+  #racePrompt { position: fixed; left: 50%; bottom: max(170px, calc(env(safe-area-inset-bottom) + 160px)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 20px; background: var(--panel); border: 1px solid var(--yellow); border-radius: 12px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-align: center; }
+  #racePrompt b { font-family: var(--hud); font-style: italic; font-size: 26px; letter-spacing: 1px; color: var(--yellow); }
+  #racePrompt span { font-size: 14px; color: var(--muted); }
+  #racePrompt .btn { margin-top: 8px; padding: 9px 22px; font-size: 16px; } #racePrompt .btn small { font-size: 11px; opacity: 0.6; margin-left: 4px; }
+  #tP { position: fixed; left: 50%; top: max(10px, env(safe-area-inset-top)); transform: translateX(-50%); width: 40px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: rgba(0,0,0,0.3); color: var(--text); font-weight: 900; font-family: var(--hud); font-size: 16px; cursor: pointer; }
+  .modes { display: grid; gap: 8px; margin-top: 12px; }
+  .mode { text-align: left; border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: var(--text); border-radius: 12px; padding: 11px 14px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; gap: 2px; }
+  .mode b { font-family: var(--hud); font-style: italic; font-weight: 900; font-size: 26px; letter-spacing: 1px; color: var(--yellow); }
+  .mode span { font-size: 13px; color: var(--muted); }
+  .mode:hover, .mode:focus-visible { border-color: var(--yellow); background: rgba(255,210,58,0.12); outline: none; }
+  .keys { font-size: 12px; margin-top: 12px !important; }
+  .rlist { display: grid; gap: 8px; margin-top: 12px; text-align: left; }
+  .ritem { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: var(--text); border-radius: 10px; padding: 9px 12px; cursor: pointer; font-family: inherit; text-align: left; }
+  .ritem b { font-size: 16px; } .ritem span { font-size: 12px; color: var(--muted); grid-row: 2; } .ritem em { grid-row: 1 / 3; grid-column: 2; font-style: normal; font-weight: 800; color: var(--yellow); font-size: 18px; }
+  .ritem:hover:not(:disabled), .ritem:focus-visible { border-color: var(--yellow); outline: none; }
+  .ritem:disabled { opacity: 0.5; cursor: default; }
+  table.res td { padding: 4px 12px; } table.res tr.you td { color: var(--yellow); font-weight: 800; }
+  #resMsg { color: var(--teal) !important; font-weight: 700; }
+  #touch .tb { z-index: 1; }
+  #tB { right: calc(max(14px, env(safe-area-inset-right)) + 102px); bottom: max(18px, env(safe-area-inset-bottom)); width: 68px; height: 68px; font-size: 13px; }
+  #tN { right: max(14px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); width: 90px; height: 90px; background: rgba(62,240,216,0.25); font-size: 17px; }
+  #hudWrap[data-mode=f] #tJ, #hudWrap[data-mode=r] #tJ { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 100px); width: 68px; height: 68px; font-size: 13px; background: rgba(255,255,255,0.14); }
+  @media (pointer: coarse) { #racePos { font-size: 46px; } #raceTime { font-size: 28px; } #nav { font-size: 18px; } #boostBar { width: 140px; } #countdown { font-size: 100px; } #racePrompt { bottom: auto; top: 30%; } }
+  @media (pointer: fine) { #tP { display: none; } }
 </style>
 <script type="importmap">
 { "imports": {
@@ -105,30 +145,56 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="hudWrap" hidden>
-  <div id="tl" class="hud"><div class="cap">SCORE</div><div id="score">0</div><div id="best">BEST 0</div><div id="coinTxt">🪙 0</div></div>
-  <div id="tr" class="hud"><div id="dist">0.00<small> KM</small></div><div id="lvl">LV 1 · CALM</div><div id="mult">×1</div><div id="tag">GATES 0</div></div>
-  <div id="bc" class="hud"><div><span id="air" class="flag" hidden>AIRBORNE</span><span id="stumble" class="flag" hidden>CAREFUL! ONE MORE HIT</span></div><div id="spd">0<small>KM/H</small></div><div id="pwRow"></div></div>
-  <div id="br" class="hud">SPACE · JUMP &nbsp; C · CAMERA &nbsp; M · <span id="snd">SOUND ON</span></div>
+<div id="hudWrap" data-mode="e" hidden>
+  <div id="tl" class="hud">
+    <div data-m="e"><div class="cap">SCORE</div><div id="score">0</div><div id="best">BEST 0</div></div>
+    <div data-m="r" id="racePos">1<small>ST</small><span>/6</span></div>
+    <div data-m="ef" id="coinTxt">🪙 0</div>
+  </div>
+  <div id="tr" class="hud">
+    <div data-m="e"><div id="dist">0.00<small> KM</small></div><div id="lvl">LV 1 · CALM</div><div id="mult">×1</div><div id="tag">GATES 0</div></div>
+    <div data-m="f" id="nav"></div>
+    <div data-m="r"><div id="raceTime">0:00.0</div><div id="raceCp"></div></div>
+  </div>
+  <div data-m="r" id="raceBar" class="hud"></div>
+  <div id="bc" class="hud">
+    <div><span id="air" class="flag" hidden>AIRBORNE</span><span id="stumble" data-m="e" class="flag" hidden>CAREFUL! ONE MORE HIT</span><span id="wrong" data-m="r" class="flag" hidden>WRONG WAY</span></div>
+    <div id="spd">0<small>KM/H</small></div>
+    <div id="boostRow" data-m="fr"><span class="cap">BOOST</span><div id="boostBar"><div id="boostFill"></div></div></div>
+    <div id="pwRow"></div>
+  </div>
+  <div id="br" class="hud"><span data-m="e">SPACE · JUMP</span><span data-m="fr">SHIFT · BOOST &nbsp; S · BRAKE &nbsp; SPACE · JUMP</span> &nbsp; C · CAMERA &nbsp; ESC · PAUSE &nbsp; M · <span id="snd">SOUND ON</span></div>
   <div id="pops" class="hud"></div>
+  <div id="countdown" hidden>3</div>
+  <div id="racePrompt" data-m="f" hidden><b id="rpTitle"></b><span id="rpInfo"></span><button type="button" class="btn" id="raceGo">START RACE <small>E</small></button></div>
+  <button type="button" id="tP" aria-label="Pause">II</button>
   <div id="touch">
     <div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div><div class="tb" id="tJ">JUMP</div>
+    <div class="tb" id="tB" data-m="fr">BRAKE</div><div class="tb" id="tN" data-m="fr">BOOST</div>
   </div>
 </div>
 <div id="start" class="overlay" hidden>
   <div class="card">
     <h1>KAZE JET</h1>
-    <p>Race a jet ski through the city river. Dodge everything, grab coins, jump wakes. It gets faster and busier the further you go.</p>
+    <p>Jet ski through a river city. Ride free, race rivals, or survive the endless run.</p>
     <div class="line" id="menuLine"></div>
-    <table>
-      <tr><td>A D / ← →</td><td>Steer</td></tr>
-      <tr><td>Space / W / ↑</td><td>Jump (clears floating booms)</td></tr>
-      <tr><td>Orange gate</td><td>Score multiplier +1 (missing one resets it)</td></tr>
-      <tr><td>Quay wall</td><td>First hit is a warning, second one ends the run</td></tr>
-    </table>
-    <h2>MISSIONS</h2>
+    <div class="modes">
+      <button type="button" class="mode" id="mFree"><b>FREE RIDE</b><span>Explore the river, jump wakes, grab coins, find the race beams</span></button>
+      <button type="button" class="mode" id="mRaces"><b>RACES</b><span>Six events against AI rivals. Top 3 unlocks the next one</span></button>
+      <button type="button" class="mode" id="mEndless"><b>ENDLESS</b><span>Dodge everything. It keeps getting faster</span></button>
+    </div>
+    <h2>ENDLESS MISSIONS</h2>
     <div id="menuMissions"></div>
-    <div class="row"><button class="btn" id="goBtn" type="button">PLAY</button><button class="btn ghost" id="shopBtn" type="button">SHOP</button></div>
+    <div class="row"><button class="btn ghost" id="shopBtn" type="button">SHOP</button></div>
+    <p class="keys">Steer A D / ← → · Boost Shift · Brake S · Jump Space · Camera C · Pause Esc · Drag to look around</p>
+  </div>
+</div>
+<div id="races" class="overlay" hidden>
+  <div class="card">
+    <h1>RACES</h1>
+    <div class="line" id="racesLine"></div>
+    <div id="raceList" class="rlist"></div>
+    <button class="btn ghost" id="racesBack" type="button">BACK</button>
   </div>
 </div>
 <div id="over" class="overlay" hidden>
@@ -139,7 +205,22 @@
     <div class="line" id="overLine"></div>
     <h2>MISSIONS</h2>
     <div id="overMissions"></div>
-    <div class="row"><button class="btn" id="againBtn" type="button">PLAY AGAIN</button><button class="btn ghost" id="shopBtn2" type="button">SHOP</button></div>
+    <div class="row"><button class="btn" id="againBtn" type="button">PLAY AGAIN</button><button class="btn ghost" id="shopBtn2" type="button">SHOP</button><button class="btn ghost" id="overMenu" type="button">MENU</button></div>
+  </div>
+</div>
+<div id="results" class="overlay" hidden>
+  <div class="card">
+    <h1 id="resTitle">YOU WIN!</h1>
+    <div class="line" id="resSub"></div>
+    <table id="resTable" class="res"></table>
+    <p id="resMsg"></p>
+    <div class="row"><button class="btn" id="resRide" type="button">RIDE ON</button><button class="btn" id="resNext" type="button">NEXT RACE</button><button class="btn ghost" id="resRetry" type="button">RETRY</button><button class="btn ghost" id="resMenu" type="button">MENU</button></div>
+  </div>
+</div>
+<div id="pause" class="overlay" hidden>
+  <div class="card">
+    <h1>PAUSED</h1>
+    <div class="row"><button class="btn" id="pResume" type="button">RESUME</button><button class="btn ghost" id="pQuit" type="button">QUIT RACE</button><button class="btn ghost" id="pMenu" type="button">MAIN MENU</button></div>
   </div>
 </div>
 <div id="shop" class="overlay" hidden>
@@ -410,7 +491,7 @@ function buildChunk(ci) {
   inst(PROPS.palm.geo, PROPS.palm.mats, palms); inst(PROPS.lamp.geo, PROPS.lamp.mat, lamps);
   inst(PROPS.sailboat, phys(0xf6f6f2, 0.3), sailboats);
   // cable-stayed bridge
-  if (ci % 6 === 4) {
+  if (((ci % 6) + 6) % 6 === 4) {
     const zb = z0 + 150, ang = riverAngle(zb), W = riverW(zb) + 90, cx = centerX(zb), cpx = cx + riverW(zb) * 0.22, deckY = 19;
     const deck = new THREE.Mesh(new THREE.BoxGeometry(W, 1.8, 16), MAT.bridge); deck.position.set(cx, deckY, zb); deck.rotation.y = ang; deck.castShadow = true; grp.add(deck);
     const under = new THREE.Mesh(new THREE.BoxGeometry(W, 0.6, 13), std(0x9aa3aa, 0.6)); under.position.set(cx, deckY - 1.2, zb); under.rotation.y = ang; grp.add(under);
@@ -424,7 +505,7 @@ function buildChunk(ci) {
     obstacles.push({ chunk: ci, type: 'pylon', kind: 'circle', x: cpx, z: zb, r: 4.2, h: 99, label: 'PYLON!' });
   }
   scene.add(grp);
-  if (ci > 0) genGameplay(ci, mulberry(ci * 7919 + runSeed), z0, z1);
+  genContent(ci, z0, z1);
   return grp;
 }
 function disposeChunk(ci) {
@@ -435,10 +516,13 @@ function disposeChunk(ci) {
   for (let i = gates.length - 1; i >= 0; i--) if (gates[i].chunk === ci) { scene.remove(gates[i].mesh); gates.splice(i, 1); }
 }
 function streamChunks(pz, budget = 1) {
-  const i0 = Math.floor((pz - 450) / CH), i1 = Math.floor((pz + AHEAD) / CH);
-  for (const k of [...chunks.keys()]) if (k < i0 || k > i1 + 1) disposeChunk(k);
-  let built = 0;
-  for (let i = i0; i <= i1 && built < budget; i++) if (!chunks.has(i)) { chunks.set(i, buildChunk(i)); built++; }
+  // build ahead in the direction of travel (free ride can go both ways), keep a margin before disposing
+  const sg = fwdSign(), lo = sg > 0 ? 450 : AHEAD, hi = sg > 0 ? AHEAD : 450;
+  const i0 = Math.floor((pz - lo) / CH), i1 = Math.floor((pz + hi) / CH), ic = Math.floor(pz / CH);
+  for (const k of [...chunks.keys()]) if (k < Math.floor((pz - lo - 600) / CH) || k > Math.floor((pz + hi + 600) / CH)) disposeChunk(k);
+  const want = []; for (let i = i0; i <= i1; i++) if (!chunks.has(i)) want.push(i);
+  want.sort((a, b) => Math.abs(a - ic) - Math.abs(b - ic));
+  for (let k = 0; k < Math.min(budget, want.length); k++) chunks.set(want[k], buildChunk(want[k]));
 }
 
 /* ================================================================
@@ -467,15 +551,16 @@ function spawnTraffic(t, pz, initial) {
   const wake = makeWakeMesh(type === 'ferry' ? 70 : 55, 0.36); wake.position.z = -len * 0.35; g.add(wake);
   scene.add(g);
   const dir = Math.random() < 0.5 ? 1 : -1;
-  const z = initial ? pz + 200 + Math.random() * 2000 : pz + 1100 + Math.random() * 1300;
+  const z = pz + fwdSign() * (initial ? 200 + Math.random() * 2000 : 1100 + Math.random() * 1300);
   Object.assign(t, { mesh: g, type, len, half, dir, lane: (Math.random() - 0.5) * 0.7, speed: (type === 'speed' ? 9 + Math.random() * 7 : type === 'yacht' ? 6 + Math.random() * 4 : 5 + Math.random() * 3) * dir, z, x: 0, yaw: 0, ph: Math.random() * 6, nearDone: false, hitT: 0, wakeH: type === 'speed' ? 1.05 : type === 'yacht' ? 1.25 : 1.4 });
 }
 function updateTraffic(dt, pz) {
-  while (traffic.length < trafficWanted()) { const t = {}; spawnTraffic(t, pz, S.dist < 30); traffic.push(t); }
+  while (traffic.length < trafficWanted()) { const t = {}; spawnTraffic(t, pz, trafficInit); traffic.push(t); }
+  trafficInit = false;
   for (const t of traffic) {
     t.z += t.speed * dt;
     const W = riverW(t.z); t.x = centerX(t.z) + t.lane * W; t.yaw = riverAngle(t.z) + (t.dir < 0 ? Math.PI : 0);
-    if (t.z < pz - 350 || t.z > pz + 2700) spawnTraffic(t, pz, false);
+    const rel = (t.z - pz) * fwdSign(); if (rel < -350 || rel > 2700) spawnTraffic(t, pz, false);
   }
 }
 // height of the water surface: tiny ripples + the wakes of nearby boats
@@ -574,8 +659,8 @@ function buildRider() {
    ================================================================ */
 let runSeed = 1;
 const save = (() => {
-  let d = { coins: 0, best: 0, mLevel: 0, runs: 0, missions: null, upg: { magnet: 0, shield: 0, double: 0, turbo: 0 }, skins: ['classic'], skin: 'classic' };
-  try { const s = JSON.parse(localStorage.getItem('kazeJet.v2') || 'null'); if (s) d = { ...d, ...s, upg: { ...d.upg, ...(s.upg || {}) } }; } catch {}
+  let d = { coins: 0, best: 0, mLevel: 0, runs: 0, missions: null, upg: { magnet: 0, shield: 0, double: 0, turbo: 0 }, skins: ['classic'], skin: 'classic', races: {} };
+  try { const s = JSON.parse(localStorage.getItem('kazeJet.v2') || 'null'); if (s) d = { ...d, ...s, upg: { ...d.upg, ...(s.upg || {}) }, races: { ...(s.races || {}) } }; } catch {}
   return { d, write() { try { localStorage.setItem('kazeJet.v2', JSON.stringify(d)); } catch {} } };
 })();
 const UPG = [
@@ -739,25 +824,80 @@ function clearChunkContent(ci) {
   if (coinMesh) coinMesh.instanceMatrix.needsUpdate = true;
   for (const L of [pickups, ramps, xferries]) for (let i = L.length - 1; i >= 0; i--) if (L[i].chunk === ci) { scene.remove(L[i].mesh); L.splice(i, 1); }
 }
-const trafficWanted = () => clamp(2 + Math.floor(clamp((S.dist - 300) / 5000, 0, 1) * 7), 2, 9);
+const trafficWanted = () => S.mode === 'free' ? 6 : S.mode === 'race' ? 4 : clamp(2 + Math.floor(clamp((S.dist - 300) / 5000, 0, 1) * 7), 2, 9);
+let trafficInit = true;
+
+/* ================================================================
+   OPEN WORLD CONTENT: coin trails, ramps, buoys and power-ups for free ride
+   ================================================================ */
+let GEN = 'endless';
+function genContent(ci, z0, z1) {
+  if (GEN === 'endless') { if (ci > 0) genGameplay(ci, mulberry(ci * 7919 + runSeed), z0, z1); return; }
+  genFree(ci, mulberry(ci * 3571 + 99), z0, z1);
+}
+function makeRamp(ci, x, z, ang) {
+  const L = 9, w = 6.5, Hh = 1.9, shape = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(L, 0), new THREE.Vector2(L, Hh)]);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: w, bevelEnabled: false }); geo.rotateY(-Math.PI / 2); geo.translate(w / 2, 0, 0);
+  const tex = rampTex(); tex.repeat.set(0.25, 0.25);
+  const m = new THREE.Mesh(geo, std(0xffffff, 0.6, 0, { map: tex })); m.position.set(x, -0.15, z); m.rotation.y = ang; m.castShadow = true; scene.add(m);
+  ramps.push({ chunk: ci, x, z, ang, L, w, H: Hh, mesh: m });
+}
+function genFree(ci, rnd, z0, z1) {
+  if (inRaceZone(z0 - 20, z1 + 20)) return;           // race tracks stay clear
+  const nT = 2 + ((rnd() * 2) | 0);
+  for (let k = 0; k < nT; k++) {
+    const z = z0 + 20 + rnd() * (CH - 80), half = riverW(z) / 2 - 15, base = (rnd() * 2 - 1) * half * 0.8, ph = rnd() * 6;
+    for (let j = 0; j < 10; j++) { const zj = z + j * 5; addCoin(ci, centerX(zj) + base + Math.sin(ph + j * 0.4) * 5, zj); }
+  }
+  if (rnd() < 0.6) {
+    const z = z0 + 40 + rnd() * (CH - 100), half = riverW(z) / 2, x = centerX(z) + (rnd() * 2 - 1) * (half - 25), fwd = rnd() < 0.5 ? 1 : -1;
+    makeRamp(ci, x, z, riverAngle(z) + (fwd < 0 ? Math.PI : 0));
+    coinLine(ci, x, z + fwd * 14, x, z + fwd * 46, 9, 3.2, 2.2);
+  }
+  const nB = 2 + ((rnd() * 4) | 0);
+  for (let k = 0; k < nB; k++) {
+    const z = z0 + rnd() * CH, x = centerX(z) + (rnd() * 2 - 1) * (riverW(z) / 2 - 12), red = rnd() < 0.5;
+    const bm = new THREE.Mesh(PROPS.buoy.geo, red ? PROPS.buoy.mats.red : PROPS.buoy.mats.yellow); bm.position.set(x, 0, z); bm.castShadow = true; scene.add(bm);
+    obstacles.push({ chunk: ci, type: 'buoy', kind: 'circle', x, z, r: 1.0, h: 2.6, mesh: bm, ph: rnd() * 6, label: 'BUOY!' });
+  }
+  if (rnd() < 0.3) {
+    const zp = z0 + 40 + rnd() * (CH - 80), xp = centerX(zp) + (rnd() * 2 - 1) * (riverW(zp) / 2 - 20), r = rnd(), type = r < 0.4 ? 'magnet' : r < 0.75 ? 'double' : 'turbo';
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), pwMat(type)); m.position.set(xp, 1.4, zp); scene.add(m);
+    pickups.push({ chunk: ci, type, x: xp, z: zp, mesh: m, taken: false });
+  }
+}
 
 /* ================================================================
    GAME STATE + JET SKI PHYSICS
+   modes: attract (menu backdrop), free (open world), race, endless
    ================================================================ */
 const S = { x: 0, z: 0, y: 0.1, vx: 0, vz: 24, vy: 0, yaw: 0, yawRate: 0, pitch: 0, roll: 0, steer: 0, speed: 0, air: false, airT: 0,
   score: 0, gateMult: 1, gatesHit: 0, dist: 0, startZ: 0, level: 1, dead: false, deadT: 0, hopCd: 0, stumbleT: 0, invulnT: 0,
-  magnetT: 0, shieldT: 0, doubleT: 0, turboT: 0, onRamp: null, newBest: false, mode: 'attract' };
+  magnetT: 0, shieldT: 0, doubleT: 0, turboT: 0, onRamp: null, newBest: false, mode: 'attract', boost: 1, boosting: false, crashT: 0,
+  fwd: 1, fwdT: 0, paused: false, deathBy: '' };
 const RS = { coins: 0, gates: 0, jumps: 0, dist: 0, close: 0, power: 0, maxAir: 0 };
-const input = { left: false, right: false, hopQueued: false };
+const input = { left: false, right: false, hopQueued: false, brake: false, boost: false, brakePad: false, boostPad: false };
+const TOP = 34.5, THRUST = 4.6;
+const isFree = () => S.mode === 'free' || S.mode === 'race';
+const fwdSign = () => S.fwd;
 const mult = () => baseMult() * S.gateMult;
-function resetRun(attract = false) {
-  runSeed = (Math.random() * 1e6) | 0;
-  for (const k of [...chunks.keys()]) disposeChunk(k);
-  S.z = 60; S.x = centerX(S.z); S.yaw = riverAngle(S.z); S.vx = Math.sin(S.yaw) * 24; S.vz = Math.cos(S.yaw) * 24; S.vy = 0; S.y = 0.1;
-  Object.assign(S, { yawRate: 0, pitch: 0, roll: 0, air: false, airT: 0, score: 0, gateMult: 1, gatesHit: 0, dist: 0, startZ: S.z, level: 1, dead: false, deadT: 0, hopCd: 0, stumbleT: 0, invulnT: 0, magnetT: 0, shieldT: 0, doubleT: 0, turboT: 0, onRamp: null, newBest: false, mode: attract ? 'attract' : 'run' });
+let saveDirty = false;
+function resetRun(mode = 'endless', z = 60, yaw = null) {
+  const gen = mode === 'free' || mode === 'race' ? 'free' : 'endless';
+  if (gen === 'endless' || gen !== GEN) {
+    if (gen === 'endless') runSeed = (Math.random() * 1e6) | 0;
+    GEN = gen; for (const k of [...chunks.keys()]) disposeChunk(k);
+  }
+  clearRace();
+  S.z = z; S.x = centerX(z); S.yaw = yaw ?? riverAngle(z);
+  const v0 = gen === 'endless' ? 24 : 6;
+  S.vx = Math.sin(S.yaw) * v0; S.vz = Math.cos(S.yaw) * v0; S.vy = 0; S.y = 0.1;
+  Object.assign(S, { yawRate: 0, pitch: 0, roll: 0, steer: 0, air: false, airT: 0, score: 0, gateMult: 1, gatesHit: 0, dist: 0, startZ: S.z, level: 1, dead: false, deadT: 0, hopCd: 0, stumbleT: 0, invulnT: 0,
+    magnetT: 0, shieldT: 0, doubleT: 0, turboT: 0, onRamp: null, newBest: false, mode, boost: 1, boosting: false, crashT: 0, fwd: Math.cos(S.yaw - riverAngle(z)) >= 0 ? 1 : -1, fwdT: 0, paused: false, deathBy: '' });
   for (const k in RS) RS[k] = 0;
-  for (const t of traffic) scene.remove(t.mesh); traffic.length = 0;
-  streamChunks(S.z, 30);
+  input.hopQueued = false;
+  for (const t of traffic) scene.remove(t.mesh); traffic.length = 0; trafficInit = true;
+  streamChunks(S.z, 40);
   camState.init = false; $('pops').innerHTML = '';
 }
 function popup(text, val, cls = '') {
@@ -766,14 +906,26 @@ function popup(text, val, cls = '') {
   const box = $('pops'); box.prepend(el); while (box.children.length > 3) box.lastChild.remove(); setTimeout(() => el.remove(), 1700);
 }
 function addScore(base, label, cls) { const v = Math.round(base * mult()); S.score += v; if (label) popup(label, `+${v.toLocaleString('en-US')}`, cls); }
+function addCoins(v) { RS.coins += v; if (isFree()) { save.d.coins += v; saveDirty = true; } }
+// endless: points; free ride and races: a few coins
+function reward(base, label, cls) { if (isFree()) { const c = Math.max(1, Math.round(base / 75)); addCoins(c); if (label) popup(label, `+${c} 🪙`, cls); } else addScore(base, label, cls); }
+function crash(label) {
+  if (S.crashT > 0.6) return;
+  S.crashT = 1.2; popup(label, '', 'red'); camState.shake = 0.6; audio.thud(); S.vx *= 0.45; S.vz *= 0.45;
+}
 function endRun(label) {
   if (S.dead) return;
   S.dead = true; S.deadT = 0; S.deathBy = label; popup(label, '', 'red'); camState.shake = 0.8; audio.thud(); fx_splash(5);
-  if (S.mode !== 'run') return;
+  if (S.mode !== 'endless') return;
   save.d.coins += RS.coins; save.d.runs++; const isBest = S.score > save.d.best; if (isBest) save.d.best = Math.round(S.score); save.write();
-  setTimeout(() => showOver(label, isBest), 1500);
+  setTimeout(() => { if (S.mode === 'endless' && S.dead) showOver(label, isBest); }, 1500);
 }
 function hitObstacle(o, nx, nz, pen) {
+  if (isFree()) {
+    S.x += nx * (pen + 0.05); S.z += nz * (pen + 0.05); const vn = S.vx * nx + S.vz * nz;
+    if (vn < 0) { S.vx -= 1.5 * vn * nx; S.vz -= 1.5 * vn * nz; }
+    if (S.turboT <= 0) crash(o.label || 'CRASH!'); return;
+  }
   if (S.invulnT > 0) return;
   if (S.turboT > 0) { o.dead = true; if (o.mesh) o.mesh.visible = false; if (o.traffic) { o.traffic.z = S.z + 1500; } addScore(120, 'SMASH!', 'teal'); fx_splash(4); return; }
   if (S.shieldT > 0) { S.shieldT = 0; S.invulnT = 1.6; S.x += nx * (pen + 0.5); S.z += nz * (pen + 0.5); popup('SHIELD!', '', 'teal'); camState.shake = 0.4; audio.thud(); return; }
@@ -789,6 +941,7 @@ function step(dt) {
     s.y += (waterHeight(s.x, s.z) + 0.02 - s.y) * Math.min(1, dt * 3); s.vy = 0; s.speed = Math.hypot(s.vx, s.vz);
     s.pitch *= k; s.roll = lerp(s.roll, 0.55, dt * 2); return;
   }
+  const free = isFree(), frozen = s.mode === 'race' && R && R.t < 0;
   const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw), lx = fz, lz = -fx;
   let vF = s.vx * fx + s.vz * fz, vL = s.vx * lx + s.vz * lz;
   const hN = waterHeight(s.x + fx * 1.3, s.z + fz * 1.3), hT = waterHeight(s.x - fx * 1.2, s.z - fz * 1.2), hC = waterHeight(s.x, s.z);
@@ -798,7 +951,7 @@ function step(dt) {
   for (const rp of ramps) {
     const dx = s.x - rp.x, dz = s.z - rp.z; if (dx * dx + dz * dz > 400) continue;
     const rfx = Math.sin(rp.ang), rfz = Math.cos(rp.ang), along = dx * rfx + dz * rfz, lat = dx * rfz - dz * rfx;
-    if (Math.abs(lat) < rp.w / 2 && along > 0 && along < rp.L) { const ry = along / rp.L * rp.H + 0.1; if (s.y < ry + 0.35) { onRamp = rp; s.y = ry + 0.2; s.vy = Math.max(s.vy, vF * rp.H / rp.L); } }
+    if (Math.abs(lat) < rp.w / 2 && along > 0 && along < rp.L && vF * (fx * rfx + fz * rfz) > 0) { const ry = along / rp.L * rp.H + 0.1; if (s.y < ry + 0.35) { onRamp = rp; s.y = ry + 0.2; s.vy = Math.max(s.vy, vF * rp.H / rp.L); } }
   }
   if (s.onRamp && !onRamp) { s.vy = clamp(vF * 0.27, 6.5, 13); s.airT = 0.001; popup('RAMP!', '', 'teal'); }
   s.onRamp = onRamp;
@@ -807,7 +960,11 @@ function step(dt) {
     s.vy += ((target - s.y) * 140 - s.vy * 16) * dt;
     if (s.air) {
       const t = s.airT;
-      if (t > 0.35) { RS.jumps++; RS.maxAir = Math.max(RS.maxAir, +t.toFixed(1)); addScore(220 * t + 520 * Math.max(0, t - 0.4), t > 1.4 ? `BIG AIR ${t.toFixed(1)}s` : `WAKE JUMP ${t.toFixed(1)}s`); }
+      if (t > 0.35) {
+        RS.jumps++; RS.maxAir = Math.max(RS.maxAir, +t.toFixed(1));
+        if (free) s.boost = Math.min(1, s.boost + 0.15 * t);
+        reward(220 * t + 520 * Math.max(0, t - 0.4), t > 1.4 ? `BIG AIR ${t.toFixed(1)}s` : `WAKE JUMP ${t.toFixed(1)}s`);
+      }
       fx_splash(Math.max(2, -s.vy * 1.2)); s.air = false;
     }
     s.airT = 0;
@@ -815,50 +972,73 @@ function step(dt) {
     if (s.airT === 0 && s.vy > 1.2) s.vy = Math.min(9, s.vy * 1.7 + 0.8);   // arcade kick off a wake lip
     s.vy -= 9.81 * dt; s.airT += dt; if (s.airT > 0.18) s.air = true;
   }
-  // hop over floating booms
-  if (input.hopQueued) { input.hopQueued = false; if ((contact || onRamp) && s.hopCd <= 0) { s.vy = 5.6; s.airT = 0.001; s.hopCd = 0.6; contact = false; audio.splash(1.4); } }
+  // hop (Space): clears floating booms, small kicker anywhere
+  if (input.hopQueued) { input.hopQueued = false; if ((contact || onRamp) && s.hopCd <= 0 && !frozen) { s.vy = 5.6; s.airT = 0.001; s.hopCd = 0.6; contact = false; audio.splash(1.4); } }
   s.hopCd -= dt;
-  // speed climbs the longer you survive
-  const vt = (24 + Math.min(26, s.dist / 220)) * (s.turboT > 0 ? 1.5 : 1) * (s.stumbleT > 3.5 ? 0.75 : 1);
-  if (contact || onRamp) { vF += (vt - vF) * (1 - Math.exp(-dt * (vt > vF ? 0.9 : 2.2))); vL *= Math.exp(-dt * 4.2); }
-  // steering assist: the jet ski aims along the river and steer bends it off that line
-  const ra = riverAngle(s.z), yT = ra + s.steer * 0.5;
-  s.yawRate = clamp(wrapAngle(yT - s.yaw) * (contact || onRamp ? 7 : 1.2), -1.8, 1.8);
-  s.yaw = wrapAngle(s.yaw + s.yawRate * dt);
+  const ra = riverAngle(s.z);
+  if (free) {
+    // open-water handling: throttle always on, brake, boost, free carving in any direction
+    const brake = input.brake || input.brakePad;
+    s.boosting = (input.boost || input.boostPad) && s.boost > 0 && !brake && !frozen;
+    const top = TOP * (s.boosting ? 1.22 : 1) * (s.turboT > 0 ? 1.3 : 1) * (s.crashT > 0 ? 0.5 : 1);
+    if (frozen) { vF *= Math.exp(-dt * 6); vL *= Math.exp(-dt * 6); s.yawRate = 0; }
+    else if (contact || onRamp) {
+      vF = Math.max(0, vF + (brake ? -14 : THRUST * (1 - Math.max(0, vF) / top) * 3.2) * dt);
+      vL *= Math.exp(-dt * 4.2);
+      const yT = s.steer * 1.25 * (vF / (vF + 6)); s.yawRate += (yT - s.yawRate) * Math.min(1, dt * 5);
+    } else s.yawRate *= Math.exp(-dt * 2);
+    if (s.boosting) s.boost = Math.max(0, s.boost - dt / 4); else s.boost = Math.min(1, s.boost + dt * 0.02);
+    s.yaw = wrapAngle(s.yaw + s.yawRate * dt);
+    // which way along the river are we heading (with a little hysteresis, so streaming does not flip-flop)
+    const want = Math.cos(s.yaw - ra) >= 0 ? 1 : -1;
+    if (want !== s.fwd) { s.fwdT += dt; if (s.fwdT > 1.2) { s.fwd = want; s.fwdT = 0; } } else s.fwdT = 0;
+  } else {
+    // endless: speed climbs the longer you survive, steering is assisted along the river
+    const vt = (24 + Math.min(26, s.dist / 220)) * (s.turboT > 0 ? 1.5 : 1) * (s.stumbleT > 3.5 ? 0.75 : 1);
+    if (contact || onRamp) { vF += (vt - vF) * (1 - Math.exp(-dt * (vt > vF ? 0.9 : 2.2))); vL *= Math.exp(-dt * 4.2); }
+    const yT = ra + s.steer * 0.5;
+    s.yawRate = clamp(wrapAngle(yT - s.yaw) * (contact || onRamp ? 7 : 1.2), -1.8, 1.8);
+    s.yaw = wrapAngle(s.yaw + s.yawRate * dt);
+  }
   const nfx = Math.sin(s.yaw), nfz = Math.cos(s.yaw);
   s.vx = nfx * vF + nfz * vL; s.vz = nfz * vF - nfx * vL;
   s.x += s.vx * dt; s.z += s.vz * dt; s.y += s.vy * dt;
   s.speed = Math.hypot(s.vx, s.vz);
-  const pitchT = s.air ? clamp(Math.atan2(s.vy, s.speed) * 0.8, -0.35, 0.45) : onRamp ? Math.atan2(onRamp.H, onRamp.L) : Math.atan2(hN - hT, 2.5) + 0.05 * smooth(4, 15, vF);
+  const brakeNow = free && (input.brake || input.brakePad);
+  const pitchT = s.air ? clamp(Math.atan2(s.vy, s.speed) * 0.8, -0.35, 0.45) : onRamp ? Math.atan2(onRamp.H, onRamp.L) : Math.atan2(hN - hT, 2.5) + 0.05 * smooth(4, 15, vF) - (brakeNow ? 0.06 : 0);
   s.pitch = lerp(s.pitch, pitchT, 1 - Math.exp(-dt * (s.air ? 2.5 : 8)));
   s.roll = lerp(s.roll, s.air ? s.roll : -s.steer * 0.5 * smooth(3, 18, vF), 1 - Math.exp(-dt * 5));
-  // quay walls: first touch is a stumble, a second one within 5 s ends the run
+  // quay walls
   const off = s.x - centerX(s.z), lim = riverW(s.z) / 2 - 1.4;
   if (Math.abs(off) > lim) {
     const sg = Math.sign(off), nx = -Math.cos(ra) * sg, nz = Math.sin(ra) * sg;
     s.x -= (Math.abs(off) - lim) * sg; const vn = s.vx * nx + s.vz * nz;
-    if (vn < 0) { s.vx -= 1.4 * vn * nx; s.vz -= 1.4 * vn * nz; s.vx *= 0.88; s.vz *= 0.88; }
-    if (s.invulnT <= 0 && s.turboT <= 0) { if (s.stumbleT > 0) endRun('WALL!'); else { s.stumbleT = 5; s.invulnT = 0.7; popup('STUMBLE!', '', 'red'); camState.shake = 0.35; audio.thud(); } }
+    if (free) {
+      if (vn < 0) { s.vx -= 1.4 * vn * nx; s.vz -= 1.4 * vn * nz; s.vx *= 0.85; s.vz *= 0.85; if (-vn > 4) crash('WALL!'); const along = ra + (Math.cos(s.yaw - ra) < 0 ? Math.PI : 0); s.yaw = wrapAngle(s.yaw + wrapAngle(along - s.yaw) * 0.3); }
+    } else {
+      if (vn < 0) { s.vx -= 1.4 * vn * nx; s.vz -= 1.4 * vn * nz; s.vx *= 0.88; s.vz *= 0.88; }
+      if (s.invulnT <= 0 && s.turboT <= 0) { if (s.stumbleT > 0) endRun('WALL!'); else { s.stumbleT = 5; s.invulnT = 0.7; popup('STUMBLE!', '', 'red'); camState.shake = 0.35; audio.thud(); } }
+    }
   }
-  // obstacles (buoys, booms, barges, crossing ferries)
+  // obstacles (buoys, booms, barges, crossing ferries, bridge pylons)
   for (const o of obstacles) {
     if (o.dead) continue;
     let cx, cz;
     if (o.kind === 'seg') { const abx = o.bx - o.ax, abz = o.bz - o.az, l2 = abx * abx + abz * abz || 1, t = clamp(((s.x - o.ax) * abx + (s.z - o.az) * abz) / l2, 0, 1); cx = o.ax + abx * t; cz = o.az + abz * t; }
     else { cx = o.x; cz = o.z; }
     const dx = s.x - cx, dz = s.z - cz; if (Math.abs(dz) > 40) continue;
-    const d = Math.hypot(dx, dz), R = o.r + 0.85;
-    if (d < R && s.y < o.h) hitObstacle(o, dx / (d || 1), dz / (d || 1), R - d);
-    else if (!o.near && d < R + 2.6 && s.speed > 20 && Math.abs(dx * nfx + dz * nfz) < 2) { o.near = true; RS.close++; addScore(150, 'RAZOR CLOSE', 'teal'); }
+    const d = Math.hypot(dx, dz), R2 = o.r + 0.85;
+    if (d < R2 && s.y < o.h) hitObstacle(o, dx / (d || 1), dz / (d || 1), R2 - d);
+    else if (!o.near && d < R2 + 2.6 && s.speed > 20 && Math.abs(dx * nfx + dz * nfz) < 2) { o.near = true; RS.close++; reward(150, 'RAZOR CLOSE', 'teal'); }
   }
   // traffic boats
   for (const t of traffic) {
     const tfx = Math.sin(t.yaw), tfz = Math.cos(t.yaw), dx = s.x - t.x, dz = s.z - t.z; if (Math.abs(dz) > 40) continue;
-    const along = clamp(dx * tfx + dz * tfz, -t.len / 2 + t.half, t.len / 2 - t.half), cx = t.x + tfx * along, cz = t.z + tfz * along, ex = s.x - cx, ez = s.z - cz, d = Math.hypot(ex, ez), R = t.half + 0.85;
-    if (d < R && s.y < 2.6) hitObstacle({ label: 'CRASH!', traffic: t, mesh: null }, ex / (d || 1), ez / (d || 1), R - d);
-    else if (!t.nearDone && d < R + 2.6 && s.speed > 18 && Math.abs(dx * tfx + dz * tfz) < t.len / 2) { t.nearDone = true; RS.close++; addScore(260, 'RAZOR CLOSE', 'teal'); }
+    const along = clamp(dx * tfx + dz * tfz, -t.len / 2 + t.half, t.len / 2 - t.half), cx = t.x + tfx * along, cz = t.z + tfz * along, ex = s.x - cx, ez = s.z - cz, d = Math.hypot(ex, ez), R2 = t.half + 0.85;
+    if (d < R2 && s.y < 2.6) hitObstacle({ label: 'CRASH!', traffic: t, mesh: null }, ex / (d || 1), ez / (d || 1), R2 - d);
+    else if (!t.nearDone && d < R2 + 2.6 && s.speed > 18 && Math.abs(dx * tfx + dz * tfz) < t.len / 2) { t.nearDone = true; RS.close++; reward(260, 'RAZOR CLOSE', 'teal'); }
   }
-  // gates: through the arch raises the multiplier, a miss resets it
+  // endless gates: through the arch raises the multiplier, a miss resets it
   for (const g of gates) {
     if (g.done || g.missed) continue;
     const gfx = Math.sin(g.ang), gfz = Math.cos(g.ang), rel = (s.x - g.x) * gfx + (s.z - g.z) * gfz;
@@ -874,16 +1054,17 @@ function step(dt) {
     if (c.taken) continue; const dx = c.x - s.x, dz = c.z - s.z; if (Math.abs(dz) > 60) continue;
     let d2 = dx * dx + dz * dz;
     if (magR && d2 < magR * magR) { const k = Math.min(1, dt * 9); c.x -= dx * k; c.z -= dz * k; c.y = lerp(c.y, s.y + 0.9, k); d2 = (c.x - s.x) ** 2 + (c.z - s.z) ** 2; }
-    if (d2 < 3.8 && Math.abs(c.y - (s.y + 0.8)) < 1.9) { c.taken = true; coinMesh.setMatrixAt(c.slot, ZERO); const v = s.doubleT > 0 ? 2 : 1; RS.coins += v; S.score += 12 * mult(); audio.coin(); }
+    if (d2 < 3.8 && Math.abs(c.y - (s.y + 0.8)) < 1.9) { c.taken = true; coinMesh.setMatrixAt(c.slot, ZERO); addCoins(s.doubleT > 0 ? 2 : 1); if (!free) S.score += 12 * mult(); audio.coin(); }
   }
   for (const p of pickups) { if (p.taken) continue; const d2 = (p.x - s.x) ** 2 + (p.z - s.z) ** 2; if (d2 < 6.5 && s.y < 3.2) { p.taken = true; p.mesh.visible = false; givePower(p.type); } }
-  for (const k of ['magnetT', 'shieldT', 'doubleT', 'turboT', 'invulnT', 'stumbleT']) if (s[k] > 0) s[k] = Math.max(0, s[k] - dt);
-  // distance, score, level
+  for (const k of ['magnetT', 'shieldT', 'doubleT', 'turboT', 'invulnT', 'stumbleT', 'crashT']) if (s[k] > 0) s[k] = Math.max(0, s[k] - dt);
+  if (free) { seaAmp = 0.07; return; }
+  // endless: distance, score, level
   const ds = Math.max(0, s.z - s.startZ) - s.dist; if (ds > 0) { s.dist += ds; S.score += ds * 0.6 * mult(); }
   RS.dist = Math.round(s.dist);
-  const lvl = 1 + Math.floor(s.dist / 1000); if (lvl > s.level) { s.level = lvl; popup(`LEVEL ${lvl}`, 'FASTER!'); }
+  const lvl = 1 + Math.floor(s.dist / 1000); if (lvl > s.level) { s.level = lvl; if (S.mode === 'endless') popup(`LEVEL ${lvl}`, 'FASTER!'); }
   seaAmp = 0.05 + (s.level - 1) * 0.03;
-  if (S.mode === 'run' && !s.newBest && save.d.best > 0 && S.score > save.d.best) { s.newBest = true; popup('NEW BEST!', '', 'teal'); }
+  if (S.mode === 'endless' && !s.newBest && save.d.best > 0 && S.score > save.d.best) { s.newBest = true; popup('NEW BEST!', '', 'teal'); }
 }
 function updateFerries(dt) {
   for (const f of xferries) {
@@ -893,6 +1074,216 @@ function updateFerries(dt) {
     f.mesh.position.set(f.x, Math.sin(simT + f.z) * 0.05, f.z); f.mesh.rotation.y = yaw;
     f.obs.ax = f.x - ax * e; f.obs.az = f.z - az * e; f.obs.bx = f.x + ax * e; f.obs.bz = f.z + az * e;
   }
+}
+
+/* ================================================================
+   RACES: markers along the river, checkpoint tracks, AI rivals on jet skis
+   ================================================================ */
+const RACES = (() => {
+  const defs = [
+    ['Harbour Sprint', 1800, 3, 0.84, 300, 1],
+    ['Bridge Run', 2200, 4, 0.88, 450, -1],
+    ['Glass Canyon', 2800, 5, 0.91, 650, 1],
+    ['Ferry Rush', 3200, 5, 0.93, 850, -1],
+    ['Twin Towers', 3800, 5, 0.95, 1100, 1],
+    ['Kaze Grand Prix', 5000, 5, 0.97, 2000, -1],
+  ];
+  let zp = 700, zn = -500;
+  return defs.map(([name, len, rivals, skill, prize, dir], i) => {
+    let z; if (dir > 0) { z = zp; zp += len + 900; } else { z = zn; zn -= len + 900; }
+    return { i, name, len, rivals, skill, prize, dir, z };
+  });
+})();
+const raceSpan = r => r.dir > 0 ? [r.z - 80, r.z + r.len + 120] : [r.z - r.len - 120, r.z + 80];
+const inRaceZone = (za, zb) => RACES.some(r => { const [a, b] = raceSpan(r); return zb > a && za < b; });
+const raceUnlocked = i => i === 0 || (save.d.races[i - 1] && save.d.races[i - 1] <= 3);
+const ORD = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH'];
+const fmtT = t => { t = Math.max(0, t); const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
+const RIVALS = [
+  { name: 'NOVA', deck: 0xe23b3b, hull: 0x111316, vest: 0xf4f5f3 },
+  { name: 'RAZOR', deck: 0x2f6fd1, hull: 0xf4f5f3, vest: 0xffd23a },
+  { name: 'TIDE', deck: 0x18a35a, hull: 0x111316, vest: 0x18a35a },
+  { name: 'VIPER', deck: 0xf4c430, hull: 0x1a1d22, vest: 0xe23b3b },
+  { name: 'BLAZE', deck: 0x9b4dff, hull: 0x111316, vest: 0x9b4dff },
+];
+// race markers: a light beam you can see from far away, a ring on the water and a floating sign
+const markers = [];
+function markerTex(r) {
+  const un = raceUnlocked(r.i), best = save.d.races[r.i];
+  return canvasTex(512, 170, (g, w, h) => {
+    g.fillStyle = 'rgba(8,22,30,0.82)'; g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, 26); g.fill();
+    g.lineWidth = 6; g.strokeStyle = un ? '#ffd23a' : '#8a9aa6'; g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = un ? '#ffd23a' : '#a9b6c0'; g.font = 'italic 900 58px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText(`RACE ${r.i + 1}`, w / 2, 48);
+    g.fillStyle = '#ffffff'; g.font = 'italic 800 40px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText(r.name.toUpperCase(), w / 2, 98);
+    g.fillStyle = 'rgba(255,255,255,0.75)'; g.font = '600 28px "Barlow Condensed", "Arial Narrow", sans-serif';
+    g.fillText(!un ? 'LOCKED' : best ? `BEST: ${ORD[best - 1]}` : `${(r.len / 1000).toFixed(1)} KM · ${r.rivals} RIVALS`, w / 2, 140);
+  });
+}
+function buildMarkers() {
+  for (const r of RACES) {
+    const g = new THREE.Group();
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 160, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false }));
+    beam.position.y = 80; g.add(beam);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(7, 0.35, 8, 48), new THREE.MeshBasicMaterial({ color: 0xffd23a })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.3; g.add(ring);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTex(r), depthWrite: false, fog: false })); spr.scale.set(24, 8, 1); spr.position.y = 15; g.add(spr);
+    g.position.set(centerX(r.z), 0, r.z); g.visible = false; scene.add(g); markers.push({ r, g, beam, ring, spr });
+  }
+}
+function refreshMarkers() {
+  for (const m of markers) {
+    const un = raceUnlocked(m.r.i); m.spr.material.map.dispose(); m.spr.material.map = markerTex(m.r); m.spr.material.needsUpdate = true;
+    m.beam.material.color.setHex(un ? 0xffd23a : 0x8a9aa6); m.ring.material.color.setHex(un ? 0xffd23a : 0x8a9aa6);
+  }
+}
+function nearRace() {
+  if (S.mode !== 'free') return null;
+  for (const r of RACES) if (Math.abs(S.z - r.z) < 16 && Math.abs(S.x - centerX(r.z)) < 16) return r;
+  return null;
+}
+function navTarget() {
+  // the next race worth doing: the first unlocked one you have not won yet, else the nearest
+  let best = RACES.find(r => raceUnlocked(r.i) && save.d.races[r.i] !== 1);
+  if (!best) best = RACES.reduce((a, r) => Math.abs(r.z - S.z) < Math.abs(a.z - S.z) ? r : a, RACES[0]);
+  return best;
+}
+
+let R = null;     // the active race
+const cpTex = {};
+function cpBanner(fin) {
+  const k = fin ? 'fin' : 'cp';
+  return cpTex[k] || (cpTex[k] = canvasTex(512, 96, (g, w, h) => {
+    if (fin) { for (let i = 0; i < 32; i++) for (let j = 0; j < 6; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#fff'; g.fillRect(i * 16, j * 16, 16, 16); } g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(110, 14, 292, 68); }
+    else { g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); g.fillStyle = '#ff6a1a'; g.fillRect(0, 0, w, 8); g.fillRect(0, h - 8, w, 8); }
+    g.fillStyle = '#16202a'; g.font = 'italic 900 62px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(fin ? 'FINISH' : 'CHECKPOINT', w / 2, h / 2 + 3);
+  }));
+}
+function buildTrack(r) {
+  const n = Math.max(6, Math.round(r.len / 170)), cps = [], finMat = phys(0xf4f5f3, 0.3);
+  for (let k = 1; k <= n; k++) {
+    const z = r.z + r.dir * r.len * k / n, half = riverW(z) / 2, fin = k === n;
+    const x = centerX(z) + (fin ? 0 : 0.45 * (half - 25) * Math.sin(z / 260 + r.i * 1.7));
+    const ang = riverAngle(z) + (r.dir < 0 ? Math.PI : 0), sc = fin ? 2.4 : 1.35;
+    const m = new THREE.Mesh(PROPS.arch, fin ? finMat : PROPS.archMat); m.castShadow = true; m.scale.setScalar(sc); m.rotation.y = ang; m.position.set(x, -0.5, z);
+    const glow = new THREE.Mesh(new THREE.TorusGeometry(8, 0.95, 10, 44, Math.PI), PROPS.archGlow.clone()); m.add(glow);
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 1.4), std(0xffffff, 0.6, 0, { map: cpBanner(fin), side: THREE.DoubleSide })); banner.position.set(0, 8.4, -0.02); banner.rotation.y = Math.PI; m.add(banner);
+    for (const s of [-1, 1]) { const f = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.2, 14), fin ? finMat : PROPS.archMat); f.position.set(s * 8, 0.6, 0); m.add(f); }
+    scene.add(m); cps.push({ x, z, ang, mesh: m, glow, hw: 8 * sc - 1.2, fin });
+  }
+  return cps;
+}
+function makeRivalMesh(c) {
+  const m = jet.clone(true), mats = new Map([[JM.deck, phys(c.deck, 0.22)], [JM.hull, phys(c.hull, 0.35)], [JM.vest, std(c.vest, 0.6)]]);
+  m.traverse(o => { if (o.material && mats.has(o.material)) o.material = mats.get(o.material); });
+  for (const ch of [...m.children]) if (ch.geometry === shieldBubble.geometry) m.remove(ch);
+  m.position.set(0, 0, 0); m.rotation.set(0, 0, 0); scene.add(m); return m;
+}
+function clearRace() {
+  if (!R) return;
+  for (const c of R.cps) scene.remove(c.mesh);
+  for (const a of R.rivals) scene.remove(a.mesh);
+  R = null; $('countdown').hidden = true;
+}
+const raceProg = (o, r) => (o.z - r.z) * r.dir;
+function startRace(i) {
+  const r = RACES[i]; if (!raceUnlocked(i)) return;
+  hideOverlays(); $('hudWrap').hidden = false; audio.start();
+  const yaw = riverAngle(r.z) + (r.dir < 0 ? Math.PI : 0);
+  if (!isFree() || Math.abs(S.z - r.z) > 600) resetRun('free', r.z, yaw); else clearRace();
+  // rivals line up abreast on the start line, you start just behind the middle of the pack
+  const n = r.rivals, cx = centerX(r.z);
+  const grid = k => ({ x: cx + (k - (n - 1) / 2) * 10 * r.dir, z: r.z - r.dir * 4 });
+  const p = { x: cx + 5 * r.dir * (n % 2), z: r.z - r.dir * 12 };
+  Object.assign(S, { mode: 'race', x: p.x, z: p.z, y: 0.1, yaw, vx: 0, vz: 0, vy: 0, yawRate: 0, pitch: 0, roll: 0, steer: 0, air: false, airT: 0, boost: 1, crashT: 0, onRamp: null, magnetT: 0, doubleT: 0, turboT: 0, shieldT: 0, fwd: r.dir, fwdT: 0, paused: false, dead: false });
+  input.hopQueued = false;
+  R = { r, cps: buildTrack(r), t: -3.6, cp: 0, cpRel: -1, pen: 0, done: false, rivals: [], count: 9, goT: 0, finishT: 0 };
+  for (let k = 0; k < n; k++) {
+    const k2 = [0, 2, 4, 1, 3].filter(i => i < n)[k], c = RIVALS[k2], g = grid(k), skill = r.skill * [1, 0.97, 0.94, 0.91, 0.88][k2];
+    R.rivals.push({ ...c, mesh: makeRivalMesh(c), x: g.x, z: g.z, yaw, v: 0, cp: 0, skill, lane: (Math.random() - 0.5) * 8, done: false, time: 0, ph: Math.random() * 6, turn: 0, bumpT: 0 });
+  }
+  for (const t of traffic) scene.remove(t.mesh); traffic.length = 0; trafficInit = true;
+  streamChunks(S.z, 40); camState.init = false; $('pops').innerHTML = '';
+  for (const m of markers) m.g.visible = false;
+  // progress bar dots
+  $('raceBar').innerHTML = R.rivals.map(a => `<i style="background:#${a.deck.toString(16).padStart(6, '0')}"></i>`).join('') + '<i class="you"></i>';
+}
+function updateRace(dt) {
+  if (!R) return;
+  const r = R.r; R.t += dt;
+  if (R.t < 0) { const c = Math.ceil(-R.t); if (c !== R.count && c <= 3) { R.count = c; $('countdown').textContent = c; $('countdown').hidden = false; audio.beep(660); } return; }
+  if (R.count !== 0) { R.count = 0; $('countdown').textContent = 'GO!'; audio.beep(1320, 0.35); R.goT = 1; }
+  if (R.goT > 0) { R.goT -= dt; if (R.goT <= 0) $('countdown').hidden = true; }
+  // player checkpoints: crossing the plane of the next arch
+  if (!R.done) {
+    const c = R.cps[R.cp], gfx = Math.sin(c.ang), gfz = Math.cos(c.ang), rel = (S.x - c.x) * gfx + (S.z - c.z) * gfz;
+    if (rel > 0 && R.cpRel <= 0 && rel < 20) {
+      const lat = Math.abs((S.x - c.x) * gfz - (S.z - c.z) * gfx);
+      if (lat < c.hw) { if (!c.fin) popup(`CHECKPOINT ${R.cp + 1}/${R.cps.length - 1}`, '', 'teal'); S.boost = Math.min(1, S.boost + 0.08); audio.ding(); }
+      else { R.pen += 3; popup('MISSED CHECKPOINT', '+3 s', 'red'); }
+      c.glow.material.opacity = 0; R.cp++; R.cpRel = -1;
+      if (R.cp >= R.cps.length) finishRace();
+    } else R.cpRel = rel;
+  }
+  const myProg = raceProg(S, r);
+  // rivals
+  for (const a of R.rivals) {
+    const c = R.cps[Math.min(a.cp, R.cps.length - 1)];
+    let tx = c.x + clamp(a.lane, -(c.hw - 2.5), c.hw - 2.5), tz = c.z;
+    if (a.done) { tx = a.x + Math.sin(a.yaw) * 50; tz = a.z + Math.cos(a.yaw) * 50; }
+    for (const t of traffic) { const dx = t.x - a.x, dz = (t.z - a.z) * r.dir; if (dz > 0 && dz < 45 && Math.abs(dx) < t.half + 4) tx = a.x + (dx > 0 ? -1 : 1) * 12; }
+    const dyaw = wrapAngle(Math.atan2(tx - a.x, tz - a.z) - a.yaw), turn = clamp(dyaw * 2.5, -1.1, 1.1);
+    a.yaw = wrapAngle(a.yaw + turn * dt); a.turn = lerp(a.turn, turn, Math.min(1, dt * 4));
+    const gap = myProg - raceProg(a, r), rubber = gap > 100 ? 1.06 : gap < -120 ? 0.92 : gap < -60 ? 0.96 : 1;
+    const vt = a.done ? 9 : TOP * a.skill * rubber * (1 + 0.04 * Math.sin(R.t * 0.4 + a.ph)) * (1 - Math.min(0.3, Math.abs(dyaw) * 0.4));
+    a.v += clamp((vt - a.v) * 1.2, -8, 11) * dt;
+    a.x += Math.sin(a.yaw) * a.v * dt; a.z += Math.cos(a.yaw) * a.v * dt;
+    const off = a.x - centerX(a.z), lim = riverW(a.z) / 2 - 3; if (Math.abs(off) > lim) a.x = centerX(a.z) + Math.sign(off) * lim;
+    if (!a.done) { const rel = (a.x - c.x) * Math.sin(c.ang) + (a.z - c.z) * Math.cos(c.ang); if (rel > 0) { a.cp++; if (a.cp >= R.cps.length) { a.done = true; a.time = R.t; } } }
+    // bumping with the player
+    const dx = S.x - a.x, dz = S.z - a.z, d = Math.hypot(dx, dz);
+    if (d < 2.4 && d > 1e-3 && S.y < 2) {
+      const nx = dx / d, nz = dz / d, p = (2.4 - d) / 2; S.x += nx * p; S.z += nz * p; a.x -= nx * p; a.z -= nz * p;
+      // bounce on the relative velocity only, so tapping a rival from behind does not stop you dead
+      const avx = Math.sin(a.yaw) * a.v, avz = Math.cos(a.yaw) * a.v, vn = (S.vx - avx) * nx + (S.vz - avz) * nz;
+      if (vn < 0) { S.vx -= vn * nx * 0.8; S.vz -= vn * nz * 0.8; a.v = Math.max(0, a.v + vn * 0.3); } if (a.bumpT <= 0) { audio.thud(); camState.shake = 0.25; a.bumpT = 1; }
+    }
+    a.bumpT -= dt;
+  }
+  for (let i = 0; i < R.rivals.length; i++) for (let j = i + 1; j < R.rivals.length; j++) {
+    const a = R.rivals[i], b = R.rivals[j], dx = a.x - b.x, dz = a.z - b.z, d = Math.hypot(dx, dz);
+    if (d < 2.6 && d > 1e-3) { const p = (2.6 - d) / 2; a.x += dx / d * p; a.z += dz / d * p; b.x -= dx / d * p; b.z -= dz / d * p; }
+  }
+}
+function standings() {
+  const r = R.r, rows = [{ name: 'YOU', you: true, done: R.done, time: R.finishT + R.pen, prog: raceProg(S, r), cp: R.cp }];
+  for (const a of R.rivals) rows.push({ name: a.name, done: a.done, time: a.time, prog: raceProg(a, r), cp: a.cp, col: a.deck });
+  rows.sort((p, q) => p.done !== q.done ? (p.done ? -1 : 1) : p.done ? p.time - q.time : q.prog - p.prog);
+  return rows;
+}
+function finishRace() {
+  R.done = true; R.finishT = R.t;
+  const r = R.r, rows = [{ name: 'YOU', you: true, time: R.t + R.pen }];
+  for (const a of R.rivals) rows.push({ name: a.name, time: a.done ? a.time : R.t + Math.max(0, r.len - raceProg(a, r)) / Math.max(15, TOP * a.skill), est: !a.done });
+  rows.sort((p, q) => p.time - q.time);
+  const pos = rows.findIndex(x => x.you) + 1, prize = Math.round(r.prize * [1, 0.6, 0.4, 0.25, 0.15, 0.1][pos - 1]);
+  const wasUnlocked = raceUnlocked(r.i + 1);
+  save.d.coins += prize; if (!save.d.races[r.i] || pos < save.d.races[r.i]) save.d.races[r.i] = pos; save.write();
+  refreshMarkers();
+  let msg = pos <= 3 ? 'Podium finish!' : 'Finish top 3 to unlock the next race.';
+  if (pos <= 3 && r.i + 1 < RACES.length && !wasUnlocked) msg = `RACE ${r.i + 2} · ${RACES[r.i + 1].name.toUpperCase()} UNLOCKED!`;
+  if (pos === 1 && r.i === RACES.length - 1) msg = 'You won the Kaze Grand Prix. Champion of the river!';
+  popup(`FINISH · ${ORD[pos - 1]}`, '', pos <= 3 ? 'teal' : '');
+  audio.ding();
+  setTimeout(() => { if (R && R.done && S.mode === 'race') showResults(rows, pos, prize, msg); }, 1800);
+}
+function leaveRace() { clearRace(); S.mode = 'free'; S.fwd = Math.cos(S.yaw - riverAngle(S.z)) >= 0 ? 1 : -1; }
+function renderRivals() {
+  if (!R) return;
+  for (const a of R.rivals) {
+    a.mesh.position.set(a.x, waterHeight(a.x, a.z) * 0.6 + 0.14, a.z);
+    a.mesh.rotation.order = 'YXZ'; a.mesh.rotation.set(-0.05 - Math.min(0.1, a.v * 0.002), a.yaw, 0); a.mesh.children[0].rotation.z = -a.turn * 0.35;
+  }
+  for (const c of R.cps) if (c !== R.cps[R.cp]) c.glow.material.opacity *= 0.9; else c.glow.material.opacity = 0.35 + 0.25 * Math.sin(wallT * 6);
 }
 
 /* ================================================================
@@ -981,26 +1372,66 @@ function updateCamera(dt) {
    HUD + SCREENS
    ================================================================ */
 const SEA = ['CALM', 'LIGHT CHOP', 'CHOPPY', 'ROUGH', 'STORMY'];
+let promptRace = null;
 function hud() {
-  $('score').textContent = Math.round(S.score).toLocaleString('en-US');
-  $('best').textContent = `BEST ${Math.max(save.d.best, Math.round(S.score)).toLocaleString('en-US')}`;
-  $('coinTxt').textContent = `🪙 ${RS.coins}`;
-  $('dist').innerHTML = `${(S.dist / 1000).toFixed(2)}<small> KM</small>`;
-  $('lvl').textContent = `LV ${S.level} · ${SEA[Math.min(SEA.length - 1, S.level - 1)]}`;
-  $('mult').textContent = `×${mult()}`;
-  $('tag').textContent = `GATES ${S.gatesHit}`;
-  $('spd').innerHTML = `${Math.round(S.speed * 3.6)}<small>KM/H</small>`; $('spd').classList.toggle('boost', S.turboT > 0);
+  const m = S.mode === 'race' ? 'r' : S.mode === 'free' ? 'f' : 'e', hw = $('hudWrap');
+  if (hw.dataset.mode !== m) hw.dataset.mode = m;
+  $('spd').innerHTML = `${Math.round(S.speed * 3.6)}<small>KM/H</small>`; $('spd').classList.toggle('boost', S.turboT > 0 || S.boosting);
   $('air').hidden = !S.air;
-  $('stumble').hidden = !(S.stumbleT > 0);
   const chips = []; for (const k of ['magnet', 'shield', 'double', 'turbo']) if (S[k + 'T'] > 0) chips.push(`<span class="chip" style="border-color:${PWINFO[k].col}">${PWINFO[k].icon} ${Math.ceil(S[k + 'T'])}s</span>`);
   $('pwRow').innerHTML = chips.join('');
+  if (m === 'e') {
+    $('score').textContent = Math.round(S.score).toLocaleString('en-US');
+    $('best').textContent = `BEST ${Math.max(save.d.best, Math.round(S.score)).toLocaleString('en-US')}`;
+    $('coinTxt').textContent = `🪙 ${RS.coins}`;
+    $('dist').innerHTML = `${(S.dist / 1000).toFixed(2)}<small> KM</small>`;
+    $('lvl').textContent = `LV ${S.level} · ${SEA[Math.min(SEA.length - 1, S.level - 1)]}`;
+    $('mult').textContent = `×${mult()}`;
+    $('tag').textContent = `GATES ${S.gatesHit}`;
+    $('stumble').hidden = !(S.stumbleT > 0);
+    return;
+  }
+  $('boostFill').style.width = `${S.boost * 100}%`;
+  if (m === 'f') {
+    $('coinTxt').textContent = `🪙 ${save.d.coins.toLocaleString('en-US')}`;
+    const nr = nearRace();
+    if (nr !== promptRace) {
+      promptRace = nr; $('racePrompt').hidden = !nr;
+      if (nr) {
+        const un = raceUnlocked(nr.i);
+        $('rpTitle').textContent = `RACE ${nr.i + 1} · ${nr.name.toUpperCase()}`;
+        $('rpInfo').textContent = un ? `${(nr.len / 1000).toFixed(1)} km · ${nr.rivals} rivals · win 🪙 ${nr.prize}` : `Locked · finish top 3 in ${RACES[nr.i - 1].name} first`;
+        $('raceGo').hidden = !un;
+      }
+    }
+    const t = navTarget(), dz = t.z - S.z, ahead = Math.sign(dz) === S.fwd || Math.abs(dz) < 20, d = Math.hypot(dz, S.x - centerX(t.z));
+    $('nav').innerHTML = `<b>${ahead ? '▲' : '▼'}</b> RACE ${t.i + 1}<small>${d > 950 ? (d / 1000).toFixed(1) + ' KM' : Math.round(d) + ' M'}${ahead ? '' : ' · TURN AROUND'}</small>`;
+    return;
+  }
+  // race
+  const rows = standings(), pos = rows.findIndex(x => x.you) + 1;
+  $('racePos').innerHTML = `${pos}<small>${ORD[pos - 1].slice(-2)}</small><span>/${rows.length}</span>`;
+  $('raceTime').textContent = fmtT(R.done ? R.finishT + R.pen : R.t + R.pen);
+  $('raceCp').textContent = R.done ? 'FINISHED' : `CHECKPOINT ${Math.min(R.cp + 1, R.cps.length - 1)}/${R.cps.length - 1}${R.pen ? ` · +${R.pen}s` : ''}`;
+  const dots = $('raceBar').children;
+  R.rivals.forEach((a, i) => { dots[i].style.left = `${clamp(raceProg(a, R.r) / R.r.len, 0, 1) * 100}%`; });
+  dots[dots.length - 1].style.left = `${clamp(raceProg(S, R.r) / R.r.len, 0, 1) * 100}%`;
+  $('wrong').hidden = R.done || R.t < 0 || Math.cos(S.yaw - (riverAngle(S.z) + (R.r.dir < 0 ? Math.PI : 0))) > -0.2 || S.speed < 3;
 }
 function updateMenu() {
   ensureMissions();
-  const line = `🪙 ${save.d.coins.toLocaleString('en-US')}  ·  BASE MULTIPLIER ×${baseMult()}  ·  BEST ${save.d.best.toLocaleString('en-US')}`;
-  for (const id of ['menuLine', 'overLine']) $(id).textContent = line;
-  $('menuMissions').innerHTML = missionsHTML(); $('overMissions').innerHTML = missionsHTML();
+  const wins = RACES.filter(r => save.d.races[r.i] === 1).length;
+  const line = `🪙 ${save.d.coins.toLocaleString('en-US')}  ·  RACES WON ${wins}/${RACES.length}  ·  ENDLESS BEST ${save.d.best.toLocaleString('en-US')}`;
+  for (const id of ['menuLine', 'overLine', 'racesLine']) $(id).textContent = line;
+  $('overMissions').innerHTML = missionsHTML(); $('menuMissions').innerHTML = missionsHTML();
+  $('raceList').innerHTML = RACES.map(r => {
+    const un = raceUnlocked(r.i), best = save.d.races[r.i], medal = best ? ['🥇', '🥈', '🥉'][best - 1] || ORD[best - 1] : '';
+    return `<button type="button" class="ritem" data-race="${r.i}" ${un ? '' : 'disabled'}><b>${r.i + 1}. ${r.name}</b><span>${(r.len / 1000).toFixed(1)} km · ${r.rivals} rivals · win 🪙 ${r.prize}</span><em>${un ? (medal || 'NEW') : '🔒'}</em></button>`;
+  }).join('');
 }
+const OVERLAYS = ['start', 'races', 'over', 'results', 'shop', 'pause'];
+function hideOverlays() { for (const id of OVERLAYS) $(id).hidden = true; }
+const anyOverlay = () => OVERLAYS.some(id => !$(id).hidden);
 function showOver(label, isBest) {
   $('hudWrap').hidden = true;
   $('overTitle').textContent = isBest ? 'NEW BEST! 🏆' : label;
@@ -1008,19 +1439,27 @@ function showOver(label, isBest) {
   $('overStats').innerHTML = [['Distance', `${(S.dist / 1000).toFixed(2)} km`], ['Coins', `+${RS.coins} 🪙`], ['Gates', RS.gates], ['Jumps', RS.jumps], ['Close passes', RS.close]].map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
   updateMenu(); $('over').hidden = false; $('againBtn').focus();
 }
+function showResults(rows, pos, prize, msg) {
+  $('resTitle').textContent = pos === 1 ? 'YOU WIN! 🏆' : `${ORD[pos - 1]} PLACE`;
+  $('resSub').textContent = `RACE ${R.r.i + 1} · ${R.r.name.toUpperCase()}  ·  +${prize} 🪙`;
+  $('resTable').innerHTML = rows.map((x, i) => `<tr class="${x.you ? 'you' : ''}"><td>${ORD[i]}</td><td>${x.name}</td><td>${x.est ? '~' : ''}${fmtT(x.time)}</td></tr>`).join('');
+  $('resMsg').textContent = msg;
+  $('resNext').hidden = !(raceUnlocked(R.r.i + 1) && R.r.i + 1 < RACES.length);
+  $('results').hidden = false; $('resRide').focus();
+}
 function renderShop() {
   $('shopCoins').textContent = save.d.coins.toLocaleString('en-US');
   $('shopUpg').innerHTML = UPG.map(u => {
-    const lv = save.d.upg[u.id] || 0, max = lv >= UPG_COST.length, price = UPG_COST[lv];
-    return `<div class="item"><b>${u.icon} ${u.name}</b><span>${(u.base + u.per * lv).toFixed(u.per % 1 ? 1 : 0)}s${max ? '' : ` → ${(u.base + u.per * (lv + 1)).toFixed(u.per % 1 ? 1 : 0)}`}</span><div class="pips">${Array.from({ length: UPG_COST.length }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div><button type="button" data-upg="${u.id}" ${max || save.d.coins < price ? 'disabled' : ''}>${max ? 'MAXED' : `🪙 ${price.toLocaleString('en-US')}`}</button></div>`;
+    const lv = save.d.upg[u.id] || 0, max = lv >= UPG_COST.length, price = UPG_COST[lv], f = v => (u.per % 1 ? v.toFixed(1) : v);
+    return `<div class="item"><b>${u.icon} ${u.name}</b><span>${f(u.base + u.per * lv)}s${max ? '' : ` → ${f(u.base + u.per * (lv + 1))}s`}</span><div class="pips">${Array.from({ length: UPG_COST.length }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div><button type="button" data-upg="${u.id}" ${max || save.d.coins < price ? 'disabled' : ''}>${max ? 'MAXED' : `🪙 ${price.toLocaleString('en-US')}`}</button></div>`;
   }).join('');
   $('shopSkins').innerHTML = SKINS.map(s => {
     const owned = save.d.skins.includes(s.id), sel = save.d.skin === s.id, hex = '#' + s.deck.toString(16).padStart(6, '0');
     return `<div class="item${sel ? ' sel' : ''}"><b><span class="sw" style="background:${hex}"></span>${s.name}</b><button type="button" data-skin="${s.id}" ${sel || (!owned && save.d.coins < s.price) ? 'disabled' : ''}>${sel ? 'EQUIPPED' : owned ? 'EQUIP' : `🪙 ${s.price.toLocaleString('en-US')}`}</button></div>`;
   }).join('');
 }
-function openShop(from) { shopFrom = from; $('start').hidden = true; $('over').hidden = true; renderShop(); $('shop').hidden = false; }
 let shopFrom = 'start';
+function openShop(from) { shopFrom = from; hideOverlays(); renderShop(); $('shop').hidden = false; }
 
 /* ================================================================
    INPUT
@@ -1028,29 +1467,40 @@ let shopFrom = 'start';
 function setKey(code, v) {
   if (code === 'KeyA' || code === 'ArrowLeft') input.left = v;
   if (code === 'KeyD' || code === 'ArrowRight') input.right = v;
+  if (code === 'KeyS' || code === 'ArrowDown') input.brake = v;
+  if (code === 'ShiftLeft' || code === 'ShiftRight') input.boost = v;
 }
 let muted = false;
 addEventListener('keydown', e => {
-  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && !(e.target instanceof HTMLButtonElement && e.code === 'Space')) e.preventDefault();
   setKey(e.code, true); if (e.repeat) return;
-  if (['Space', 'KeyW', 'ArrowUp'].includes(e.code)) input.hopQueued = true;
+  if (['Space', 'KeyW', 'ArrowUp'].includes(e.code) && !anyOverlay()) input.hopQueued = true;
   if (e.code === 'KeyC') { camMode = (camMode + 1) % 4; camState.init = false; }
   if (e.code === 'KeyM') { muted = !muted; audio.setMuted(muted); $('snd').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; }
-  if ((e.code === 'Enter' || e.code === 'KeyR') && !$('over').hidden) startRun();
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (!$('pause').hidden) resume(); else if (S.mode !== 'attract' && !anyOverlay()) pauseGame(); }
+  if ((e.code === 'KeyE' || e.code === 'Enter') && promptRace && raceUnlocked(promptRace.i) && !anyOverlay()) startRace(promptRace.i);
+  if ((e.code === 'Enter' || e.code === 'KeyR') && !$('over').hidden) startEndless();
 });
 addEventListener('keyup', e => setKey(e.code, false));
-addEventListener('blur', () => { input.left = input.right = false; });
-for (const [id, key] of [['tL', 'left'], ['tR', 'right']]) {
+addEventListener('blur', () => { input.left = input.right = input.brake = input.boost = false; });
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.mode !== 'attract' && !anyOverlay()) pauseGame(); });
+for (const [id, key] of [['tL', 'left'], ['tR', 'right'], ['tB', 'brake'], ['tN', 'boost']]) {
   const el = $(id), on = e => { e.preventDefault(); input[key] = true; el.classList.add('on'); }, off = e => { e.preventDefault(); input[key] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
 }
 $('tJ').addEventListener('pointerdown', e => { e.preventDefault(); input.hopQueued = true; $('tJ').classList.add('on'); setTimeout(() => $('tJ').classList.remove('on'), 150); });
+$('tP').addEventListener('click', () => pauseGame());
+$('raceGo').addEventListener('click', () => { if (promptRace) startRace(promptRace.i); });
 let steerSm = 0, padHop = false;
 function readInput(dt) {
   const target = (input.left ? 1 : 0) - (input.right ? 1 : 0);
   steerSm += clamp(target - steerSm, -dt * 4.5, dt * 4.5);
   const pad = navigator.getGamepads ? [...navigator.getGamepads()].find(p => p && p.connected) : null;
-  if (pad) { const ax = pad.axes[0] || 0; if (Math.abs(ax) > 0.1) steerSm = -Math.sign(ax) * ((Math.abs(ax) - 0.1) / 0.9) ** 1.4; const h = !!(pad.buttons[0]?.pressed); if (h && !padHop) input.hopQueued = true; padHop = h; }
+  if (pad) {
+    const ax = pad.axes[0] || 0; if (Math.abs(ax) > 0.1) steerSm = -Math.sign(ax) * ((Math.abs(ax) - 0.1) / 0.9) ** 1.4;
+    const h = !!(pad.buttons[0]?.pressed); if (h && !padHop) input.hopQueued = true; padHop = h;
+    input.brakePad = (pad.buttons[6]?.value || 0) > 0.3; input.boostPad = !!(pad.buttons[7]?.pressed || pad.buttons[2]?.pressed);
+  }
   S.steer = steerSm;
 }
 
@@ -1062,7 +1512,7 @@ const audio = (() => {
   const env = (n, t, a, d) => { n.gain.setValueAtTime(0.0001, t); n.gain.exponentialRampToValueAtTime(a, t + 0.02); n.gain.exponentialRampToValueAtTime(0.0001, t + d); };
   return {
     start() {
-      if (ctx) return; try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
+      if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; } try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
       master = ctx.createGain(); master.gain.value = muted ? 0 : 0.6; master.connect(ctx.destination);
       ef = ctx.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 800; eg = ctx.createGain(); eg.gain.value = 0.08; ef.connect(eg); eg.connect(master);
       e1 = ctx.createOscillator(); e1.type = 'sawtooth'; e1.connect(ef); e1.start(); e2 = ctx.createOscillator(); e2.type = 'square'; const g2 = ctx.createGain(); g2.gain.value = 0.25; e2.connect(g2); g2.connect(ef); e2.start();
@@ -1070,14 +1520,15 @@ const audio = (() => {
       const n = ctx.createBufferSource(); n.buffer = noiseBuf; n.loop = true; hissF = ctx.createBiquadFilter(); hissF.type = 'bandpass'; hissF.frequency.value = 1200; hissF.Q.value = 0.6; hissG = ctx.createGain(); hissG.gain.value = 0; n.connect(hissF); hissF.connect(hissG); hissG.connect(master); n.start();
     },
     update() {
-      if (!ctx) return; const t = ctx.currentTime, on = !S.dead && S.mode === 'run', rpm = 2200 + S.speed * 120 + (S.air ? 2200 : 0) + (S.turboT > 0 ? 900 : 0);
+      if (!ctx) return; const t = ctx.currentTime, on = !S.dead && S.mode !== 'attract' && !S.paused, rpm = 2200 + S.speed * 120 + (S.air ? 2200 : 0) + (S.turboT > 0 || S.boosting ? 900 : 0);
       e1.frequency.setTargetAtTime(rpm / 60 * 2, t, 0.05); e2.frequency.setTargetAtTime(rpm / 60, t, 0.05); ef.frequency.setTargetAtTime(700 + S.speed * 28 + (S.air ? 900 : 0), t, 0.08);
       eg.gain.setTargetAtTime(on ? 0.08 : 0.0, t, 0.2);
-      hissG.gain.setTargetAtTime(!on || S.air ? 0.02 : clamp(S.speed / 30, 0, 1) * 0.25, t, 0.08); hissF.frequency.setTargetAtTime(700 + S.speed * 40, t, 0.1);
+      hissG.gain.setTargetAtTime(!on || S.air ? 0.0 : clamp(S.speed / 30, 0, 1) * 0.25, t, 0.08); hissF.frequency.setTargetAtTime(700 + S.speed * 40, t, 0.1);
     },
     splash(k) { if (!ctx) return; const t = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = 800; s.connect(f); f.connect(g); g.connect(master); env(g, t, clamp(k / 6, 0.15, 0.9), 0.6); s.start(t); s.stop(t + 0.7); },
     thud() { if (!ctx) return; const t = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = 200; s.connect(f); f.connect(g); g.connect(master); env(g, t, 0.9, 0.5); s.start(t); s.stop(t + 0.6); },
     ding() { if (!ctx) return; const t = ctx.currentTime; for (const [fq, dl] of [[988, 0], [1480, 0.07]]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = fq; o.connect(g); g.connect(master); env(g, t + dl, 0.16, 0.3); o.start(t + dl); o.stop(t + dl + 0.35); } },
+    beep(fq, d = 0.18) { if (!ctx) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = fq; o.connect(g); g.connect(master); env(g, t, 0.12, d); o.start(t); o.stop(t + d + 0.05); },
     coin() { if (!ctx) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(1320, t); o.frequency.setValueAtTime(1760, t + 0.05); o.connect(g); g.connect(master); env(g, t, 0.08, 0.14); o.start(t); o.stop(t + 0.16); },
     setMuted(m) { if (master) master.gain.value = m ? 0 : 0.6; },
   };
@@ -1089,15 +1540,33 @@ const audio = (() => {
 makeTextures(); makeProps(); makeMaterials(); buildJetski(); buildRider(); applySkin(); makeSpray(); initCoins();
 shieldBubble = new THREE.Mesh(new THREE.SphereGeometry(2.3, 24, 16), new THREE.MeshBasicMaterial({ color: 0x5fd8ff, transparent: true, opacity: 0.2, depthWrite: false })); shieldBubble.position.y = 0.9; jet.add(shieldBubble);
 trailMesh = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ map: TEX.foam, vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 })); trailMesh.frustumCulled = false; scene.add(trailMesh);
+buildMarkers();
 ensureMissions();
 $('loadMsg').textContent = 'Building the city…'; await nextFrame();
-resetRun(true);
+resetRun('attract');
 updateMenu();
-$('loading').hidden = true; $('start').hidden = false; $('goBtn').focus();
-function startRun() { $('start').hidden = true; $('over').hidden = true; $('shop').hidden = true; $('hudWrap').hidden = false; audio.start(); resetRun(false); }
-$('goBtn').addEventListener('click', startRun); $('againBtn').addEventListener('click', startRun);
+$('loading').hidden = true; $('start').hidden = false; $('mFree').focus();
+function enter(mode, z) { hideOverlays(); $('hudWrap').hidden = false; audio.start(); resetRun(mode, z); }
+function startFree() { enter('free', 60); }
+function startEndless() { enter('endless'); }
+function toMenu() { if (saveDirty) { save.write(); saveDirty = false; } hideOverlays(); $('hudWrap').hidden = true; resetRun('attract'); updateMenu(); $('start').hidden = false; $('mFree').focus(); }
+function pauseGame() { if (S.mode === 'attract' || S.dead) return; S.paused = true; if (saveDirty) { save.write(); saveDirty = false; } $('pQuit').hidden = S.mode !== 'race'; $('pause').hidden = false; $('pResume').focus(); }
+function resume() { S.paused = false; $('pause').hidden = true; last = performance.now(); }
+$('mFree').addEventListener('click', startFree);
+$('mEndless').addEventListener('click', startEndless);
+$('mRaces').addEventListener('click', () => { updateMenu(); hideOverlays(); $('races').hidden = false; });
+$('racesBack').addEventListener('click', () => { hideOverlays(); $('start').hidden = false; });
+$('raceList').addEventListener('click', e => { const b = e.target.closest('button[data-race]'); if (b && !b.disabled) startRace(+b.dataset.race); });
+$('againBtn').addEventListener('click', startEndless); $('overMenu').addEventListener('click', toMenu);
 $('shopBtn').addEventListener('click', () => openShop('start')); $('shopBtn2').addEventListener('click', () => openShop('over'));
-$('shopClose').addEventListener('click', () => { $('shop').hidden = true; updateMenu(); $(shopFrom === 'over' ? 'over' : 'start').hidden = false; });
+$('shopClose').addEventListener('click', () => { hideOverlays(); updateMenu(); $(shopFrom === 'over' ? 'over' : 'start').hidden = false; });
+$('resRide').addEventListener('click', () => { hideOverlays(); leaveRace(); });
+$('resRetry').addEventListener('click', () => startRace(R.r.i));
+$('resNext').addEventListener('click', () => startRace(R.r.i + 1));
+$('resMenu').addEventListener('click', toMenu);
+$('pResume').addEventListener('click', resume);
+$('pQuit').addEventListener('click', () => { resume(); leaveRace(); });
+$('pMenu').addEventListener('click', toMenu);
 $('shop').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
   if (b.dataset.upg) { const id = b.dataset.upg, lv = save.d.upg[id] || 0, price = UPG_COST[lv]; if (lv < UPG_COST.length && save.d.coins >= price) { save.d.coins -= price; save.d.upg[id] = lv + 1; audio.ding(); } }
@@ -1105,7 +1574,7 @@ $('shop').addEventListener('click', e => {
   save.write(); renderShop();
 });
 
-const H = 1 / 120; let acc = 0, last = performance.now(), wallT = 0;
+const H = 1 / 120; let acc = 0, last = performance.now(), wallT = 0, saveT = 0;
 function attractPilot(s) {           // the menu background: the jet ski weaves down the river on its own
   const oz = o => o.kind === 'seg' ? o.az : o.z, oxf = o => o.kind === 'seg' ? (o.ax + o.bx) / 2 : o.x;
   const ahead = obstacles.filter(o => !o.dead && oz(o) > s.z && oz(o) < s.z + 60);
@@ -1116,24 +1585,30 @@ function attractPilot(s) {           // the menu background: the jet ski weaves 
 }
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; wallT += dt;
-  if (S.mode === 'run' && !S.dead) readInput(dt);
-  acc += dt; let n = 0;
-  while (acc >= H && n++ < 6) { if (S.mode === 'attract') attractPilot(S); updateTraffic(H, S.z); updateFerries(H); step(H); acc -= H; }
-  if (S.mode === 'attract' && S.dead) resetRun(true);
-  if (S.mode === 'run' && !S.dead) checkMissions();
+  if (S.mode !== 'attract' && !S.dead && !S.paused) readInput(dt);
+  if (!S.paused) {
+    acc += dt; let n = 0;
+    while (acc >= H && n++ < 6) { if (S.mode === 'attract') attractPilot(S); updateTraffic(H, S.z); updateFerries(H); step(H); if (S.mode === 'race') updateRace(H); acc -= H; }
+    if (acc > H * 6) acc = 0;
+  }
+  if (S.mode === 'attract' && S.dead) resetRun('attract');
+  if (S.mode === 'endless' && !S.dead) checkMissions();
+  saveT += dt; if (saveDirty && saveT > 3) { save.write(); saveDirty = false; saveT = 0; }
   streamChunks(S.z, 1);
   jet.position.set(S.x, S.y, S.z); jet.rotation.order = 'YXZ'; jet.rotation.set(-S.pitch, S.yaw, 0); jetBody.rotation.z = S.roll;
   torso.rotation.set(S.air ? -0.2 : 0, S.steer * 0.15, -S.steer * 0.12); rider.position.x = -S.steer * 0.06;
   for (const t of traffic) { t.mesh.position.set(t.x, waterHeight(t.x, t.z) * 0.3 + Math.sin(simT * 1.2 + t.ph) * 0.05, t.z); t.mesh.rotation.set(Math.sin(simT * 0.9 + t.ph) * 0.01, t.yaw, Math.sin(simT * 0.7 + t.ph) * 0.015); }
   for (const o of obstacles) if (o.type === 'buoy' && o.mesh) { o.mesh.position.y = Math.sin(simT * 1.6 + o.ph) * 0.12 - 0.1; o.mesh.rotation.z = Math.sin(simT * 1.3 + o.ph) * 0.08; }
   for (const g of gates) { g.mesh.position.y = -0.5 + Math.sin(simT * 1.1 + g.z) * 0.08; if (g.done) g.glow.material.opacity *= 0.96; else if (!g.missed) { const d = g.z - S.z; g.glow.material.opacity = d > 0 && d < 260 ? 0.25 + 0.2 * Math.sin(wallT * 6) : 0; } }
+  for (const m of markers) { m.g.visible = S.mode === 'free'; if (m.g.visible) { m.beam.material.opacity = 0.14 * smooth(14, 90, Math.hypot(S.x - m.g.position.x, S.z - m.g.position.z)); m.ring.scale.setScalar(1 + 0.06 * Math.sin(wallT * 3)); m.spr.position.y = 15 + Math.sin(wallT * 1.5) * 0.4; } }
+  renderRivals();
   updateEffects(dt);
   water.material.uniforms.time.value = simT * 0.9; water.material.uniforms.distortionScale.value = 0.9 + seaAmp * 8;
   water.position.set(Math.round(S.x / 50) * 50, 0, Math.round(S.z / 50) * 50);
   updateCamera(dt);
   sun.position.set(S.x + sunDir.x * 300, sunDir.y * 300, S.z + sunDir.z * 300); sun.target.position.set(S.x, 0, S.z);
-  if (blurPass) blurPass.uniforms.strength.value = S.dead ? 0 : clamp((S.speed - 18) / 25, 0, 1) * (S.turboT > 0 ? 0.06 : 0.035) * (camMode === 3 ? 0 : 1);
-  if (S.mode === 'run') { hud(); }
+  if (blurPass) blurPass.uniforms.strength.value = S.dead ? 0 : clamp((S.speed - 18) / 25, 0, 1) * (S.turboT > 0 || S.boosting ? 0.06 : 0.035) * (camMode === 3 ? 0 : 1);
+  if (S.mode !== 'attract') hud();
   audio.update();
   if (composer) composer.render(); else renderer.render(scene, camera);
   requestAnimationFrame(frame);
@@ -1141,8 +1616,8 @@ function frame(now) {
 requestAnimationFrame(frame);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); if (composer) composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 
-window.__jet = { S, RS, input, pathOff, step, traffic, gates, obstacles, coins, pickups, ramps, xferries, chunks, streamChunks, updateTraffic, updateFerries, resetRun, startRun, waterHeight, centerX, riverW, riverAngle, save, givePower, setCam(m) { camMode = m; camState.init = false; }, look,
-  sim(sec, ctl) { for (let i = 0; i < Math.round(sec / H); i++) { if (ctl) ctl(S); updateTraffic(H, S.z); updateFerries(H); step(H); if (i % 60 === 0) { streamChunks(S.z, 2); checkMissions(); } if (S.dead) break; } } };
+window.__jet = { S, RS, R: () => R, RACES, input, pathOff, step, traffic, gates, obstacles, coins, pickups, ramps, xferries, chunks, streamChunks, updateTraffic, updateFerries, updateRace, resetRun, startFree, startEndless, startRace, leaveRace, toMenu, standings, waterHeight, centerX, riverW, riverAngle, save, givePower, nearRace, setCam(m) { camMode = m; camState.init = false; }, look,
+  sim(sec, ctl) { for (let i = 0; i < Math.round(sec / H); i++) { if (ctl) ctl(S); updateTraffic(H, S.z); updateFerries(H); step(H); if (S.mode === 'race') updateRace(H); if (i % 60 === 0) { streamChunks(S.z, 2); if (S.mode === 'endless') checkMissions(); } if (S.dead) break; } } };
 </script>
 </body>
 </html>
