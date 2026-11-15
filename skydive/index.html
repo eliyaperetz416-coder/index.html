@@ -69,6 +69,23 @@
   #tF { right: calc(max(14px, env(safe-area-inset-right)) + 78px); bottom: max(96px, calc(env(safe-area-inset-bottom) + 78px)); }
   #tB { right: calc(max(14px, env(safe-area-inset-right)) + 78px); bottom: max(18px, env(safe-area-inset-bottom)); }
   #tA { right: max(14px, env(safe-area-inset-right)); bottom: max(52px, calc(env(safe-area-inset-bottom) + 34px)); width: 76px; height: 76px; background: rgba(255,122,26,0.35); font-size: 14px; }
+  .btnrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn.alt { background: rgba(255,255,255,0.14); color: var(--text); border: 1px solid var(--line); }
+  #gearLine, #gearLine2 { color: var(--text); font-weight: 700; }
+  .shopcard { max-width: 680px; max-height: 92vh; overflow: auto; text-align: right; }
+  .shophead { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .shophead h2 { margin: 0; font-size: 22px; }
+  .coins { font-size: 18px; font-weight: 800; direction: ltr; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 8px 0 16px; }
+  .item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.04); min-width: 0; }
+  .item.sel { border-color: var(--accent); background: rgba(255,122,26,0.12); }
+  .item b { font-size: 15px; } .item span { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .item button { margin-top: auto; border: 0; border-radius: 8px; padding: 8px; font-weight: 800; background: var(--accent); color: #111; cursor: pointer; font-family: inherit; font-size: 14px; }
+  .item button:disabled { background: rgba(255,255,255,0.1); color: var(--muted); cursor: default; }
+  .item.sel button { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .item button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  #tFF { left: max(14px, env(safe-area-inset-left)); bottom: max(96px, calc(env(safe-area-inset-bottom) + 78px)); width: 56px; height: 56px; font-size: 18px; }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
   @media (pointer: coarse) {
     #touch { display: block; } #keys { display: none; }
     #status { bottom: auto; top: max(14px, env(safe-area-inset-top)); }
@@ -105,29 +122,32 @@
 <div id="toast"></div>
 <div id="keys" class="panel" hidden>
   <kbd>Space</kbd> קפיצה / פתיחת מצנח · <kbd>A</kbd><kbd>D</kbd> פנייה · <kbd>W</kbd> קדימה · <kbd>S</kbd> בלמים / פלייר<br>
-  <kbd>Shift</kbd> צלילת ראש · <kbd>C</kbd> מצלמה · <kbd>R</kbd> מהתחלה · <kbd>M</kbd> סאונד
+  <kbd>Shift</kbd> צלילת ראש · <kbd>F</kbd> הרצה מהירה · גרירה = מבט · <kbd>C</kbd> מצלמה · <kbd>R</kbd> מהתחלה
 </div>
 
 <div id="touch">
   <div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div>
   <div class="tb" id="tF">▲</div><div class="tb" id="tB">▼</div>
   <div class="tb" id="tA">קפוץ</div>
+  <div class="tb" id="tFF">⏩</div>
 </div>
 
 <div id="start" class="overlay" hidden>
   <div class="card panel" dir="rtl">
     <h1>KAZE SKY</h1>
-    <p>גרסת בדיקה · קפיצה מ-4,000 מטר מעל הרים ואגמים</p>
+    <p id="gearLine"></p>
     <table>
       <tr><td>Space</td><td>קפיצה מהמטוס, ואחר כך פתיחת מצנח</td></tr>
       <tr><td>A / D</td><td>פנייה (בנפילה ובמצנח)</td></tr>
       <tr><td>W</td><td>תנועה קדימה (טראקינג) / ריזרים קדמיים</td></tr>
       <tr><td>S</td><td>בלמים, ולחיצה ממש לפני הקרקע = פלייר</td></tr>
       <tr><td>Shift</td><td>צלילת ראש למטה (מהר יותר)</td></tr>
+      <tr><td>F</td><td>הרצה מהירה כשהמצנח פתוח</td></tr>
+      <tr><td>גרירה / החלקה</td><td>הסתכלות לכל הכיוונים, גלגלת = זום</td></tr>
       <tr><td>C / R / M</td><td>מצלמה / מהתחלה / סאונד</td></tr>
     </table>
-    <p>המטרה: לעבור בטבעות, לפתוח מצנח בגובה 1,000 מטר בערך ולנחות רך על העיגול.</p>
-    <button class="btn" id="goBtn">עלייה למטוס</button>
+    <p>כל קפיצה מרוויחה מטבעות. בחנות קונים מטוס גבוה יותר ומצנח טוב יותר.</p>
+    <div class="btnrow"><button class="btn" id="goBtn">עלייה למטוס</button><button class="btn alt" id="shopBtn">🪙 חנות</button></div>
   </div>
 </div>
 <div id="res" class="overlay" hidden>
@@ -135,7 +155,16 @@
     <div class="lbl" id="resTitle">LANDED</div>
     <div id="resScore">0</div>
     <table id="resTable"></table>
-    <button class="btn" id="againBtn">קפיצה נוספת</button>
+    <p id="gearLine2"></p>
+    <div class="btnrow"><button class="btn" id="againBtn">קפיצה נוספת</button><button class="btn alt" id="shopBtn2">🪙 חנות</button></div>
+  </div>
+</div>
+<div id="shop" class="overlay" hidden>
+  <div class="card panel shopcard" dir="rtl">
+    <div class="shophead"><h2>חנות ציוד</h2><div class="coins">🪙 <b id="coinsShop">0</b></div></div>
+    <div class="lbl">מטוסים · גובה הקפיצה</div><div class="grid" id="shopPlanes"></div>
+    <div class="lbl">מצנחים</div><div class="grid" id="shopCanopies"></div>
+    <div class="btnrow"><button class="btn" id="shopClose">חזרה</button></div>
   </div>
 </div>
 <div id="loading"><b>KAZE SKY</b><span id="loadMsg">בונה את הנוף…</span></div>
@@ -218,15 +247,15 @@ const slopeAt = (x, z, e = 5) => Math.hypot(meshHeight(x + e, z) - meshHeight(x 
    ================================================================ */
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: LOW, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
-const DPR = Math.min(devicePixelRatio, LOW ? 1.5 : 2);
+const DPR = Math.min(devicePixelRatio, LOW ? 1.75 : 2);
 renderer.setPixelRatio(DPR); renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.6;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.66;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.3, 70000);
-scene.fog = new THREE.FogExp2(0xb9cbe0, 0.000062);
+scene.fog = new THREE.FogExp2(0xbccde1, 0.000043);
 
 const SUN_ELEV = 34, SUN_AZ = 205;
 const sunDir = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - SUN_ELEV), THREE.MathUtils.degToRad(SUN_AZ));
@@ -394,10 +423,20 @@ tCol = mix(tCol, rock, tRock);
 float snowLine = uSnow + (nA.b - 0.5) * 520.0 + (nC.r - 0.5) * 130.0;
 float tSnow = smoothstep(snowLine - 35.0, snowLine + 35.0, tH) * (1.0 - smoothstep(0.34, 0.5, tSlope + (nC.g - 0.5) * 0.12));
 tCol = mix(tCol, vec3(0.88, 0.91, 0.96) * (0.92 + 0.12 * nC.b), tSnow);
+// lone trees and bushes dotted over open ground (crisp detail from altitude)
+{
+  vec2 tc = tXZ / 13.0, tci = floor(tc), tcf = fract(tc) - 0.5;
+  vec2 toff = vec2(thash(tci + 3.1), thash(tci + 7.7)) - 0.5;
+  float dotR = 0.16 + 0.2 * thash(tci + 9.3);
+  float dotK = step(thash(tci + 17.0), 0.07) * (1.0 - smoothstep(dotR - 0.06, dotR, length(tcf - toff * 0.5)));
+  dotK *= (1.0 - tForest) * (1.0 - tSnow) * (1.0 - tRock) * (1.0 - fieldK * 0.75) * step(uWater + 1.5, tH) * (1.0 - smoothstep(1800.0, 4500.0, camD));
+  tCol = mix(tCol, vec3(0.04, 0.09, 0.03), dotK);
+}
 // shoreline and lake bed
 float shore = 1.0 - smoothstep(uWater + 1.0, uWater + 7.0, tH + (nC.r - 0.5) * 4.0);
 tCol = mix(tCol, vec3(0.50, 0.45, 0.31), shore * (1.0 - tRock));
 if (tH < uWater) tCol = mix(vec3(0.20, 0.36, 0.34), vec3(0.03, 0.09, 0.14), smoothstep(0.0, 22.0, uWater - tH));
+tCol = max(mix(vec3(dot(tCol, vec3(0.299, 0.587, 0.114))), tCol, 1.2), 0.0);
 diffuseColor.rgb *= tCol;`;
 const TERRAIN_BUMP = `
 {
@@ -443,7 +482,7 @@ function curvePts(ctrl, step = 9) { const c = new THREE.CatmullRomCurve3(ctrl.ma
 
 async function buildWorld() {
   $('loadMsg').textContent = 'מצייר את ההרים…'; await nextFrame();
-  const noiseTex = tileNoiseTexture(256), maskTex = bakeMask(LOW ? 512 : 1024);
+  const noiseTex = tileNoiseTexture(256), maskTex = bakeMask(LOW ? 1024 : 2048);
 
   // ---- terrain mesh: dense under the landing zone, sparse at the horizon
   $('loadMsg').textContent = 'בונה את פני השטח…'; await nextFrame();
@@ -607,7 +646,7 @@ async function buildWorld() {
     const inside = new THREE.Mesh(new THREE.CircleGeometry(12.6, 24, 0, Math.PI), new THREE.MeshBasicMaterial({ color: 0x0c0d10, side: THREE.DoubleSide })); inside.position.z = 16.2;
     hg.add(shell, back, inside); hg.position.set(apron[0] + perp[0] * 22, ay - 0.3, apron[1] + perp[1] * 22); hg.rotation.y = Math.atan2(-perp[0], -perp[1]);
     hg.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); scene.add(hg);
-    world.parkedAt = { x: apron[0] - perp[0] * 12, y: ay + 2.25, z: apron[1] - perp[1] * 12, yaw: RW.yaw + 0.5 };
+    world.parkedAt = { g: ay, x: apron[0] - perp[0] * 12, y: ay + 2.25, z: apron[1] - perp[1] * 12, yaw: RW.yaw + 0.5 };
     // cars
     const carG = mergeGeometries([new THREE.BoxGeometry(1.8, 0.7, 4.3).translate(0, 0.65, 0), new THREE.BoxGeometry(1.6, 0.6, 2.2).translate(0, 1.3, -0.2)]);
     const cars = [], cc = [], CARC = [0xb8242a, 0xe8e8e8, 0x1f3d7a, 0x1c1c1e, 0x8a8d91, 0xd9a21b, 0x2f6b3c];
@@ -764,11 +803,30 @@ async function buildWorld() {
 /* ================================================================
    AIRCRAFT: twin-turboprop jump plane
    ================================================================ */
-const PLANE_ALT = 4000, PLANE_SPEED = 48;
+const PLANES = [
+  { id: 'cessna', heb: 'ססנה 182', agl: 340, speed: 38, price: 0, engines: 1, scale: 0.64, color: '#c8202a', desc: 'קפיצת Hop & Pop מ-340 מ׳. המצנח נפתח מיד.' },
+  { id: 'porter', heb: 'פילטוס פורטר', agl: 1300, speed: 42, price: 350, engines: 1, scale: 0.8, color: '#1f5fbf', desc: '1,300 מ׳: כמה שניות של נפילה חופשית וטבעת אחת.' },
+  { id: 'otter', heb: 'טווין אוטר', agl: 2600, speed: 46, price: 1100, engines: 2, scale: 1, color: '#ff6a1a', desc: '2,600 מ׳: נפילה חופשית אמיתית ו-3 טבעות.' },
+  { id: 'skyvan', heb: 'סקייוואן', agl: 3900, speed: 50, price: 2600, engines: 2, scale: 1.12, color: '#2a9d5b', desc: '3,900 מ׳: דקה של נפילה ו-6 טבעות.' },
+];
+const CANOPIES = [
+  { id: 'round', heb: 'מצנח עגול T-10', round: true, A0: 3, s0: 7.8, turn: 0.4, flare: 0, price: 0, colors: ['#5f6d3c', '#7b8650'], desc: 'צבאי ישן: בלי בלמים, פונה לאט ונוחת חזק.' },
+  { id: 'student', heb: 'Navigator 260', A0: 9, s0: 5.0, turn: 0.6, flare: 0.45, span: 9.6, price: 300, colors: ['#2f6fd1', '#f4f4f0', '#2f6fd1', '#f4c430', '#f4f4f0', '#f4c430', '#2f6fd1', '#f4f4f0', '#2f6fd1'], desc: 'מצנח תלמידים: יציב וסלחני, יש בלמים ופלייר.' },
+  { id: 'sport', heb: 'Sabre 170', A0: 14, s0: 5.4, turn: 0.95, flare: 0.4, span: 8.8, price: 950, colors: ['#ff5a12', '#f4f4f0', '#ff5a12', '#1d2b44', '#f4f4f0', '#1d2b44', '#ff5a12', '#f4f4f0', '#ff5a12'], desc: 'ספורט: מהיר, פונה חד ופלייר חזק.' },
+  { id: 'swoop', heb: 'Velocity 103', A0: 20, s0: 7.0, turn: 1.45, flare: 0.5, span: 7.2, price: 2400, colors: ['#111317', '#e2241f', '#111317', '#f4f4f0', '#e2241f', '#f4f4f0', '#111317', '#e2241f', '#111317'], desc: 'סוופ: מהיר מאוד ורגיש. למקצוענים.' },
+];
+const save = (() => {
+  const KEY = 'kazeSky.v1'; let d = { coins: 0, best: 0, jumps: 0, planes: ['cessna'], canopies: ['round'], plane: 'cessna', canopy: 'round' };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) d = { ...d, ...s }; } catch {}
+  return { d, write() { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} } };
+})();
+const GEAR = { plane: PLANES[0], canopy: CANOPIES[0] };
+let PLANE_ALT = VALLEY_H + 450, PLANE_SPEED = 38, EXIT_DIST = 450;
 const RUN_DIR = new THREE.Vector2(WIND_DIR.x, WIND_DIR.y);
 const plane = new THREE.Group(); scene.add(plane);
 const planeProps = [], planeStrobes = [];
-{
+function buildPlane(spec) {
+  plane.clear(); planeProps.length = 0; planeStrobes.length = 0; plane.scale.setScalar(1);
   const L = 15.2, rAt = hermite([[0, 0.05], [0.4, 0.22], [2, 0.5], [4.5, 0.88], [6.5, 1.08], [12, 1.1], [13.6, 0.96], [14.6, 0.62], [15.05, 0.25], [15.2, 0.03]]);
   const prof = []; for (let i = 0; i <= 56; i++) { const s = i / 56 * L; prof.push(new THREE.Vector2(Math.max(0.02, rAt(s)), s - L / 2)); }
   const fg = new THREE.LatheGeometry(prof, 32); fg.rotateX(Math.PI / 2);
@@ -778,7 +836,7 @@ const planeProps = [], planeStrobes = [];
     const X = u => u * W, Y = v => (1 - v) * H, rect = (u0, u1, v0, v1) => g.fillRect(X(u0), Y(v1), X(u1) - X(u0), Y(v0) - Y(v1));
     g.fillStyle = '#f5f4ef'; g.fillRect(0, 0, W, H);
     g.fillStyle = '#dcdde0'; rect(0, 0.07, 0, 1); rect(0.93, 1, 0, 1);
-    g.fillStyle = '#ff6a1a'; rect(0.125, 0.19, 0.03, 0.94); rect(0.81, 0.875, 0.03, 0.94);
+    g.fillStyle = spec.color; rect(0.125, 0.19, 0.03, 0.94); rect(0.81, 0.875, 0.03, 0.94);
     g.fillStyle = '#1d2b44'; rect(0.195, 0.207, 0.03, 0.95); rect(0.793, 0.805, 0.03, 0.95); rect(0, 1, 0.972, 1);
     const win = (u, v, du, dv) => { const x = X(u - du / 2), y = Y(v + dv / 2), w = X(du), h = dv * H; g.fillStyle = '#10161f'; g.beginPath(); g.roundRect(x, y, w, h, 9); g.fill(); g.fillStyle = 'rgba(140,190,235,0.35)'; g.beginPath(); g.roundRect(x + 3, y + 3, w - 6, h * 0.4, 6); g.fill(); };
     for (let k = 0; k < 7; k++) { win(0.287, 0.385 + k * 0.058, 0.05, 0.03); win(0.713, 0.385 + k * 0.058, 0.05, 0.03); }
@@ -790,7 +848,7 @@ const planeProps = [], planeStrobes = [];
   });
   const paint = new THREE.MeshPhysicalMaterial({ map: livery, roughness: 0.32, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.1 });
   const white = new THREE.MeshPhysicalMaterial({ color: 0xf5f4ef, roughness: 0.32, metalness: 0.1, clearcoat: 0.7 });
-  const orange = new THREE.MeshPhysicalMaterial({ color: 0xff6a1a, roughness: 0.35, clearcoat: 0.6 });
+  const orange = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(spec.color), roughness: 0.35, clearcoat: 0.6 });
   const dark = std(0x1a1d22, 0.4, 0.6);
   plane.add(new THREE.Mesh(fg, paint));
   const af = airfoil(10, 0.15);
@@ -798,20 +856,28 @@ const planeProps = [], planeStrobes = [];
   plane.add(new THREE.Mesh(wing(9.9, 1.22, 2.35, 2.4, 1.35, 0.3, 0.3), white));
   plane.add(new THREE.Mesh(wing(3.5, 1.05, -5.3, 1.7, 1.0, 0.05, 0.3), white));
   plane.add(new THREE.Mesh(loft(Array.from({ length: 9 }, (_, i) => { const t = i / 8, y = 0.9 + t * 3.3, ch = lerp(2.7, 1.25, t); return airfoil(8, 0.12, 1).map(([c, th]) => [th * ch, y, -4.6 - t * 1.7 - c * ch]); })), orange));
+  const discTex = canvasTex(256, 256, (g, w) => { g.translate(w / 2, w / 2); for (let k = 0; k < 3; k++) { g.rotate(Math.PI * 2 / 3); const gr = g.createLinearGradient(-30, 0, 30, 0); gr.addColorStop(0, 'rgba(20,20,22,0)'); gr.addColorStop(0.5, 'rgba(20,20,22,0.42)'); gr.addColorStop(1, 'rgba(20,20,22,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 124, -0.5, 0.5); g.fill(); } g.strokeStyle = 'rgba(230,200,40,0.5)'; g.lineWidth = 5; g.beginPath(); g.arc(0, 0, 121, 0, 6.3); g.stroke(); });
+  const discM = new THREE.MeshBasicMaterial({ map: discTex, transparent: true, depthWrite: false, side: THREE.DoubleSide });
   for (const s of [1, -1]) {
+    if (spec.engines === 2) {
     const np = [[0.02, 0], [0.34, 0.25], [0.52, 0.9], [0.55, 2.2], [0.42, 3.3], [0.2, 3.9], [0.02, 4.05]].map(([r, y]) => new THREE.Vector2(r, y));
     const nac = new THREE.Mesh(new THREE.LatheGeometry(new THREE.SplineCurve(np).getPoints(24), 16).rotateX(-Math.PI / 2), white); nac.position.set(s * 3.3, 0.86, 4.1); plane.add(nac);
     const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.75, 14).rotateX(Math.PI / 2), dark); spinner.position.set(s * 3.3, 0.86, 4.35); plane.add(spinner);
-    const discTex = canvasTex(256, 256, (g, w) => { g.translate(w / 2, w / 2); for (let k = 0; k < 3; k++) { g.rotate(Math.PI * 2 / 3); const gr = g.createLinearGradient(-30, 0, 30, 0); gr.addColorStop(0, 'rgba(20,20,22,0)'); gr.addColorStop(0.5, 'rgba(20,20,22,0.42)'); gr.addColorStop(1, 'rgba(20,20,22,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 124, -0.5, 0.5); g.fill(); } g.strokeStyle = 'rgba(230,200,40,0.5)'; g.lineWidth = 5; g.beginPath(); g.arc(0, 0, 121, 0, 6.3); g.stroke(); });
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.3, 32), new THREE.MeshBasicMaterial({ map: discTex, transparent: true, depthWrite: false, side: THREE.DoubleSide })); disc.position.set(s * 3.3, 0.86, 4.4); plane.add(disc); planeProps.push(disc);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.3, 32), discM); disc.position.set(s * 3.3, 0.86, 4.4); plane.add(disc); planeProps.push(disc);
+    }
     const leg = stick(new THREE.Vector3(s * 0.9, -0.7, 0.6), new THREE.Vector3(s * 1.75, -1.75, 0.5), 0.07, white); plane.add(leg);
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 16).rotateZ(Math.PI / 2), dark); wheel.position.set(s * 1.8, -1.8, 0.5); plane.add(wheel);
     const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color: s > 0 ? 0xff2020 : 0x20ff40 })); tip.position.set(s * 9.9, 1.55, 1.6); plane.add(tip);
+  }
+  if (spec.engines === 1) {                       // single engine: propeller on the nose
+    const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.8, 16).rotateX(Math.PI / 2), dark); spinner.position.set(0, 0.02, L / 2 + 0.25); plane.add(spinner);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.45, 32), discM); disc.position.set(0, 0.02, L / 2 + 0.2); plane.add(disc); planeProps.push(disc);
   }
   plane.add(stick(new THREE.Vector3(0, -0.9, 5.4), new THREE.Vector3(0, -1.75, 5.6), 0.06, white));
   const nw = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.24, 14).rotateZ(Math.PI / 2), dark); nw.position.set(0, -1.85, 5.6); plane.add(nw);
   const strobe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); strobe.position.set(0, 4.3, -7.4); plane.add(strobe); planeStrobes.push(strobe);
   plane.traverse(o => { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } });
+  plane.scale.setScalar(spec.scale);
 }
 
 /* ================================================================
@@ -873,18 +939,40 @@ function applyPose(target, dt, flutter) {
    RAM-AIR CANOPY: one inflated wing with cells, seams, lines, risers, slider
    ================================================================ */
 const canopy = new THREE.Group(); diver.add(canopy); canopy.visible = false;
-const CAN_Y = 4.75;
+let CAN_Y = 4.75;
 let brakeGeo = null; const brakeTE = { L: [], R: [] };
-{
-  const SPAN = 8.8, R = 7.4, CELLS = 9, SUB = 6, af = airfoil(12, 0.17, 0.5), half = SPAN / 2 / R, rings = [], ribs = [];
-  const chordAt = u => 3.15 * Math.sqrt(1 - Math.pow(Math.abs(u * 2 - 1), 2.6) * 0.42);
+function buildRound(spec) {                       // old military round canopy: lathed dome with gores, lines to the risers
+  CAN_Y = 6.4;
+  const GORES = 28, pts = new THREE.SplineCurve([[0.35, 2.55], [1.4, 2.42], [2.5, 1.98], [3.3, 1.25], [3.72, 0.42], [3.64, 0]].map(([r, y]) => new THREE.Vector2(r, y))).getPoints(22);
+  const tex = canvasTex(1024, 256, (g, W, H) => {
+    for (let i = 0; i < GORES; i++) { g.fillStyle = spec.colors[i % spec.colors.length]; g.fillRect(i * W / GORES, 0, W / GORES + 1, H); }
+    g.fillStyle = 'rgba(0,0,0,0.28)'; for (let i = 0; i <= GORES; i++) g.fillRect(i * W / GORES - 1.5, 0, 3, H);
+    g.fillStyle = 'rgba(0,0,0,0.12)'; for (const y of [0.3, 0.55, 0.78]) g.fillRect(0, H * y, W, 2);
+    g.fillStyle = 'rgba(25,28,20,0.6)'; g.fillRect(0, 0, W, 9);
+  });
+  const dome = new THREE.Mesh(new THREE.LatheGeometry(pts, GORES * 2), std(0xffffff, 0.85, 0, { map: tex, side: THREE.DoubleSide }));
+  { const p = dome.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), a = Math.atan2(x, z), r = Math.hypot(x, z), k = 1 + 0.035 * Math.cos(a * GORES) * smooth(1.5, 3.6, r); p.setX(i, x * k); p.setZ(i, z * k); } dome.geometry.computeVertexNormals(); }
+  dome.castShadow = true; canopy.add(dome);
+  const lv = [], top = s => new THREE.Vector3(s * 0.2, -CAN_Y + 1.08, 0);
+  for (let i = 0; i < GORES; i++) { const a = i / GORES * Math.PI * 2, x = Math.sin(a) * 3.64, z = Math.cos(a) * 3.64, t = top(x >= 0 ? 1 : -1); lv.push(x, 0, z, t.x, t.y, t.z); }
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+  canopy.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0xd8d4c4, transparent: true, opacity: 0.8 })));
+  for (const s of [1, -1]) canopy.add(stick(new THREE.Vector3(s * 0.19, -CAN_Y + 0.36, 0), top(s), 0.016, std(0x4a4f38, 0.8)));
+  canopy.position.y = CAN_Y;
+}
+function buildCanopy(spec) {
+  canopy.clear(); brakeGeo = null; canopy.rotation.set(0, 0, 0);
+  if (spec.round) { buildRound(spec); return; }
+  CAN_Y = 4.75;
+  const SPAN = spec.span, R = spec.span * 0.84, CELLS = 9, SUB = 6, af = airfoil(12, 0.17, 0.5), half = SPAN / 2 / R, rings = [], ribs = [];
+  const chordAt = u => spec.span * 0.358 * Math.sqrt(1 - Math.pow(Math.abs(u * 2 - 1), 2.6) * 0.42);
   for (let i = 0; i <= CELLS * SUB; i++) {
     const u = i / (CELLS * SUB), a = lerp(-half, half, u), bulge = Math.sin(Math.PI * (i % SUB) / SUB), ch = chordAt(u);
     const cx = R * Math.sin(a), cy = R * Math.cos(a) - R, ux = Math.sin(a), uy = Math.cos(a);
     rings.push(af.map(([c, th]) => { const t = th * ch * (1 + 0.3 * bulge) + (th >= 0 ? 0.04 : -0.018) * bulge * ch * Math.sin(Math.PI * Math.min(1, c * 1.08)); return [cx + ux * t, cy + uy * t, ch * (0.42 - c)]; }));
     if (i % SUB === 0) ribs.push({ cx, cy, ux, uy, ch, at: c => new THREE.Vector3(cx - ux * 0.03, cy - uy * 0.03, ch * (0.42 - c)) });
   }
-  const COLS = ['#ff5a12', '#f4f4f0', '#ff5a12', '#1d2b44', '#f4f4f0', '#1d2b44', '#ff5a12', '#f4f4f0', '#ff5a12'];
+  const COLS = spec.colors;
   const tex = canvasTex(1152, 512, (g, W, H) => {
     const cw = W / CELLS;                         // v: 0 = trailing edge (top skin) .. 0.5 = nose .. 1 = trailing edge (bottom skin)
     for (let i = 0; i < CELLS; i++) { g.fillStyle = COLS[i]; g.fillRect(i * cw, 0, cw + 1, H); const gr = g.createLinearGradient(i * cw, 0, (i + 1) * cw, 0); gr.addColorStop(0, 'rgba(0,0,0,0.22)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.10)'); gr.addColorStop(1, 'rgba(0,0,0,0.22)'); g.fillStyle = gr; g.fillRect(i * cw, 0, cw, H); }
@@ -898,7 +986,7 @@ let brakeGeo = null; const brakeTE = { L: [], R: [] };
   for (const r of [ribs[0], ribs[CELLS]]) {
     const g = new THREE.BufferGeometry(), a = r.at(0.1), b = r.at(0.85), s = Math.sign(r.cx), c = new THREE.Vector3(r.cx - s * 0.25, r.cy - 0.95, r.ch * -0.05);
     g.setAttribute('position', new THREE.Float32BufferAttribute([...a.toArray(), ...b.toArray(), ...c.toArray()], 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, std(0xff5a12, 0.7, 0, { side: THREE.DoubleSide })); m.castShadow = true; canopy.add(m);
+    const m = new THREE.Mesh(g, std(new THREE.Color(spec.colors[0]), 0.7, 0, { side: THREE.DoubleSide })); m.castShadow = true; canopy.add(m);
   }
   // suspension lines: four rows cascading down to four risers
   const lv = [], seg = (a, b) => lv.push(a.x, a.y, a.z, b.x, b.y, b.z);
@@ -927,6 +1015,7 @@ let brakeGeo = null; const brakeTE = { L: [], R: [] };
   canopy.position.y = CAN_Y;
 }
 function updateBrakeLines() {
+  if (!brakeGeo) return;
   const p = brakeGeo.attributes.position; let o = 0;
   for (const side of ['L', 'R']) {
     const hand = joints['hand' + side].getWorldPosition(v3); canopy.worldToLocal(hand);
@@ -960,8 +1049,9 @@ const rings = [];
 function placeRings(exitX, exitZ) {
   for (const r of rings) scene.remove(r.mesh);
   rings.length = 0;
-  for (let i = 0; i < 6; i++) {
-    const t = (i + 1) / 7, x = lerp(exitX, TARGET.x - WIND_DIR.x * 700, t) + Math.sin(i * 2.1) * 120, z = lerp(exitZ, TARGET.z - WIND_DIR.y * 700, t) + Math.cos(i * 1.7) * 120, y = PLANE_ALT - 400 - i * 330;
+  const agl = GEAR.plane.agl, n = clamp(Math.round((agl - 800) / 520), 0, 6), stepY = n ? (agl - 1150) / n : 0;
+  for (let i = 0; i < n; i++) {
+    const t = (i + 1) / (n + 1), x = lerp(exitX, TARGET.x - WIND_DIR.x * 500, t) + Math.sin(i * 2.1) * 100, z = lerp(exitZ, TARGET.z - WIND_DIR.y * 500, t) + Math.cos(i * 1.7) * 100, y = PLANE_ALT - 350 - i * stepY;
     const m = new THREE.Mesh(new THREE.TorusGeometry(24, 1.4, 12, 56), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 1.6, roughness: 0.4 })); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); scene.add(m);
     rings.push({ mesh: m, x, y, z, done: false });
   }
@@ -972,15 +1062,15 @@ function placeRings(exitX, exitZ) {
    ================================================================ */
 const G = 9.81;
 const S = { phase: 'plane', x: 0, y: PLANE_ALT, z: 0, vx: 0, vy: 0, vz: 0, heading: 0, airspeed: 0, prevAir: 0, toggle: 0, open: 0, t: 0, freefallT: 0, maxSpeed: 0, deployAGL: null, ringsHit: 0, result: null, planeT: 0, flare: 0, pose: 'box' };
-const input = { left: false, right: false, fwd: false, back: false, dive: false };
-const planeStart = () => [TARGET.x - RUN_DIR.x * 3200, TARGET.z - RUN_DIR.y * 3200];
+const input = { left: false, right: false, fwd: false, back: false, dive: false, ff: false };
+const planeStart = () => [TARGET.x - RUN_DIR.x * (EXIT_DIST + 1300), TARGET.z - RUN_DIR.y * (EXIT_DIST + 1300)];   // green light ~30 s after boarding
 
 function resetGame() {
   Object.assign(S, { phase: 'plane', planeT: 0, t: 0, freefallT: 0, maxSpeed: 0, deployAGL: null, ringsHit: 0, result: null, open: 0, toggle: 0, flare: 0 });
   const [px, pz] = planeStart(); S.x = px; S.z = pz; S.y = PLANE_ALT; S.heading = Math.atan2(RUN_DIR.x, RUN_DIR.y);
   S.vx = RUN_DIR.x * PLANE_SPEED; S.vz = RUN_DIR.y * PLANE_SPEED; S.vy = 0;
   canopy.visible = false; canopy.scale.set(1, 1, 1);
-  placeRings(TARGET.x - RUN_DIR.x * 1600, TARGET.z - RUN_DIR.y * 1600);
+  placeRings(TARGET.x - RUN_DIR.x * EXIT_DIST, TARGET.z - RUN_DIR.y * EXIT_DIST);
   camState.init = false;
   $('res').hidden = true;
 }
@@ -988,9 +1078,10 @@ function jump() {
   if (S.phase !== 'plane') return;
   S.phase = 'freefall'; S.t = 0;
   const lx = Math.cos(S.heading), lz = -Math.sin(S.heading), fx = Math.sin(S.heading), fz = Math.cos(S.heading);     // out of the left-hand door
-  S.x += lx * 1.9 - fx * 3.3; S.z += lz * 1.9 - fz * 3.3; S.y = PLANE_ALT + 1.5 - 0.5;
+  const sc = GEAR.plane.scale; S.x += (lx * 1.9 - fx * 3.3) * sc; S.z += (lz * 1.9 - fz * 3.3) * sc; S.y = PLANE_ALT + 1.5 - 0.5 * sc;
+  S.autoOpen = GEAR.plane.agl < 900;
   S.vx = RUN_DIR.x * PLANE_SPEED + lx * 2.5; S.vz = RUN_DIR.y * PLANE_SPEED + lz * 2.5; S.vy = -1;
-  toast('GO!'); audio.whoosh();
+  toast(S.autoOpen ? 'HOP & POP!' : 'GO!'); audio.whoosh();
 }
 function deploy() {
   if (S.phase !== 'freefall') return;
@@ -1020,31 +1111,33 @@ function step(dt) {
     const glide = pose === 'track' ? 36 : pose === 'back' ? -7 : pose === 'dive' ? 6 : 0;
     const tx = wx + Math.sin(s.heading) * glide, tz = wz + Math.cos(s.heading) * glide, k = 1 - Math.exp(-dt * (s.t < 4 ? 0.45 : 0.8));
     s.vx += (tx - s.vx) * k; s.vz += (tz - s.vz) * k;
+    if (s.autoOpen && s.t > 1.6) deploy();
   } else if (s.phase === 'opening') {
     s.open += dt / 2.4;
     const inflate = smooth(0.25, 1, s.open);
     s.vy += (-G - s.vy * Math.abs(s.vy) * lerp(0.0032, 0.2, inflate)) * dt;
     const k = 1 - Math.exp(-dt * 1.2 * inflate);
-    s.vx += (wx + Math.sin(s.heading) * 9 - s.vx) * k; s.vz += (wz + Math.cos(s.heading) * 9 - s.vz) * k;
-    if (s.open >= 1) { s.phase = 'canopy'; s.airspeed = Math.max(7, Math.hypot(s.vx - wx, s.vz - wz)); }
+    const A0 = GEAR.canopy.A0 * 0.8; s.vx += (wx + Math.sin(s.heading) * A0 - s.vx) * k; s.vz += (wz + Math.cos(s.heading) * A0 - s.vz) * k;
+    if (s.open >= 1) { s.phase = 'canopy'; s.airspeed = GEAR.canopy.A0; }
   } else if (s.phase === 'canopy') {
     const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0);
     s.toggle = lerp(s.toggle, turn, 1 - Math.exp(-dt * 3));
-    const target = input.back ? 4 : input.fwd ? 19 : 14;
+    const C = GEAR.canopy, target = C.round ? C.A0 : input.back ? C.A0 * 0.3 : input.fwd ? C.A0 * 1.35 : C.A0;
     s.prevAir = s.airspeed;
     s.airspeed += (target - s.airspeed) * (1 - Math.exp(-dt * (target < s.airspeed ? 1.2 : 0.6)));
     s.flare = lerp(s.flare, Math.max(0, (s.prevAir - s.airspeed) / dt), 1 - Math.exp(-dt * 10));
-    s.heading = wrapAngle(s.heading + s.toggle * (input.back ? 0.5 : 0.95) * dt);
+    s.heading = wrapAngle(s.heading + s.toggle * C.turn * (input.back && !C.round ? 0.55 : 1) * dt);
     // steady sink: ~5.5 m/s in full flight, ~2.5 m/s in deep brakes; a flare converts speed into lift for about 1.5 s
-    let sink = 1.6 + 0.02 * s.airspeed * s.airspeed + (s.airspeed < 4.5 ? (4.5 - s.airspeed) * 1.5 : 0) + Math.abs(s.toggle) * 3.5;
-    sink -= s.flare * 0.4;
+    let sink = C.round ? C.s0 + Math.abs(s.toggle) * 0.8
+      : C.s0 * (0.5 + 0.5 * (s.airspeed / C.A0) ** 2) + (s.airspeed < C.A0 * 0.33 ? (C.A0 * 0.33 - s.airspeed) * 1.5 : 0) + Math.abs(s.toggle) * C.s0 * 0.6;
+    sink -= s.flare * C.flare;
     s.vy += (-sink - s.vy) * (1 - Math.exp(-dt * (s.flare > 0.5 ? 6 : 4)));
     s.vx = wx + Math.sin(s.heading) * s.airspeed; s.vz = wz + Math.cos(s.heading) * s.airspeed;
   }
   s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt;
   s.maxSpeed = Math.max(s.maxSpeed, Math.hypot(s.vx, s.vy, s.vz));
   for (const r of rings) if (!r.done && s.y < r.y && s.y - s.vy * dt >= r.y && Math.hypot(s.x - r.x, s.z - r.z) < 24) {
-    r.done = true; s.ringsHit++; r.mesh.material.color.set(0x7be38f); r.mesh.material.emissive.set(0x2fbf4f); toast(`RING ${s.ringsHit}/6`); audio.ding();
+    r.done = true; s.ringsHit++; r.mesh.material.color.set(0x7be38f); r.mesh.material.emissive.set(0x2fbf4f); toast(`RING ${s.ringsHit}/${rings.length}`); audio.ding();
   }
   const gH = groundAt(s.x, s.z), feet = s.phase === 'freefall' ? 0.3 : 1.0;
   if (s.y - feet <= gH) { s.y = gH + feet; land(); }
@@ -1055,13 +1148,16 @@ function land() {
   let quality, qScore;
   if (s.phase === 'freefall' || s.phase === 'opening') { quality = s.phase === 'freefall' ? 'לא נפתח מצנח' : 'המצנח נפתח מאוחר מדי'; qScore = 0; }
   else if (inWater) { quality = 'נחיתה במים'; qScore = 50; }
+  else if (GEAR.canopy.round && vSink < 8.5) { quality = 'נחיתת PLF במצנח עגול'; qScore = 200; }
   else if (vSink < 2.2 && ground < 10) { quality = 'נחיתה רכה מושלמת'; qScore = 500; }
   else if (vSink < 4.5) { quality = 'נחיתה טובה'; qScore = 300; }
   else if (vSink < 7) { quality = 'נחיתה קשה'; qScore = 100; }
   else { quality = 'נחיתה כואבת'; qScore = 0; }
   const ok = qScore > 0, accuracy = ok ? Math.round(Math.max(0, 1000 - dist * 4)) : 0;
-  const deployPts = s.deployAGL != null && s.deployAGL > 700 && s.deployAGL < 1400 ? 200 : 0;
-  s.result = { quality, dist, vSink, score: qScore + accuracy + s.ringsHit * 150 + deployPts };
+  const deployPts = !s.autoOpen && s.deployAGL != null && s.deployAGL > 600 && s.deployAGL < 1300 ? 200 : 0;
+  const score = qScore + accuracy + s.ringsHit * 150 + deployPts, coins = Math.round(score / 5) + 20;
+  s.result = { quality, dist, vSink, score, coins };
+  save.d.coins += coins; save.d.jumps++; save.d.best = Math.max(save.d.best, score); save.write(); updateGearLine();
   s.phase = 'landed'; s.vx = s.vy = s.vz = 0;
   audio.thud(clamp(vSink / 6, 0.2, 1));
   setTimeout(showResults, 1400);
@@ -1071,6 +1167,23 @@ function land() {
    CAMERA
    ================================================================ */
 let camMode = 0;
+const look = { yaw: 0, pitch: 0, zoom: 1, drag: null, idle: 9 };
+canvas.addEventListener('pointerdown', e => { look.drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; look.idle = 0; try { canvas.setPointerCapture(e.pointerId); } catch {} });
+canvas.addEventListener('pointermove', e => {
+  if (!look.drag || look.drag.id !== e.pointerId) return;
+  const k = isTouch ? 0.009 : 0.006;
+  look.yaw -= (e.clientX - look.drag.x) * k; look.pitch = clamp(look.pitch + (e.clientY - look.drag.y) * k * 0.8, -1.2, 1.3);
+  look.yaw = wrapAngle(look.yaw); look.drag.x = e.clientX; look.drag.y = e.clientY; look.idle = 0;
+});
+const endDrag = e => { if (look.drag && look.drag.id === e.pointerId) look.drag = null; };
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('wheel', e => { e.preventDefault(); look.zoom = clamp(look.zoom * (1 + e.deltaY * 0.0012), 0.45, 3); look.idle = 0; }, { passive: false });
+function lookAround(pivot) {                      // swing the chase camera around the player
+  const ox = tv.x - pivot.x, oy = tv.y - pivot.y, oz = tv.z - pivot.z, r0 = Math.hypot(ox, oy, oz) || 1, r = r0 * look.zoom;
+  const az = Math.atan2(ox, oz) + look.yaw, el = clamp(Math.asin(clamp(oy / r0, -1, 1)) + look.pitch, -1.2, 1.45);
+  tv.set(pivot.x + Math.sin(az) * Math.cos(el) * r, pivot.y + Math.sin(el) * r, pivot.z + Math.cos(az) * Math.cos(el) * r);
+  lv.lerp(pivot, clamp((Math.abs(look.yaw) + Math.abs(look.pitch)) * 1.6, 0, 1));
+}
 const camState = { pos: new THREE.Vector3(), init: false, yaw: 0, orbit: 0, shake: 0 };
 const tv = new THREE.Vector3(), lv = new THREE.Vector3();
 function updateCamera(dt) {
@@ -1079,24 +1192,30 @@ function updateCamera(dt) {
   if (!camState.init) camState.yaw = s.heading;
   camState.yaw += wrapAngle(s.heading - camState.yaw) * (1 - Math.exp(-dt * 2.2));
   const fx = Math.sin(camState.yaw), fz = Math.cos(camState.yaw);
+  if (!look.drag) { look.idle += dt; if (look.idle > 2.5) { const k = 1 - Math.exp(-dt * 2.2); look.yaw -= look.yaw * k; look.pitch -= look.pitch * k; } }
   if (camMode === 2) {
     camState.orbit += dt * 0.25;
-    const a = camState.orbit + camState.yaw, r = s.phase === 'plane' ? 30 : s.phase === 'canopy' || s.phase === 'opening' ? 13 : 5.5;
+    const a = camState.orbit + camState.yaw + look.yaw, r = s.phase === 'plane' ? 30 : s.phase === 'canopy' || s.phase === 'opening' ? 13 : 5.5;
     tv.set(target.x + Math.sin(a) * r, target.y + (s.phase === 'canopy' ? 2 : 1.6), target.z + Math.cos(a) * r);
     lv.copy(target); if (s.phase === 'canopy') lv.y += 2.2;
+    tv.y += look.pitch * r; tv.sub(lv).multiplyScalar(look.zoom).add(lv);
     camState.pos.copy(tv);
   } else if (camMode === 1 && s.phase !== 'plane') {
     tv.set(s.x + fx * 0.2, s.y + (s.phase === 'freefall' ? 0 : 0.55), s.z + fz * 0.2);
     lv.set(s.x + fx * 30, s.y - (s.phase === 'freefall' ? 40 : 8), s.z + fz * 30);
+    { const dx = lv.x - tv.x, dy = lv.y - tv.y, dz = lv.z - tv.z, r = Math.hypot(dx, dy, dz), az = Math.atan2(dx, dz) + look.yaw, el = clamp(Math.asin(dy / r) + look.pitch, -1.5, 1.4);
+      lv.set(tv.x + Math.sin(az) * Math.cos(el) * r, tv.y + Math.sin(el) * r, tv.z + Math.cos(az) * Math.cos(el) * r); }
     camState.pos.copy(tv);
   } else {
     if (s.phase === 'plane') { tv.set(target.x - fx * 24 + fz * 15, target.y + 5, target.z - fz * 24 - fx * 15); lv.copy(target); }
     else if (s.phase === 'freefall') { tv.set(s.x - fx * 5.2 + Math.sin(t * 0.7) * 0.25, s.y + 3.4, s.z - fz * 5.2 + Math.cos(t * 0.6) * 0.25); lv.set(s.x + fx * 4.5, s.y - 3.2, s.z + fz * 4.5); }
     else if (s.phase === 'landed') { tv.set(s.x - fx * 8, s.y + 3, s.z - fz * 8); lv.set(s.x, s.y + 0.5, s.z); }
     else { tv.set(s.x - fx * 9.5, s.y + 1.9, s.z - fz * 9.5); lv.set(s.x + fx * 7, s.y + 1.2, s.z + fz * 7); }
+    const pivot = s.phase === 'plane' ? plane.position : (s.phase === 'canopy' || s.phase === 'opening') ? v3.set(s.x, s.y + 1.6, s.z) : diver.position;
+    lookAround(pivot);
     tv.y = Math.max(tv.y, groundAt(tv.x, tv.z) + 1.5);
     if (!camState.init || camState.pos.distanceTo(tv) > 150) camState.pos.copy(tv);
-    else camState.pos.lerp(tv, 1 - Math.exp(-dt * (s.phase === 'freefall' ? 6 : 3.5)));
+    else camState.pos.lerp(tv, 1 - Math.exp(-dt * (look.drag ? 14 : s.phase === 'freefall' ? 6 : 3.5)));
   }
   camState.init = true;
   camera.position.copy(camState.pos);
@@ -1141,7 +1260,8 @@ function sync(dt) {
     camState.shake = Math.max(camState.shake, o > 0.35 && o < 0.6 ? 0.25 : 0);
   } else if (s.phase === 'canopy') canopy.scale.set(1, 1, 1);
   if (s.phase === 'landed' && canopy.visible) { canopy.position.y = lerp(canopy.position.y, 0.5, 1 - Math.exp(-dt * 1.2)); canopy.rotation.x = lerp(canopy.rotation.x, -1.3, 1 - Math.exp(-dt * 1.2)); }
-  else { canopy.position.y = CAN_Y; canopy.rotation.x = s.phase === 'canopy' ? lerp(canopy.rotation.x, input.back ? -0.16 : 0.03, 1 - Math.exp(-dt * 3)) : 0; }
+  else { canopy.position.y = CAN_Y; canopy.rotation.x = s.phase === 'canopy' && !GEAR.canopy.round ? lerp(canopy.rotation.x, input.back ? -0.16 : 0.03, 1 - Math.exp(-dt * 3)) : 0; }
+  if (s.phase === 'canopy' && GEAR.canopy.round) { const b = Math.sin(worldT * 2.1); canopy.scale.set(1 + b * 0.025, 1 - b * 0.035, 1 + b * 0.025); }
   if (canopy.visible) { diver.updateMatrixWorld(true); updateBrakeLines(); }
 
   for (const r of rings) if (!r.done) r.mesh.material.emissiveIntensity = 1.3 + Math.sin(worldT * 5) * 0.4;
@@ -1169,10 +1289,10 @@ function hud(dt) {
   $('altBig').innerHTML = `${Math.round(agl).toLocaleString('en-US')}<small>m</small>`;
   $('vs').textContent = `${Math.round(-s.vy * 3.6)} km/h`;
   $('hs').textContent = `${Math.round(Math.hypot(s.vx, s.vz) * 3.6)} km/h`;
-  $('rings').textContent = `${s.ringsHit}/6`;
-  const tapeMax = PLANE_ALT - VALLEY_H;
+  $('rings').textContent = `${s.ringsHit}/${rings.length}`;
+  const tapeMax = GEAR.plane.agl;
   $('tapeMark').style.bottom = `${clamp(agl / tapeMax, 0, 1) * 100}%`;
-  $('tapeZone').style.bottom = `${800 / tapeMax * 100}%`; $('tapeZone').style.height = `${600 / tapeMax * 100}%`;
+  $('tapeZone').style.bottom = `${600 / tapeMax * 100}%`; $('tapeZone').style.height = `${Math.max(0, Math.min(500, tapeMax - 600)) / tapeMax * 100}%`;
   const dx = TARGET.x - s.x, dz = TARGET.z - s.z, dist = Math.hypot(dx, dz);
   const camYaw = Math.atan2(lv.x - camera.position.x, lv.z - camera.position.z), rel = wrapAngle(camYaw - Math.atan2(dx, dz));
   $('arrowPath').setAttribute('transform', `rotate(${(rel * 180 / Math.PI).toFixed(1)})`);
@@ -1181,18 +1301,21 @@ function hud(dt) {
   $('wind').textContent = `WIND ${Math.round(Math.hypot(wx, wz) * 3.6)} km/h`;
   let main = '', sub = '', warn = 0;
   if (s.phase === 'plane') {
-    const ex = TARGET.x - RUN_DIR.x * 1600, ez = TARGET.z - RUN_DIR.y * 1600, along = (plane.position.x - ex) * RUN_DIR.x + (plane.position.z - ez) * RUN_DIR.y;
-    if (along < -900) { main = 'מתקרבים לאזור הקפיצה'; sub = `עוד ${Math.round(-along - 900).toLocaleString('en-US')} מ׳ עד האור הירוק`; }
-    else if (along < 900) { main = '🟢 אור ירוק! Space לקפיצה'; sub = 'קפיצה עכשיו תעביר אותך דרך הטבעות'; }
+    const ex = TARGET.x - RUN_DIR.x * EXIT_DIST, ez = TARGET.z - RUN_DIR.y * EXIT_DIST, along = (plane.position.x - ex) * RUN_DIR.x + (plane.position.z - ez) * RUN_DIR.y;
+    if (along < -500) { main = 'מתקרבים לאזור הקפיצה'; sub = `עוד ${Math.round(-along - 500).toLocaleString('en-US')} מ׳ עד האור הירוק`; }
+    else if (along < 500) { main = '🟢 אור ירוק! Space לקפיצה'; sub = rings.length ? 'קפיצה עכשיו תעביר אותך דרך הטבעות' : 'קפיצה עכשיו תנחית אותך ליד המטרה'; }
     else { main = 'עברנו את האזור'; sub = 'אפשר עדיין לקפוץ, או R לסיבוב נוסף'; }
+  } else if (free && s.autoOpen) { main = 'Hop & Pop'; sub = 'המצנח נפתח אוטומטית';
   } else if (free) {
-    if (agl < 600) { main = 'פתח מצנח עכשיו!'; warn = 1; }
-    else if (agl < 1300) { main = 'גובה פתיחה: Space'; sub = 'אזור הפתיחה המומלץ'; warn = 0.25; }
+    if (agl < 500) { main = 'פתח מצנח עכשיו!'; warn = 1; }
+    else if (agl < 1100) { main = 'גובה פתיחה: Space'; sub = 'אזור הפתיחה המומלץ'; warn = 0.25; }
     else { main = 'נפילה חופשית'; sub = 'W קדימה · Shift צלילה · A/D פנייה'; }
   } else if (s.phase === 'opening') main = 'המצנח נפתח…';
   else if (s.phase === 'canopy') {
-    if (agl < 25) { main = 'S = פלייר!'; sub = 'לחץ ממש לפני הקרקע כדי לנחות רך'; warn = agl < 8 ? 0.4 : 0; }
-    else { main = 'שליטה במצנח'; sub = 'A/D פנייה · S בלמים · W מהירות'; }
+    const ffOn = input.ff && agl > 60;
+    if (GEAR.canopy.round) { main = ffOn ? '⏩ ×4' : agl < 25 ? 'מתכוננים לנחיתה' : 'מצנח עגול'; sub = agl < 25 ? 'רגליים צמודות, ברכיים כפופות' : 'A/D פנייה · F הרצה מהירה'; }
+    else if (agl < 25) { main = 'S = פלייר!'; sub = 'לחץ ממש לפני הקרקע כדי לנחות רך'; warn = agl < 8 ? 0.4 : 0; }
+    else { main = ffOn ? '⏩ ×4' : 'שליטה במצנח'; sub = 'A/D פנייה · S בלמים · W מהירות · F הרצה מהירה'; }
   }
   $('statusMain').textContent = main; $('statusSub').textContent = sub;
   $('warnFlash').style.opacity = warn ? (0.5 + 0.5 * Math.sin(performance.now() / 120)) * warn : 0;
@@ -1203,7 +1326,7 @@ function showResults() {
   $('resTitle').textContent = r.score > 0 ? 'LANDED' : 'OUCH';
   $('resScore').textContent = r.score.toLocaleString('en-US');
   const rows = [['איכות הנחיתה', r.quality], ['מרחק מהמטרה', `${Math.round(r.dist)} m`], ['מהירות אנכית בנגיעה', `${r.vSink.toFixed(1)} m/s`],
-    ['גובה פתיחת מצנח', S.deployAGL != null ? `${Math.round(S.deployAGL)} m` : '—'], ['זמן נפילה חופשית', `${S.freefallT.toFixed(1)} s`], ['מהירות מרבית', `${Math.round(S.maxSpeed * 3.6)} km/h`], ['טבעות', `${S.ringsHit}/6`]];
+    ['גובה פתיחת מצנח', S.deployAGL != null ? `${Math.round(S.deployAGL)} m` : '—'], ['זמן נפילה חופשית', `${S.freefallT.toFixed(1)} s`], ['מהירות מרבית', `${Math.round(S.maxSpeed * 3.6)} km/h`], ['טבעות', `${S.ringsHit}/${rings.length}`], ['מטבעות שהרווחת', `+${r.coins} 🪙`]];
   $('resTable').innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
   $('res').hidden = false; $('againBtn').focus();
 }
@@ -1223,6 +1346,7 @@ function setKey(code, v) {
   if (code === 'KeyW' || code === 'ArrowUp') input.fwd = v;
   if (code === 'KeyS' || code === 'ArrowDown') input.back = v;
   if (code === 'ShiftLeft' || code === 'ShiftRight') input.dive = v;
+  if (code === 'KeyF') input.ff = v;
 }
 addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
@@ -1235,7 +1359,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => setKey(e.code, false));
 addEventListener('blur', () => { for (const k in input) input[k] = false; });
-for (const [id, key] of [['tL', 'left'], ['tR', 'right'], ['tF', 'fwd'], ['tB', 'back']]) {
+for (const [id, key] of [['tL', 'left'], ['tR', 'right'], ['tF', 'fwd'], ['tB', 'back'], ['tFF', 'ff']]) {
   const el = $(id);
   const on = e => { e.preventDefault(); input[key] = true; el.classList.add('on'); };
   const off = e => { e.preventDefault(); input[key] = false; el.classList.remove('on'); };
@@ -1244,6 +1368,41 @@ for (const [id, key] of [['tL', 'left'], ['tR', 'right'], ['tF', 'fwd'], ['tB', 
 $('tA').addEventListener('pointerdown', e => { e.preventDefault(); action(); });
 $('goBtn').addEventListener('click', () => { started = true; $('start').hidden = true; for (const id of ['alt', 'nav', 'tape']) $(id).hidden = false; $('keys').hidden = isTouch; audio.start(); });
 $('againBtn').addEventListener('click', () => resetGame());
+function updateGearLine() {
+  const t = `${GEAR.plane.heb} · ${GEAR.canopy.heb} · 🪙 ${save.d.coins.toLocaleString('en-US')}`;
+  for (const id of ['gearLine', 'gearLine2']) if ($(id)) $(id).textContent = t;
+}
+function renderShop() {
+  $('coinsShop').textContent = save.d.coins.toLocaleString('en-US');
+  const card = (it, kind) => {
+    const owned = save.d[kind === 'plane' ? 'planes' : 'canopies'].includes(it.id), sel = save.d[kind] === it.id;
+    const label = sel ? 'בשימוש' : owned ? 'בחר' : `🪙 ${it.price.toLocaleString('en-US')}`;
+    return `<div class="item${sel ? ' sel' : ''}"><b>${it.heb}</b><span>${it.desc}</span><button type="button" data-kind="${kind}" data-id="${it.id}"${sel || (!owned && save.d.coins < it.price) ? ' disabled' : ''}>${label}</button></div>`;
+  };
+  $('shopPlanes').innerHTML = PLANES.map(p => card(p, 'plane')).join('');
+  $('shopCanopies').innerHTML = CANOPIES.map(c => card(c, 'canopy')).join('');
+}
+function openShop() { $('start').hidden = true; $('res').hidden = true; renderShop(); $('shop').hidden = false; }
+$('shop').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]'); if (!b || b.disabled) return;
+  const kind = b.dataset.kind, list = kind === 'plane' ? PLANES : CANOPIES, it = list.find(x => x.id === b.dataset.id);
+  if (!save.d[kind === 'plane' ? 'planes' : 'canopies'].includes(it.id)) { if (save.d.coins < it.price) return; save.d.coins -= it.price; save.d[kind === 'plane' ? 'planes' : 'canopies'].push(it.id); audio.ding(); }
+  save.d[kind] = it.id; save.write(); applyGear(); renderShop();
+});
+$('shopBtn').addEventListener('click', openShop); $('shopBtn2').addEventListener('click', openShop);
+$('shopClose').addEventListener('click', () => { $('shop').hidden = true; if (!started) $('start').hidden = false; else if (S.phase === 'landed') resetGame(); });
+function applyGear() {
+  GEAR.plane = PLANES.find(p => p.id === save.d.plane) || PLANES[0];
+  GEAR.canopy = CANOPIES.find(c => c.id === save.d.canopy) || CANOPIES[0];
+  PLANE_ALT = VALLEY_H + GEAR.plane.agl; PLANE_SPEED = GEAR.plane.speed; EXIT_DIST = 300 + GEAR.plane.agl * 0.33;
+  buildPlane(GEAR.plane); buildCanopy(GEAR.canopy);
+  if (parked) scene.remove(parked);
+  if (world.parkedAt) {
+    parked = plane.clone(); parked.position.set(world.parkedAt.x, world.parkedAt.g + 2.25 * GEAR.plane.scale, world.parkedAt.z); parked.rotation.set(0, world.parkedAt.yaw, 0);
+    parked.traverse(o => { if (o.isMesh && o.geometry.type === 'CircleGeometry') o.visible = false; }); scene.add(parked);
+  }
+  updateGearLine(); resetGame();
+}
 
 /* ================================================================
    AUDIO
@@ -1279,14 +1438,14 @@ const audio = (() => {
    MAIN
    ================================================================ */
 await buildWorld();
-if (world.parkedAt) { parked = plane.clone(); parked.position.set(world.parkedAt.x, world.parkedAt.y, world.parkedAt.z); parked.rotation.set(0, world.parkedAt.yaw, 0); parked.traverse(o => { if (o.isMesh && o.material.map && o.material.transparent && o.geometry.type === 'CircleGeometry') o.visible = false; }); scene.add(parked); }
-resetGame();
+applyGear();
 $('loading').hidden = true; $('start').hidden = false; $('goBtn').focus();
 const H = 1 / 120;
 let acc = 0, last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (started) { acc += dt; let n = 0; while (acc >= H && n++ < 8) { if (S.phase !== 'landed') step(H); acc -= H; } }
+  const ff = input.ff && S.phase === 'canopy' && S.y - groundAt(S.x, S.z) > 60 ? 4 : 1;
+  if (started) { acc += dt * ff; let n = 0; while (acc >= H && n++ < 8 * ff) { if (S.phase !== 'landed') step(H); acc -= H; } }
   else S.planeT += dt;
   sync(dt); updateCamera(dt); hud(dt);
   const agl = S.y - groundAt(S.x, S.z);
@@ -1300,7 +1459,7 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
 });
 
-window.__sky = { S, input, step, H, TARGET, heightAt, groundAt, meshHeight, world, plane, jump() { started = true; $('start').hidden = true; action(); }, deploy, resetGame, setCam(m) { camMode = m; camState.init = false; },
+window.__sky = { S, input, step, H, TARGET, GEAR, save, PLANES, CANOPIES, applyGear, look, exitDist: () => EXIT_DIST, setGear(p, c) { save.d.plane = p; save.d.canopy = c; applyGear(); }, heightAt, groundAt, meshHeight, world, plane, jump() { started = true; $('start').hidden = true; action(); }, deploy, resetGame, setCam(m) { camMode = m; camState.init = false; },
   rings, simulate(sec, inp) { Object.assign(input, inp || {}); for (let i = 0; i < Math.round(sec / H) && S.phase !== 'landed'; i++) step(H); return { ...S }; } };
 </script>
 </body>
